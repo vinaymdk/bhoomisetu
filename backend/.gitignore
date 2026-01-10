@@ -12,9 +12,16 @@ build/
 
 # Environment variables
 .env
+.env.*
 .env.local
 .env.*.local
-
+/backend/.env.*
+/backend/.env.example
+/backend/.env.example.local
+/backend/.env.example.*.local
+/backend/.env.example.*
+/backend/.env.example.*.local
+/backend/.env.example.*.local
 # IDE
 .idea/
 .vscode/

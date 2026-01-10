@@ -3,7 +3,33 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
-dotenv.config();
+import * as path from 'path';
+import * as fs from 'fs';
+
+// Load .env file from backend directory explicitly
+// Try multiple paths to ensure .env is loaded correctly
+const possibleEnvPaths = [
+  path.resolve(__dirname, '../.env'), // When compiled (dist/)
+  path.resolve(process.cwd(), '.env'), // From project root
+  path.resolve(__dirname, '../../.env'), // From src/ when running from backend/
+  path.join(__dirname, '..', '.env'), // Relative to dist/
+];
+
+let envLoaded = false;
+for (const envPath of possibleEnvPaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    console.log(`✅ .env file loaded from: ${envPath}`);
+    envLoaded = true;
+    break;
+  }
+}
+
+// Fallback: try loading from current working directory
+if (!envLoaded) {
+  dotenv.config();
+  console.log('⚠️  .env file not found in expected locations, using process environment variables');
+}
 
 console.log('DB_HOST=', process.env.DB_HOST);
 console.log('DB_PORT=', process.env.DB_PORT);

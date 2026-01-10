@@ -672,6 +672,23 @@ bhoomisetu/
 - `POST /api/admin/reviews/:id/hide` - Hide review
 - `GET /api/admin/reviews/reports` - Get review reports
 
+## 📚 Documentation
+
+All documentation is organized in the `docs/` directory:
+
+- **📋 Module Summaries**: [`docs/summary/`](docs/summary/) - Implementation summaries for each module
+- **🧪 Testing Docs**: [`docs/testing/`](docs/testing/) - Testing summaries and verification reports
+- **⚙️ Setup Guides**: [`docs/setup/`](docs/setup/) - Configuration and setup instructions
+- **📖 API References**: [`docs/reference/`](docs/reference/) - Technical references and API contracts
+- **📝 Development Guides**: [`docs/guides/`](docs/guides/) - Development guides and best practices
+- **🗺️ Project Roadmap**: [`docs/ROADMAP.md`](docs/ROADMAP.md) - Project roadmap and module status
+- **📜 Changelog**: [`docs/CHANGELOG.md`](docs/CHANGELOG.md) - Version history and changes
+
+**Quick Links:**
+- **Environment Variables**: See [`docs/reference/ENV_VARIABLES.md`](docs/reference/ENV_VARIABLES.md) or [`backend/ENV_SETUP.md`](backend/ENV_SETUP.md)
+- **AI Service Contract**: [`docs/reference/AI_MICROSERVICE_CONTRACT.md`](docs/reference/AI_MICROSERVICE_CONTRACT.md)
+- **Documentation Index**: [`docs/README.md`](docs/README.md)
+
 ## 🔧 Development
 
 ### Available Scripts
