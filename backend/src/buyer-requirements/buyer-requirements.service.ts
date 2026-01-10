@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, Like, MoreThan, LessThanOrEqual, IsNull, MoreThanOrEqual } from 'typeorm';
-import { BuyerRequirement, RequirementStatus } from './entities/buyer-requirement.entity';
+import { BuyerRequirement, RequirementStatus, BudgetType } from './entities/buyer-requirement.entity';
 import { PropertyRequirementMatch } from './entities/property-requirement-match.entity';
 import { Property, PropertyStatus } from '../properties/entities/property.entity';
 import { CreateBuyerRequirementDto } from './dto/create-buyer-requirement.dto';
@@ -80,7 +80,7 @@ export class BuyerRequirementsService {
       longitude,
       minBudget: createDto.minBudget,
       maxBudget: createDto.maxBudget,
-      budgetType: createDto.budgetType || 'sale',
+      budgetType: createDto.budgetType || BudgetType.SALE,
       propertyType: createDto.propertyType,
       listingType: createDto.listingType,
       minArea: createDto.minArea,
@@ -378,13 +378,16 @@ export class BuyerRequirementsService {
     }
 
     // Find LIVE properties that match location and listing type
+    const where: FindOptionsWhere<Property> = {
+      status: PropertyStatus.LIVE,
+      city: requirement.city,
+      deletedAt: IsNull(),
+    };
+    if (requirement.listingType) {
+      where.listingType = requirement.listingType;
+    }
     const properties = await this.propertyRepository.find({
-      where: {
-        status: PropertyStatus.LIVE,
-        city: requirement.city,
-        listingType: requirement.listingType,
-        deletedAt: IsNull(),
-      },
+      where,
       relations: ['seller'], // Load seller for notifications
     });
 

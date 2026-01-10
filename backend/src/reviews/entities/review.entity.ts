@@ -9,7 +9,6 @@ import {
   OneToMany,
   JoinColumn,
   Index,
-  Unique,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Property } from '../../properties/entities/property.entity';
@@ -60,9 +59,7 @@ export enum SentimentLabel {
 @Index(['fakeReviewDetected'])
 @Index(['createdAt'])
 @Index(['isVerifiedPurchase'])
-@Unique(['reviewerId', 'revieweeId', 'propertyId'], {
-  where: '"property_id" IS NOT NULL AND "deleted_at" IS NULL',
-})
+// Unique constraint defined in migration (idx_unique_review_per_context)
 export class Review {
   @PrimaryGeneratedColumn('uuid')
   id: string;

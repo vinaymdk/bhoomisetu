@@ -8,7 +8,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Like, In } from 'typeorm';
+import { Repository, FindOptionsWhere, Like, In, IsNull } from 'typeorm';
 import { Property, PropertyStatus } from '../properties/entities/property.entity';
 import { PropertyVerificationNote, UrgencyLevel } from '../properties/entities/property-verification-note.entity';
 import { User } from '../users/entities/user.entity';
@@ -22,9 +22,9 @@ export interface PendingVerificationProperty {
   property: Property;
   seller: {
     id: string;
-    fullName: string | null;
-    primaryPhone: string | null;
-    primaryEmail: string | null;
+    fullName: string | null | undefined;
+    primaryPhone: string | null | undefined;
+    primaryEmail: string | null | undefined;
   };
   verificationNotes?: PropertyVerificationNote[];
 }
@@ -65,7 +65,7 @@ export class CustomerServiceService {
 
     const where: FindOptionsWhere<Property> = {
       status: filterDto.status || PropertyStatus.PENDING_VERIFICATION,
-      deletedAt: null,
+      deletedAt: IsNull(),
     };
 
     // Apply filters

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Between } from 'typeorm';
+import { Repository, FindOptionsWhere, Between, IsNull } from 'typeorm';
 import { Property, PropertyStatus } from '../../properties/entities/property.entity';
 import { AiSearchRequestDto } from '../dto/ai-search-request.dto';
 import { AiSearchResponseDto, SearchResultProperty } from '../dto/ai-search-response.dto';
@@ -40,7 +40,7 @@ export class AiSearchService {
     const filteredProperties = await this.applyHardFilters(request, normalizedLocation);
 
     // Step 3: Rank by relevance, urgency, popularity (if AI service available)
-    let rankedProperties = filteredProperties;
+    let rankedProperties: SearchResultProperty[] = this.defaultRanking(filteredProperties, request.rankBy || 'relevance');
     let extractedFilters = this.extractFiltersFromQuery(request, normalizedLocation);
     let aiRankingUsed = false;
 
@@ -56,12 +56,8 @@ export class AiSearchService {
         rankedProperties = rankingResult.rankedProperties;
         extractedFilters.aiTags = rankingResult.extractedAiTags;
         aiRankingUsed = true;
-      } else {
-        // AI service unavailable or returned empty - use default ranking
-        rankedProperties = this.defaultRanking(filteredProperties, request.rankBy || 'relevance');
       }
-    } else {
-      rankedProperties = this.defaultRanking(filteredProperties, request.rankBy || 'relevance');
+      // If AI service unavailable or returned empty, rankedProperties already has defaultRanking result
     }
 
     // Step 4: Fetch similar properties within ±10% price (if requested)
@@ -138,7 +134,7 @@ export class AiSearchService {
   private async applyHardFilters(request: AiSearchRequestDto, normalizedLocation: any): Promise<Property[]> {
     const where: FindOptionsWhere<Property> = {
       status: PropertyStatus.LIVE,
-      deletedAt: null,
+      deletedAt: IsNull(),
     };
 
     // Listing type
@@ -395,7 +391,7 @@ export class AiSearchService {
     const similar = await this.propertyRepository.find({
       where: {
         status: PropertyStatus.LIVE,
-        deletedAt: null,
+        deletedAt: IsNull(),
         price: Between(priceRange.min, priceRange.max),
       },
       relations: ['images', 'propertyFeatures'],

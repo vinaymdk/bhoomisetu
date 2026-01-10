@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Repository, FindOptionsWhere, Between, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
 import { Property, PropertyStatus } from './entities/property.entity';
 import { PropertyImage } from './entities/property-image.entity';
 import { PropertyFeature } from './entities/property-feature.entity';
@@ -9,7 +9,6 @@ import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
 import { PropertyResponseDto } from './dto/property-response.dto';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
-import { forwardRef, Inject } from '@nestjs/common';
 
 @Injectable()
 export class PropertiesService {
@@ -100,7 +99,7 @@ export class PropertiesService {
   ): Promise<{ properties: PropertyResponseDto[]; total: number; page: number; limit: number }> {
     const where: FindOptionsWhere<Property> = {
       status: filterDto.status || PropertyStatus.LIVE, // Only show live properties by default
-      deletedAt: null,
+      deletedAt: IsNull(),
     };
 
     // Apply filters
@@ -193,7 +192,7 @@ export class PropertiesService {
   }
 
   async findOne(id: string, userId?: string, includeDraft: boolean = false): Promise<Property> {
-    const where: FindOptionsWhere<Property> = { id, deletedAt: null };
+    const where: FindOptionsWhere<Property> = { id, deletedAt: IsNull() };
 
     // If not owner, only show live properties
     if (!includeDraft) {
@@ -228,7 +227,7 @@ export class PropertiesService {
       where: {
         status: PropertyStatus.LIVE,
         isFeatured: true,
-        deletedAt: null,
+        deletedAt: IsNull(),
       },
       relations: ['images', 'propertyFeatures'],
       order: { createdAt: 'DESC' },
@@ -242,7 +241,7 @@ export class PropertiesService {
     const properties = await this.propertyRepository.find({
       where: {
         status: PropertyStatus.LIVE,
-        deletedAt: null,
+        deletedAt: IsNull(),
       },
       relations: ['images', 'propertyFeatures'],
       order: { createdAt: 'DESC' },
@@ -254,7 +253,7 @@ export class PropertiesService {
 
   async update(id: string, userId: string, updateDto: UpdatePropertyDto): Promise<PropertyResponseDto> {
     const property = await this.propertyRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
     });
 
     if (!property) {
@@ -309,7 +308,7 @@ export class PropertiesService {
 
   async submitForVerification(id: string, userId: string): Promise<PropertyResponseDto> {
     const property = await this.propertyRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
     });
 
     if (!property) {
@@ -337,7 +336,7 @@ export class PropertiesService {
 
   async remove(id: string, userId: string): Promise<void> {
     const property = await this.propertyRepository.findOne({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: IsNull() },
     });
 
     if (!property) {
@@ -356,7 +355,7 @@ export class PropertiesService {
   async findMyProperties(userId: string, status?: PropertyStatus): Promise<PropertyResponseDto[]> {
     const where: FindOptionsWhere<Property> = {
       sellerId: userId,
-      deletedAt: null,
+      deletedAt: IsNull(),
     };
 
     if (status) {

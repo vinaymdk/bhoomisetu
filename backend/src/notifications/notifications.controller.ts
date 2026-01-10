@@ -32,7 +32,7 @@ export class NotificationsController {
     @Query('limit') limit?: number,
     @Query('unreadOnly') unreadOnly?: string | boolean,
   ) {
-    const isUnreadOnly = unreadOnly === true || unreadOnly === 'true' || unreadOnly === '1' || unreadOnly === 1;
+    const isUnreadOnly = !!(unreadOnly === true || unreadOnly === 'true' || unreadOnly === '1' || (typeof unreadOnly === 'number' && unreadOnly === 1));
     return this.notificationsService.getUserNotifications(
       currentUser.userId,
       page ? parseInt(page.toString(), 10) : 1,
