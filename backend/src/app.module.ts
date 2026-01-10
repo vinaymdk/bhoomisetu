@@ -1,0 +1,54 @@
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { DatabaseModule } from './database/database.module';
+import { AiModule } from './ai/ai.module';
+import { FirebaseModule } from './firebase/firebase.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { PropertiesModule } from './properties/properties.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { HomeModule } from './home/home.module';
+import { SearchModule } from './search/search.module';
+import { CustomerServiceModule } from './customer-service/customer-service.module';
+import { BuyerRequirementsModule } from './buyer-requirements/buyer-requirements.module';
+import { MediationModule } from './mediation/mediation.module';
+import { AiChatModule } from './ai-chat/ai-chat.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { PaymentsModule } from './payments/payments.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { AdminModule } from './admin/admin.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+
+@Module({
+  imports: [
+    // Database connection
+    DatabaseModule,
+    // Firebase (Global)
+    FirebaseModule,
+    // AI service
+    AiModule,
+    // Core business modules
+    AuthModule,
+    UsersModule,
+    PropertiesModule,
+    SubscriptionsModule,
+    PaymentsModule,
+    HomeModule,
+    SearchModule,
+    CustomerServiceModule,
+    BuyerRequirementsModule,
+    MediationModule,
+    AiChatModule,
+    NotificationsModule,
+    ReviewsModule,
+    AdminModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
+})
+export class AppModule {}
+

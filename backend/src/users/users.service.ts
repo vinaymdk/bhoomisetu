@@ -1,0 +1,129 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
+import { UserRole } from '../auth/entities/user-role.entity';
+import { Role } from '../auth/entities/role.entity';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserRole)
+    private readonly userRoleRepository: Repository<UserRole>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+  ) {}
+
+  async findById(id: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { id },
+      relations: ['userRoles', 'userRoles.role'],
+    });
+  }
+
+  async findByFirebaseUid(firebaseUid: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { firebaseUid },
+      relations: ['userRoles', 'userRoles.role'],
+    });
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { primaryEmail: email },
+      relations: ['userRoles', 'userRoles.role'],
+    });
+  }
+
+  async findByPhone(phone: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { primaryPhone: phone },
+      relations: ['userRoles', 'userRoles.role'],
+    });
+  }
+
+  async getUserRoles(userId: string): Promise<string[]> {
+    const userRoles = await this.userRoleRepository.find({
+      where: { userId },
+      relations: ['role'],
+    });
+    return userRoles.map((ur) => ur.role.code);
+  }
+
+  async findOrCreateByFirebaseUid(payload: {
+    firebaseUid: string;
+    phone?: string | null;
+    email?: string | null;
+    fullName?: string | null;
+  }): Promise<User> {
+    // Try to find by firebaseUid first
+    let user = await this.findByFirebaseUid(payload.firebaseUid);
+
+    // If not found, try by email or phone
+    if (!user && payload.email) {
+      user = await this.findByEmail(payload.email);
+    }
+    if (!user && payload.phone) {
+      user = await this.findByPhone(payload.phone);
+    }
+
+    // Create new user if not found
+    if (!user) {
+      user = this.userRepository.create({
+        firebaseUid: payload.firebaseUid,
+        primaryPhone: payload.phone || null,
+        primaryEmail: payload.email || null,
+        fullName: payload.fullName || null,
+        status: 'pending',
+        fraudRiskScore: 0,
+      });
+      user = await this.userRepository.save(user);
+
+      // Assign default 'buyer' role
+      const buyerRole = await this.roleRepository.findOne({ where: { code: 'buyer' } });
+      if (buyerRole) {
+        const userRole = this.userRoleRepository.create({
+          userId: user.id,
+          roleId: buyerRole.id,
+        });
+        await this.userRoleRepository.save(userRole);
+      }
+    } else {
+      // Update firebaseUid if missing
+      if (!user.firebaseUid) {
+        user.firebaseUid = payload.firebaseUid;
+        await this.userRepository.save(user);
+      }
+    }
+
+    // Load roles
+    user = await this.findById(user.id);
+    return user!;
+  }
+
+  async updateLastLogin(userId: string): Promise<void> {
+    await this.userRepository.update(userId, {
+      lastLoginAt: new Date(),
+    });
+  }
+
+  /**
+   * Find users by role (e.g., customer_service, admin)
+   */
+  async findByRole(roleCode: string): Promise<User[]> {
+    const role = await this.roleRepository.findOne({ where: { code: roleCode } });
+    if (!role) {
+      return [];
+    }
+
+    const userRoles = await this.userRoleRepository.find({
+      where: { roleId: role.id },
+      relations: ['user'],
+    });
+
+    return userRoles.map((ur) => ur.user).filter((user) => user.status === 'active');
+  }
+}
+

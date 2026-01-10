@@ -1,0 +1,88 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  ParseUUIDPipe,
+  Type,
+} from '@nestjs/common';
+import { NotificationsService } from './notifications.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUserData } from '../auth/decorators/current-user.decorator';
+import { NotificationPreference } from './entities/notification-preference.entity';
+
+@Controller('notifications')
+@UseGuards(JwtAuthGuard)
+export class NotificationsController {
+  constructor(private readonly notificationsService: NotificationsService) {}
+
+  /**
+   * Get user notifications
+   * GET /api/notifications
+   */
+  @Get()
+  getUserNotifications(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('unreadOnly') unreadOnly?: string | boolean,
+  ) {
+    const isUnreadOnly = unreadOnly === true || unreadOnly === 'true' || unreadOnly === '1' || unreadOnly === 1;
+    return this.notificationsService.getUserNotifications(
+      currentUser.userId,
+      page ? parseInt(page.toString(), 10) : 1,
+      limit ? parseInt(limit.toString(), 10) : 20,
+      !!isUnreadOnly,
+    );
+  }
+
+  /**
+   * Mark notification as read
+   * PUT /api/notifications/:id/read
+   */
+  @Put(':id/read')
+  markAsRead(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.notificationsService.markAsRead(id, currentUser.userId);
+  }
+
+  /**
+   * Get user notification preferences
+   * GET /api/notifications/preferences
+   */
+  @Get('preferences')
+  getUserPreferences(@CurrentUser() currentUser: CurrentUserData) {
+    return this.notificationsService.getUserPreferences(currentUser.userId);
+  }
+
+  /**
+   * Update user notification preferences
+   * PUT /api/notifications/preferences
+   */
+  @Put('preferences')
+  updateUserPreferences(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Body() updates: Partial<NotificationPreference>,
+  ) {
+    return this.notificationsService.updateUserPreferences(currentUser.userId, updates);
+  }
+
+  /**
+   * Update FCM token for push notifications
+   * POST /api/notifications/fcm-token
+   */
+  @Post('fcm-token')
+  updateFcmToken(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Body() body: { fcmToken: string },
+  ) {
+    return this.notificationsService.updateFcmToken(currentUser.userId, body.fcmToken);
+  }
+}
