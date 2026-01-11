@@ -7,11 +7,13 @@ import { PropertyImage } from './entities/property-image.entity';
 import { PropertyFeature } from './entities/property-feature.entity';
 import { PropertyVerificationNote } from './entities/property-verification-note.entity';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Property, PropertyImage, PropertyFeature, PropertyVerificationNote]),
     forwardRef(() => SubscriptionsModule),
+    StorageModule,
   ],
   controllers: [PropertiesController],
   providers: [PropertiesService],

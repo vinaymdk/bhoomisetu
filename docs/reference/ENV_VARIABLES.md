@@ -85,6 +85,19 @@ GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 - Used for: Location normalization, geocoding in property search
 - If not provided, the app will use basic location parsing (graceful degradation)
 
+### Cloudinary (For Image Storage - Module 4)
+```env
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+```
+
+**Notes:**
+- Used for: Property image uploads and storage
+- If not provided, image upload endpoints will return errors
+- Get credentials from: https://cloudinary.com/
+- Images are stored in the `bhoomisetu/properties` folder by default
+
 ---
 
 ## Payment Gateway Configuration (Optional - Module 10)
@@ -149,6 +162,12 @@ SES_FROM_EMAIL=noreply@bhoomisetu.com
 - `AI_SERVICE_API_KEY` (optional)
 - `AI_SERVICE_REQUIRED` (optional, default: false)
 - `GOOGLE_MAPS_API_KEY` (optional)
+
+### Module 4: Seller Property Listing
+- `CLOUDINARY_CLOUD_NAME` (optional, required for image uploads)
+- `CLOUDINARY_API_KEY` (optional, required for image uploads)
+- `CLOUDINARY_API_SECRET` (optional, required for image uploads)
+- `GOOGLE_MAPS_API_KEY` (optional, for GPS location picker)
 
 ### Module 8: AI Chat Support
 - `AI_SERVICE_URL` (optional)

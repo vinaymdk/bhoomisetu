@@ -8,6 +8,7 @@ This directory contains all documentation organized by category.
 Implementation summaries for each module:
 - `MODULE2_SUMMARY.md` - Landing/Home Module
 - `MODULE3_SUMMARY.md` - AI Powered Property Search
+- `MODULE4_SUMMARY.md` - Seller Property Listing (Image Upload)
 - `MODULE5_SUMMARY.md` - Customer Service Verification
 - `MODULE6_SUMMARY.md` - Buyer Requirement Posting
 - `MODULE7_SUMMARY.md` - Mediation & Negotiation

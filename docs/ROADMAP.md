@@ -91,23 +91,37 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 
 ---
 
-### ⏳ Module 4: Seller Property Listing
+### ✅ Module 4: Seller Property Listing (Backend Complete)
 
-**Status**: ⏳ **PENDING**
+**Status**: ✅ **COMPLETE** (Backend)
 
 **Features:**
-- Sale/Rent selection
-- Property type selection
-- Dynamic fields based on property type
-- Image upload
-- GPS location picker
-- Submit for verification (NOT live immediately)
+- ✅ Sale/Rent selection (from Module 2)
+- ✅ Property type selection (from Module 2)
+- ✅ Dynamic fields based on property type (from Module 2)
+- ✅ Image upload (Cloudinary integration)
+- ⏳ GPS location picker (UI pending - frontend)
+- ✅ Submit for verification (from Module 2)
 
-**Backend Requirements:**
-- Property creation API
-- Image upload/storage (S3/Cloudinary)
-- Property schema with dynamic fields
-- Verification workflow
+**Backend Implementation:**
+- ✅ Property creation API (Module 2)
+- ✅ Image upload/storage (Cloudinary) - **NEW**
+- ✅ Property schema with dynamic fields (Module 2)
+- ✅ Verification workflow (Module 5)
+
+**API Endpoints:**
+- ✅ `POST /api/properties/images/upload` - Upload property images (max 20, 10MB each)
+  - Requires authentication (JWT)
+  - Requires seller/agent role
+  - Returns array of image URLs and metadata
+
+**Configuration:**
+- ✅ Cloudinary credentials required: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+
+**Frontend Requirements (Pending):**
+- ⏳ Image upload UI (camera/gallery, preview, progress)
+- ⏳ GPS location picker (Google Maps integration)
+- ⏳ Enhanced dynamic fields UI (property type-specific forms)
 
 ---
 

@@ -325,12 +325,27 @@ bhoomisetu/
 - Google Maps Geocoding API (optional, with fallback)
 - AI microservice ranking endpoint
 
-### Module 4: Seller Property Listing (Pending)
+### Module 4: Seller Property Listing ✅
 
-**Note**: Property creation is already implemented in Module 2. Module 4 would add:
-- Image upload endpoints (S3/Cloudinary integration)
-- GPS location picker UI
-- Enhanced dynamic fields based on property type
+**Status**: ✅ **COMPLETE** (Backend)
+
+**Backend Implementation:**
+- ✅ Image upload endpoints (Cloudinary integration)
+- ✅ Multi-image upload support (up to 20 images)
+- ✅ Image validation and optimization
+- ⏳ GPS location picker UI (frontend pending)
+- ✅ Enhanced dynamic fields based on property type (from Module 2)
+
+**API Endpoints:**
+- ✅ `POST /api/properties/images/upload` - Upload property images
+  - Requires authentication (JWT) and seller/agent role
+  - Accepts multiple images (max 20, 10MB each)
+  - Returns image URLs for use in property creation
+
+**Configuration:**
+- ✅ Cloudinary credentials required: `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+
+**Note**: Property creation is already implemented in Module 2. Module 4 adds image upload functionality. GPS location picker UI is pending frontend development.
 
 ### Module 6: Buyer Requirement Posting ✅
 
@@ -756,8 +771,8 @@ npm run migration:revert    # Revert last migration
 
 ### 🔄 Current Phase
 - **Phase 5**: Management & Analytics
-- **Status**: ✅ All Core Modules Complete (Modules 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12)
-- **Next Steps**: Module 4 - Seller Property Listing (Backend ready, Module 5 verification complete) OR Frontend Implementation
+- **Status**: ✅ All Core Modules Complete (Modules 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12)
+- **Next Steps**: Frontend Development (Flutter/React) OR Module 12 (Admin Panel) Review
 
 See [ROADMAP.md](./ROADMAP.md) for detailed progress tracking.
 

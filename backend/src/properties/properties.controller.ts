@@ -10,7 +10,11 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
@@ -20,10 +24,14 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
 import { PropertyResponseDto } from './dto/property-response.dto';
+import { StorageService } from '../storage/storage.service';
 
 @Controller('properties')
 export class PropertiesController {
-  constructor(private readonly propertiesService: PropertiesService) {}
+  constructor(
+    private readonly propertiesService: PropertiesService,
+    private readonly storageService: StorageService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -102,5 +110,45 @@ export class PropertiesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @CurrentUser() currentUser: CurrentUserData): Promise<void> {
     return this.propertiesService.remove(id, currentUser.userId);
+  }
+
+  /**
+   * Upload property images
+   * POST /api/properties/images/upload
+   * Accepts multiple image files (max 20)
+   * Returns array of uploaded image URLs and metadata
+   */
+  @Post('images/upload')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('seller', 'agent')
+  @UseInterceptors(FilesInterceptor('images', 20, { limits: { fileSize: 10 * 1024 * 1024 } })) // Max 20 files, 10MB each
+  async uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<{
+    images: Array<{
+      url: string;
+      publicId: string;
+      width?: number;
+      height?: number;
+      format?: string;
+      bytes?: number;
+    }>;
+  }> {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('No files provided');
+    }
+
+    const uploadResults = await this.storageService.uploadImages(files, 'bhoomisetu/properties');
+
+    return {
+      images: uploadResults.map((result) => ({
+        url: result.url,
+        publicId: result.publicId,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+        bytes: result.bytes,
+      })),
+    };
   }
 }

@@ -54,6 +54,13 @@ AI_SERVICE_REQUIRED=false
 GOOGLE_MAPS_API_KEY=your-google-maps-api-key
 
 # ===========================================
+# OPTIONAL - Cloudinary (for Image Storage - Module 4)
+# ===========================================
+CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+CLOUDINARY_API_KEY=your-cloudinary-api-key
+CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+
+# ===========================================
 # OPTIONAL - Payment Gateways (for Payments Module - Module 10)
 # ===========================================
 RAZORPAY_KEY_ID=your-razorpay-key-id
