@@ -18,6 +18,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { ConfigController } from './config/config.controller';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
       useClass: JwtAuthGuard,
     },
   ],
+  controllers: [ConfigController],
 })
 export class AppModule {}
 

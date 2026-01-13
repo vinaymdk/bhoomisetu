@@ -87,6 +87,15 @@ SENDGRID_API_KEY=SG.your-sendgrid-api-key
 SENDGRID_FROM_EMAIL=noreply@bhoomisetu.com
 
 # ===========================================
+# OPTIONAL - Brevo (formerly SendinBlue) SMTP (for Email OTP - Module 1)
+# ===========================================
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=your-brevo-smtp-username
+SMTP_PASS=your-brevo-smtp-password
+MAIL_FROM=noreply@bhoomisetu.com
+
+# ===========================================
 # OPTIONAL - AWS Services (for Notifications Module - Module 9)
 # ===========================================
 AWS_REGION=us-east-1

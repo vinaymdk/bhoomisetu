@@ -7,6 +7,8 @@ import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { AiService } from '../ai/ai.service';
 import { FirebaseService } from '../firebase/firebase.service';
+import { EmailService } from './services/email.service';
+import { SmsService } from './services/sms.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { SocialLoginDto } from './dto/social-login.dto';
@@ -32,6 +34,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly aiService: AiService,
     private readonly firebaseService: FirebaseService,
+    private readonly emailService: EmailService,
+    private readonly smsService: SmsService,
     @InjectRepository(LoginSession)
     private readonly loginSessionRepository: Repository<LoginSession>,
     @InjectRepository(OtpLog)
@@ -70,79 +74,200 @@ export class AuthService {
       throw new ForbiddenException('Too many OTP requests. Please wait before requesting again.');
     }
 
-    // Note: Firebase handles OTP sending on the client side
-    // This endpoint just logs the request and performs fraud checks
-    // Client should use Firebase SDK: firebase.auth().signInWithPhoneNumber() or similar
-    
-    const otpLog = this.otpLogRepository.create({
-      channel: dto.channel,
-      destination: dto.destination,
-      purpose: dto.purpose || 'login',
-      otpHash: crypto.createHash('sha256').update(`${dto.destination}-${Date.now()}`).digest('hex'), // Placeholder hash
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-      fraudRiskScore: fraudScore.riskScore,
-      metadata: {
-        ipAddress,
-        userAgent,
-        fraudReasons: fraudScore.reasons,
-        note: 'Firebase handles OTP delivery on client side',
-      },
-    });
-    await this.otpLogRepository.save(otpLog);
+    if (dto.channel === 'email') {
+      // Generate 6-digit OTP for email
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+      
+      // Store OTP in database
+      const otpLog = this.otpLogRepository.create({
+        channel: 'email',
+        destination: dto.destination,
+        purpose: dto.purpose || 'login',
+        otpHash,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+        fraudRiskScore: fraudScore.riskScore,
+        metadata: {
+          ipAddress,
+          userAgent,
+          fraudReasons: fraudScore.reasons,
+          otpCode, // Store plain OTP for verification (in production, use encryption)
+        },
+      });
+      await this.otpLogRepository.save(otpLog);
 
-    return {
-      success: true,
-      message: dto.channel === 'sms' 
-        ? 'OTP will be sent to your phone via Firebase. Use Firebase SDK on client to receive OTP.'
-        : 'OTP will be sent to your email via Firebase. Use Firebase SDK on client to receive OTP.',
-    };
+      // Send email via Brevo
+      try {
+        await this.emailService.sendOtpEmail(dto.destination, otpCode, dto.purpose || 'login');
+      } catch (error: any) {
+        throw new BadRequestException(`Failed to send email: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        message: 'OTP sent to your email address. Please check your inbox.',
+      };
+    } else {
+      // Generate 6-digit OTP for SMS (same pattern as email)
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+      
+      // Store OTP in database
+      const otpLog = this.otpLogRepository.create({
+        channel: 'sms',
+        destination: dto.destination,
+        purpose: dto.purpose || 'login',
+        otpHash,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+        fraudRiskScore: fraudScore.riskScore,
+        metadata: {
+          ipAddress,
+          userAgent,
+          fraudReasons: fraudScore.reasons,
+          otpCode, // Store plain OTP for verification (in production, use encryption)
+        },
+      });
+      await this.otpLogRepository.save(otpLog);
+
+      // Send SMS via SMS service
+      try {
+        await this.smsService.sendOtpSms(dto.destination, otpCode, dto.purpose || 'login');
+      } catch (error: any) {
+        throw new BadRequestException(`Failed to send SMS: ${error.message}`);
+      }
+
+      return {
+        success: true,
+        message: 'OTP sent to your phone number. Please check your SMS.',
+      };
+    }
   }
 
   async verifyOtp(dto: VerifyOtpDto, ipAddress?: string, userAgent?: string, deviceId?: string): Promise<AuthResult> {
-    // Validate Firebase ID token (client verifies OTP and gets ID token)
-    if (!dto.idToken) {
-      throw new BadRequestException('ID token is required. Client must verify OTP using Firebase SDK first.');
-    }
+    let user: User;
+    let email: string | undefined;
+    let phone: string | undefined;
 
-    let firebaseUser;
-    try {
-      // Verify Firebase ID token
-      firebaseUser = await this.firebaseService.verifyIdToken(dto.idToken);
-    } catch (error: any) {
-      throw new UnauthorizedException(`Invalid Firebase token: ${error.message}`);
-    }
+    if (dto.channel === 'email' && dto.otp) {
+      // Email OTP verification (via Brevo)
+      if (!dto.destination) {
+        throw new BadRequestException('Email destination is required for email OTP verification');
+      }
 
-    // Extract phone or email from Firebase user
-    const phone = dto.channel === 'sms' ? firebaseUser.phoneNumber : undefined;
-    const email = dto.channel === 'email' ? firebaseUser.email : undefined;
+      // Find OTP log
+      const otpLog = await this.otpLogRepository.findOne({
+        where: {
+          destination: dto.destination,
+          channel: 'email',
+          isUsed: false,
+          expiresAt: MoreThan(new Date()),
+        },
+        order: { createdAt: 'DESC' },
+      });
 
-    if (!phone && !email) {
-      throw new BadRequestException('Phone number or email not found in Firebase token');
-    }
+      if (!otpLog) {
+        throw new BadRequestException('Invalid or expired OTP. Please request a new code.');
+      }
 
-    // Find or create user
-    const user = await this.usersService.findOrCreateByFirebaseUid({
-      firebaseUid: firebaseUser.uid,
-      phone: phone || null,
-      email: email || null,
-      fullName: firebaseUser.displayName || null,
-    });
+      // Verify OTP
+      const otpHash = crypto.createHash('sha256').update(dto.otp).digest('hex');
+      const storedOtpCode = otpLog.metadata?.otpCode;
+      
+      // Compare OTP (use stored plain OTP for verification)
+      if (storedOtpCode !== dto.otp) {
+        otpLog.attemptsCount += 1;
+        await this.otpLogRepository.save(otpLog);
+        
+        if (otpLog.attemptsCount >= otpLog.maxAttempts) {
+          throw new ForbiddenException('Too many failed attempts. Please request a new OTP.');
+        }
+        
+        throw new BadRequestException('Invalid OTP code. Please try again.');
+      }
 
-    // Update OTP log as verified
-    const otpLog = await this.otpLogRepository.findOne({
-      where: {
-        destination: phone || email || '',
-        channel: dto.channel,
-        isUsed: false,
-        expiresAt: MoreThan(new Date()),
-      },
-      order: { createdAt: 'DESC' },
-    });
-
-    if (otpLog) {
+      // Mark OTP as used
       otpLog.isUsed = true;
       otpLog.verifiedAt = new Date();
       await this.otpLogRepository.save(otpLog);
+
+      email = dto.destination;
+      
+      // Find or create user by email
+      user = await this.usersService.findOrCreateByEmail({
+        email,
+        fullName: null,
+      });
+    } else if (dto.channel === 'sms' && dto.otp) {
+      // SMS OTP verification (via backend SMS service)
+      if (!dto.destination) {
+        throw new BadRequestException('Phone destination is required for SMS OTP verification');
+      }
+
+      // Find OTP log
+      const otpLog = await this.otpLogRepository.findOne({
+        where: {
+          destination: dto.destination,
+          channel: 'sms',
+          isUsed: false,
+          expiresAt: MoreThan(new Date()),
+        },
+        order: { createdAt: 'DESC' },
+      });
+
+      if (!otpLog) {
+        throw new BadRequestException('Invalid or expired OTP. Please request a new code.');
+      }
+
+      // Verify OTP
+      const storedOtpCode = otpLog.metadata?.otpCode;
+      
+      // Compare OTP (use stored plain OTP for verification)
+      if (storedOtpCode !== dto.otp) {
+        otpLog.attemptsCount += 1;
+        await this.otpLogRepository.save(otpLog);
+        
+        if (otpLog.attemptsCount >= otpLog.maxAttempts) {
+          throw new ForbiddenException('Too many failed attempts. Please request a new OTP.');
+        }
+        
+        throw new BadRequestException('Invalid OTP code. Please try again.');
+      }
+
+      // Mark OTP as used
+      otpLog.isUsed = true;
+      otpLog.verifiedAt = new Date();
+      await this.otpLogRepository.save(otpLog);
+
+      phone = dto.destination;
+      
+      // Find or create user by phone
+      user = await this.usersService.findOrCreateByPhone({
+        phone,
+        fullName: null,
+      });
+    } else if (dto.channel === 'sms' && dto.idToken) {
+      // Phone OTP verification (via Firebase - for backward compatibility with social login)
+      let firebaseUser;
+      try {
+        firebaseUser = await this.firebaseService.verifyIdToken(dto.idToken);
+      } catch (error: any) {
+        throw new UnauthorizedException(`Invalid Firebase token: ${error.message}`);
+      }
+
+      phone = firebaseUser.phoneNumber;
+      if (!phone) {
+        throw new BadRequestException('Phone number not found in Firebase token');
+      }
+
+      // Find or create user
+      user = await this.usersService.findOrCreateByFirebaseUid({
+        firebaseUid: firebaseUser.uid,
+        phone: phone,
+        email: null,
+        fullName: firebaseUser.displayName || null,
+      });
+    } else {
+      throw new BadRequestException('Invalid verification method. Provide otp+destination for SMS/email or idToken for social login.');
     }
 
     // AI Duplicate Detection: Check for duplicate accounts

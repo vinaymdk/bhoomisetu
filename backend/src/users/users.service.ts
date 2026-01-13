@@ -103,6 +103,72 @@ export class UsersService {
     return user!;
   }
 
+  async findOrCreateByEmail(payload: {
+    email: string;
+    fullName?: string | null;
+  }): Promise<User> {
+    // Try to find by email
+    let user = await this.findByEmail(payload.email);
+
+    // Create new user if not found
+    if (!user) {
+      user = this.userRepository.create({
+        primaryEmail: payload.email,
+        fullName: payload.fullName || null,
+        status: 'pending',
+        fraudRiskScore: 0,
+      });
+      user = await this.userRepository.save(user);
+
+      // Assign default 'buyer' role
+      const buyerRole = await this.roleRepository.findOne({ where: { code: 'buyer' } });
+      if (buyerRole) {
+        const userRole = this.userRoleRepository.create({
+          userId: user.id,
+          roleId: buyerRole.id,
+        });
+        await this.userRoleRepository.save(userRole);
+      }
+    }
+
+    // Load roles
+    user = await this.findById(user.id);
+    return user!;
+  }
+
+  async findOrCreateByPhone(payload: {
+    phone: string;
+    fullName?: string | null;
+  }): Promise<User> {
+    // Try to find by phone
+    let user = await this.findByPhone(payload.phone);
+
+    // Create new user if not found
+    if (!user) {
+      user = this.userRepository.create({
+        primaryPhone: payload.phone,
+        fullName: payload.fullName || null,
+        status: 'pending',
+        fraudRiskScore: 0,
+      });
+      user = await this.userRepository.save(user);
+
+      // Assign default 'buyer' role
+      const buyerRole = await this.roleRepository.findOne({ where: { code: 'buyer' } });
+      if (buyerRole) {
+        const userRole = this.userRoleRepository.create({
+          userId: user.id,
+          roleId: buyerRole.id,
+        });
+        await this.userRoleRepository.save(userRole);
+      }
+    }
+
+    // Load roles
+    user = await this.findById(user.id);
+    return user!;
+  }
+
   async updateLastLogin(userId: string): Promise<void> {
     await this.userRepository.update(userId, {
       lastLoginAt: new Date(),

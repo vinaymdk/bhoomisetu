@@ -4,6 +4,8 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { EmailService } from './services/email.service';
+import { SmsService } from './services/sms.service';
 import { UsersModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 import { FirebaseModule } from '../firebase/firebase.module';
@@ -25,7 +27,7 @@ import { OtpLog } from './entities/otp-log.entity';
       },
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, EmailService, SmsService, JwtStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })
