@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.8:3000/api'; // HMD Office
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.108:3000/api'; // Home  
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

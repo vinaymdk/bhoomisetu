@@ -471,12 +471,16 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is required');
+    }
+
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
       const user = await this.usersService.findById(payload.sub);
       
       if (!user || user.status !== 'active') {
-        throw new Error('User not found or inactive');
+        throw new UnauthorizedException('User not found or inactive');
       }
 
       // Verify refresh token exists in login_sessions and is not revoked
@@ -489,8 +493,12 @@ export class AuthService {
         },
       });
 
-      if (!session || session.expiresAt < new Date()) {
-        throw new Error('Invalid or expired refresh token');
+      if (!session) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      if (session.expiresAt < new Date()) {
+        throw new UnauthorizedException('Refresh token has expired');
       }
 
       // Load real roles from user_roles table
@@ -511,7 +519,16 @@ export class AuthService {
         session.userAgent || undefined,
       );
     } catch (error) {
-      throw new Error('Invalid refresh token');
+      // If it's already an HTTP exception, rethrow it
+      if (error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        throw error;
+      }
+      // JWT verification errors
+      if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+      // Other errors
+      throw new UnauthorizedException('Invalid refresh token');
     }
   }
 }

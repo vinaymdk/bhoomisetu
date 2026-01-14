@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
+import 'screens/home/home_screen.dart';
 import 'config/firebase_config.dart';
 import 'config/api_config.dart';
+import 'config/api_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize API config
   await ApiConfig.initialize();
+  
+  // Initialize API client with interceptors
+  ApiClient().initialize();
   
   // Initialize Firebase (for social login - optional, errors handled internally)
   await FirebaseConfig.initialize();
@@ -44,10 +49,7 @@ class BhoomisetuApp extends StatelessWidget {
             }
             
             if (authProvider.isAuthenticated) {
-              // TODO: Navigate to home screen
-              return const Scaffold(
-                body: Center(child: Text('Home Screen (Coming Soon)')),
-              );
+              return const HomeScreen();
             }
             
             return const LoginScreen();
@@ -55,9 +57,7 @@ class BhoomisetuApp extends StatelessWidget {
         ),
         routes: {
           '/login': (context) => const LoginScreen(),
-          '/home': (context) => const Scaffold(
-            body: Center(child: Text('Home Screen (Coming Soon)')),
-          ),
+          '/home': (context) => const HomeScreen(),
         },
       ),
     );

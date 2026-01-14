@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "16495143806",
+    "project_id": "bhoomisetu-48706",
+    "storage_bucket": "bhoomisetu-48706.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:16495143806:android:8119a493199d4ca998612f",
+        "android_client_info": {
+          "package_name": "com.bhoomisetu.bhoomisetu_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "16495143806-2d11jb9mshp0bitmgklbnfce0pu177bo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGBygeuZQ0iZJRDsJLY3Ia3MhUeUsyLp4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "16495143806-2d11jb9mshp0bitmgklbnfce0pu177bo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -17,13 +17,15 @@ class FirebaseConfig {
     try {
       // Use ApiConfig.baseUrl to get the correct base URL (handles Android emulator)
       final configUrl = '${ApiConfig.baseUrl}/config/firebase';
-      final response = await http.get(
-        Uri.parse(configUrl),
-      ).timeout(const Duration(seconds: 5));
+      final response = await http
+          .get(
+            Uri.parse(configUrl),
+          )
+          .timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
         final config = json.decode(response.body) as Map<String, dynamic>;
-        
+
         _options = FirebaseOptions(
           apiKey: config['apiKey'] as String,
           appId: config['appId'] as String,
@@ -36,7 +38,8 @@ class FirebaseConfig {
         _initialized = true;
         return _options!;
       } else {
-        throw Exception('Failed to fetch Firebase config: ${response.statusCode}');
+        throw Exception(
+            'Failed to fetch Firebase config: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Failed to fetch Firebase config from backend: $e');
@@ -61,6 +64,6 @@ class FirebaseConfig {
       }
     }
   }
-  
+
   static bool get isInitialized => _initialized && Firebase.apps.isNotEmpty;
 }

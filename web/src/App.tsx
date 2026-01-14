@@ -4,6 +4,8 @@ import { ProtectedRoute } from './components/routes/ProtectedRoute';
 import { LoginPage } from './components/auth/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
+import { PropertiesPage } from './pages/PropertiesPage';
+import { SearchPage } from './pages/SearchPage';
 
 function App() {
   return (
@@ -11,6 +13,8 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/properties" element={<PropertiesPage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route
           path="/dashboard"
           element={

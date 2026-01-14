@@ -1,54 +1,88 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { homeService } from '../services/home.service';
+import type { HomeData, DashboardData } from '../types/property';
+import { PremiumBanner } from '../components/home/PremiumBanner';
+import { AISearchBar } from '../components/home/AISearchBar';
+import { NewPropertiesSection } from '../components/home/NewPropertiesSection';
+import { FeaturedPropertiesSection } from '../components/home/FeaturedPropertiesSection';
+import { TestimonialsSection } from '../components/home/TestimonialsSection';
+import { AIChatButton } from '../components/home/AIChatButton';
 import './HomePage.css';
 
 export const HomePage = () => {
+  const { isAuthenticated } = useAuth();
+  const [homeData, setHomeData] = useState<HomeData | DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchHomeData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = isAuthenticated
+          ? await homeService.getDashboardData()
+          : await homeService.getHomeData();
+        setHomeData(data);
+      } catch (err: any) {
+        console.error('Error fetching home data:', err);
+        setError(err.message || 'Failed to load home data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeData();
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return (
+      <div className="home-page">
+        <div className="home-loading">
+          <div className="home-loading-spinner"></div>
+          <p>Loading properties...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="home-page">
+        <div className="home-error">
+          <p>⚠️ {error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="home-page">
-      <section className="home-hero">
-        <div className="home-hero-content">
-          <h1 className="home-hero-title">Find Your Dream Property</h1>
-          <p className="home-hero-subtitle">
-            AI-powered real estate platform connecting buyers and sellers
-          </p>
-          <div className="home-hero-actions">
-            <Link to="/search" className="home-hero-button home-hero-button-primary">
-              Search Properties
-            </Link>
-            <Link to="/login" className="home-hero-button home-hero-button-secondary">
-              List Your Property
-            </Link>
-          </div>
-        </div>
+      {/* Premium Subscription Banner (only for authenticated users) */}
+      {isAuthenticated && <PremiumBanner />}
+
+      {/* AI Search Bar */}
+      <section className="home-search-section">
+        <AISearchBar />
       </section>
 
-      <section className="home-features">
-        <div className="home-features-container">
-          <h2 className="home-section-title">Why Choose Bhoomisetu?</h2>
-          <div className="home-features-grid">
-            <div className="home-feature-card">
-              <div className="home-feature-icon">🤖</div>
-              <h3 className="home-feature-title">AI-Powered Search</h3>
-              <p className="home-feature-description">
-                Find properties using natural language queries with AI assistance
-              </p>
-            </div>
-            <div className="home-feature-card">
-              <div className="home-feature-icon">🔒</div>
-              <h3 className="home-feature-title">Verified Listings</h3>
-              <p className="home-feature-description">
-                All properties are verified by our customer service team
-              </p>
-            </div>
-            <div className="home-feature-card">
-              <div className="home-feature-icon">💬</div>
-              <h3 className="home-feature-title">24/7 Support</h3>
-              <p className="home-feature-description">
-                Get help anytime with our AI chat support
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Featured Properties Section */}
+      {homeData?.featuredProperties && homeData.featuredProperties.length > 0 && (
+        <FeaturedPropertiesSection properties={homeData.featuredProperties} />
+      )}
+
+      {/* New Properties Section */}
+      {homeData?.newProperties && homeData.newProperties.length > 0 && (
+        <NewPropertiesSection properties={homeData.newProperties} />
+      )}
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
+      {/* AI Chat Button (Floating) */}
+      <AIChatButton />
     </div>
   );
 };

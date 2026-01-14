@@ -1,0 +1,99 @@
+.ai-search-bar-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacing-lg, 24px) var(--spacing-md, 16px);
+}
+
+.ai-search-bar {
+  width: 100%;
+}
+
+.ai-search-bar-input-container {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 2px solid var(--color-gray-300, #ddd);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--spacing-sm, 8px);
+  gap: var(--spacing-sm, 8px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ai-search-bar-input-container:focus-within {
+  border-color: var(--color-primary, #2196F3);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.ai-search-bar-icon {
+  font-size: var(--font-size-xl, 20px);
+  padding: 0 var(--spacing-sm, 8px);
+  flex-shrink: 0;
+}
+
+.ai-search-bar-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: var(--font-size-base, 16px);
+  padding: var(--spacing-sm, 8px);
+  color: var(--color-text-primary, #1a1a1a);
+  background: transparent;
+}
+
+.ai-search-bar-input::placeholder {
+  color: var(--color-text-secondary, #999);
+}
+
+.ai-search-bar-button {
+  background: var(--color-primary, #2196F3);
+  color: white;
+  border: none;
+  padding: var(--spacing-sm, 8px) var(--spacing-lg, 24px);
+  border-radius: var(--radius-md, 8px);
+  font-size: var(--font-size-base, 16px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ai-search-bar-button:hover {
+  background: var(--color-primary-dark, #1976D2);
+  transform: translateY(-1px);
+}
+
+.ai-search-bar-button:active {
+  transform: translateY(0);
+}
+
+.ai-search-bar-hint {
+  margin: var(--spacing-sm, 8px) 0 0;
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-secondary, #666);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .ai-search-bar-input-container {
+    flex-wrap: wrap;
+  }
+  
+  .ai-search-bar-input {
+    width: 100%;
+    order: 2;
+  }
+  
+  .ai-search-bar-icon {
+    order: 1;
+  }
+  
+  .ai-search-bar-button {
+    width: 100%;
+    order: 3;
+  }
+  
+  .ai-search-bar-input::placeholder {
+    font-size: var(--font-size-sm, 14px);
+  }
+}
