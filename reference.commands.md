@@ -44,8 +44,13 @@ sudo ufw allow 443/tcp   # HTTPS
 sudo ufw allow 3000/tcp  # Backend API
 
 <!-- Git Restore Commands -->
-git restore --staged backend/.env
-git restore --staged mobile/lib/config.dart
+git restore --staged backend/.env <!-- Specific file restore -->
+
+git reset --soft HEAD~1 <!-- Latest commited branch restore-->
+
+git fetch origin dev <!-- New branch fetch from remote repo-->
+git checkout -b dev origin/dev <!-- New branch checkout from remote repo>
+
 
 
 
