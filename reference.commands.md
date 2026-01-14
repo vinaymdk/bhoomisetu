@@ -43,6 +43,10 @@ sudo ufw allow 80/tcp    # HTTP
 sudo ufw allow 443/tcp   # HTTPS
 sudo ufw allow 3000/tcp  # Backend API
 
+<!-- Git Restore Commands -->
+git restore --staged backend/.env
+git restore --staged mobile/lib/config.dart
+
 
 
 cp /home/kaivalya/vinay/Flutter/bhoomisetu/db/migrations/20260109_initial_auth_schema.sql /tmp/

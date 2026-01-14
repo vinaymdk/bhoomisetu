@@ -1,0 +1,94 @@
+# ===========================================
+# BHOOMISETU BACKEND - COMPLETE ENVIRONMENT VARIABLES LIST
+# ===========================================
+# Copy these key=value pairs to your backend/.env file
+# Required variables must be set, optional variables have defaults
+
+# ===========================================
+# REQUIRED - Server Configuration
+# ===========================================
+PORT=3000
+NODE_ENV=development
+
+# ===========================================
+# REQUIRED - Database Configuration (PostgreSQL)
+# ===========================================
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your-database-password-here
+DB_NAME=bhoomisetu_db
+
+# ===========================================
+# REQUIRED - JWT Authentication
+# ===========================================
+JWT_SECRET=your-super-secret-jwt-key-change-in-production-min-32-chars-required
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# ===========================================
+# REQUIRED - Firebase Configuration (for OTP/Push Notifications)
+# ===========================================
+# Option 1: Path to Firebase Admin SDK credentials JSON file (Recommended for Development)
+FIREBASE_CREDENTIALS_PATH=./bhoomisetu-48706-firebase-adminsdk-fbsvc-6e896e4e57.json
+
+# Option 2: Firebase credentials as environment variables (for Production/Containers)
+# Uncomment and set these if not using FIREBASE_CREDENTIALS_PATH:
+# FIREBASE_PROJECT_ID=your-firebase-project-id
+# FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+# FIREBASE_CLIENT_EMAIL=your-service-account@your-project.iam.gserviceaccount.com
+
+# ===========================================
+# OPTIONAL - AI Microservice Configuration
+# ===========================================
+AI_SERVICE_URL=http://localhost:8000
+AI_SERVICE_API_KEY=your-ai-service-api-key
+AI_SERVICE_REQUIRED=false
+
+# ===========================================
+# OPTIONAL - Google Maps API (for Geocoding/Location Services)
+# ===========================================
+GOOGLE_MAPS_API_KEY=your-google-maps-api-key
+
+# ===========================================
+# OPTIONAL - Payment Gateway - Razorpay (for Payments Module - Module 10)
+# ===========================================
+RAZORPAY_KEY_ID=your-razorpay-key-id
+RAZORPAY_KEY_SECRET=your-razorpay-key-secret
+
+# ===========================================
+# OPTIONAL - Payment Gateway - Stripe (for Payments Module - Module 10)
+# ===========================================
+STRIPE_SECRET_KEY=sk_test_your-stripe-secret-key
+STRIPE_WEBHOOK_SECRET=whsec_your-stripe-webhook-secret
+
+# ===========================================
+# OPTIONAL - SMS Provider - Twilio (for Notifications Module - Module 9)
+# ===========================================
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_PHONE_NUMBER=+1234567890
+
+# ===========================================
+# OPTIONAL - Email Provider - SendGrid (for Notifications Module - Module 9)
+# ===========================================
+SENDGRID_API_KEY=SG.your-sendgrid-api-key
+SENDGRID_FROM_EMAIL=noreply@bhoomisetu.com
+
+# ===========================================
+# OPTIONAL - AWS Services (for Notifications Module - Module 9 - SMS/Email)
+# ===========================================
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-aws-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+SES_FROM_EMAIL=noreply@bhoomisetu.com
+
+# ===========================================
+# NOTES:
+# ===========================================
+# 1. Never commit .env file to version control (already in .gitignore)
+# 2. For production, use environment variables or secure secret management
+# 3. AI_SERVICE_REQUIRED=false means the app will work without AI service (graceful degradation)
+# 4. Payment gateways are optional - payments module will work in test mode without them
+# 5. SMS/Email providers are optional - notifications will use Firebase Push by default
+# 6. Google Maps API is optional - geocoding will use basic location parsing without it
