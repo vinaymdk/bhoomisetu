@@ -33,12 +33,8 @@ export const LoginPage = () => {
     }
   }, [searchParams]);
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
+  // Note: Redirect is now handled by PublicRoute component
+  // This effect is kept for backward compatibility but PublicRoute handles it
 
   // Resend cooldown timer
   useEffect(() => {

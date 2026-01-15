@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/search/search_screen.dart';
 import 'config/firebase_config.dart';
 import 'config/api_config.dart';
 import 'config/api_client.dart';
+import 'utils/connectivity_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,6 +20,9 @@ void main() async {
   
   // Initialize Firebase (for social login - optional, errors handled internally)
   await FirebaseConfig.initialize();
+  
+  // Initialize connectivity service for offline detection
+  await ConnectivityService().initialize();
   
   runApp(const BhoomisetuApp());
 }
@@ -58,6 +63,7 @@ class BhoomisetuApp extends StatelessWidget {
         routes: {
           '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
+          '/search': (context) => const SearchScreen(),
         },
       ),
     );

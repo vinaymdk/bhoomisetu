@@ -7,6 +7,7 @@ import '../../widgets/premium_banner.dart';
 import '../../widgets/ai_search_bar.dart';
 import '../../widgets/property_card.dart';
 import '../../widgets/bottom_navigation.dart';
+import '../search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -78,9 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
         // Already on home
         break;
       case BottomNavItem.search:
-        // TODO: Navigate to search screen
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Search screen coming soon')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SearchScreen()),
         );
         break;
       case BottomNavItem.saved:

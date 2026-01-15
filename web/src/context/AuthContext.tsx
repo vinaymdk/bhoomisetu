@@ -26,18 +26,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkAuth = async () => {
     const token = localStorage.getItem('accessToken');
-    if (!token) {
+    const refreshToken = localStorage.getItem('refreshToken');
+    
+    if (!token && !refreshToken) {
       setIsLoading(false);
       return;
     }
 
     try {
+      // Try to get current user with existing token
       const data = await authService.getCurrentUser();
       setUser(data.user);
       setRoles(data.roles);
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      authService.logout();
+    } catch (error: any) {
+      // If token expired, try to refresh
+      if (error.response?.status === 401 && refreshToken) {
+        try {
+          const tokens = await authService.refreshTokens(refreshToken);
+          localStorage.setItem('accessToken', tokens.accessToken);
+          if (tokens.refreshToken) {
+            localStorage.setItem('refreshToken', tokens.refreshToken);
+          }
+          
+          // Retry getting user with new token
+          const data = await authService.getCurrentUser();
+          setUser(data.user);
+          setRoles(data.roles);
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          authService.logout();
+          setUser(null);
+          setRoles([]);
+        }
+      } else {
+        console.error('Auth check failed:', error);
+        authService.logout();
+        setUser(null);
+        setRoles([]);
+      }
     } finally {
       setIsLoading(false);
     }
