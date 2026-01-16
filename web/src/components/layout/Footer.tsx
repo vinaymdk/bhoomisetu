@@ -9,7 +9,7 @@ export const Footer = () => {
       <div className="footer-container">
         <div className="footer-content">
           <div className="footer-section">
-            <h3 className="footer-title">Bhoomisetu</h3>
+            <h3 className="footer-title">BhoomiSetu</h3>
             <p className="footer-description">
               Real Estate Mediation Platform connecting buyers and sellers with AI-powered assistance.
             </p>
@@ -47,7 +47,7 @@ export const Footer = () => {
 
         <div className="footer-bottom">
           <p className="footer-copyright">
-            © {currentYear} Bhoomisetu. All rights reserved.
+            © {currentYear} BhoomiSetu. All rights reserved.
           </p>
         </div>
       </div>

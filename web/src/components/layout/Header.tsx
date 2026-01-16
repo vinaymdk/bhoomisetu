@@ -4,8 +4,9 @@ import logo from '../../assets/logo-and-fav/bhoomisetu-logo.png';
 import './Header.css';
 
 export const Header = () => {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, roles } = useAuth();
   const navigate = useNavigate();
+  const canList = roles.includes('seller') || roles.includes('agent');
 
   const handleLogout = () => {
     logout();
@@ -16,8 +17,8 @@ export const Header = () => {
     <header className="header">
       <div className="header-container">
         <Link to="/" className="header-logo">
-          <img src={logo} alt="Bhoomisetu" className="header-logo-img" />
-          <span className="header-logo-text">Bhoomisetu</span>
+          <img src={logo} alt="BhoomiSetu" className="header-logo-img" />
+          <span className="header-logo-text">BhoomiSetu</span>
         </Link>
 
         <nav className="header-nav">
@@ -32,6 +33,16 @@ export const Header = () => {
               <Link to="/search" className="header-nav-link">
                 Search
               </Link>
+              {canList && (
+                <>
+                  <Link to="/my-listings" className="header-nav-link">
+                    My Listings
+                  </Link>
+                  <Link to="/list-property" className="header-nav-link header-nav-link-primary">
+                    List Property
+                  </Link>
+                </>
+              )}
               <div className="header-user">
                 <span className="header-user-name">{user?.fullName}</span>
                 <button onClick={handleLogout} className="header-logout-btn">

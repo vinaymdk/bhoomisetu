@@ -53,6 +53,7 @@ export class ConfigController {
       // Home IP: 192.168.0.108
       apiBaseUrl: process.env.API_BASE_URL || 'http://192.168.0.108:3000/api',
       environment: process.env.NODE_ENV || 'development',
+      mapboxEnabled: !!process.env.MAPBOX_API_KEY,
     };
   }
 }

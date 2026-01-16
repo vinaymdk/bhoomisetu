@@ -127,8 +127,8 @@ class SearchMetadata {
   factory SearchMetadata.fromJson(Map<String, dynamic> json) {
     return SearchMetadata(
       processingTimeMs: json['processingTimeMs'] is int ? json['processingTimeMs'] as int : (json['processingTimeMs'] as num).toInt(),
-      aiRankingUsed: json['aiRankingUsed'] as bool,
-      locationNormalized: json['locationNormalized'] as bool,
+      aiRankingUsed: json['aiRankingUsed'] as bool? ?? false,
+      locationNormalized: json['locationNormalized'] as bool? ?? false,
       similarPropertiesCount: json['similarPropertiesCount'] != null 
           ? (json['similarPropertiesCount'] is int ? json['similarPropertiesCount'] as int : (json['similarPropertiesCount'] as num).toInt())
           : null,

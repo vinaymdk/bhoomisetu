@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 enum BottomNavItem {
   home,
   search,
+  list,
   saved,
   profile,
 }
@@ -48,6 +49,12 @@ class BottomNavigation extends StatelessWidget {
                 icon: Icons.search,
                 label: 'Search',
                 item: BottomNavItem.search,
+              ),
+              _buildNavItem(
+                context,
+                icon: Icons.add_business,
+                label: 'List',
+                item: BottomNavItem.list,
               ),
               _buildNavItem(
                 context,

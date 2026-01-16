@@ -30,6 +30,11 @@
 /* Search Bar */
 .search-page-search-bar {
   margin-bottom: var(--spacing-xl, 32px);
+  position: sticky;
+  top: 88px;
+  z-index: 5;
+  background: var(--color-bg-primary, #f5f5f5);
+  padding: 8px 0;
 }
 
 .search-input-container {

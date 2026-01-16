@@ -8,6 +8,7 @@ import '../../widgets/ai_search_bar.dart';
 import '../../widgets/property_card.dart';
 import '../../widgets/bottom_navigation.dart';
 import '../search/search_screen.dart';
+import '../properties/my_listings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,19 +44,19 @@ class _HomeScreenState extends State<HomeScreen> {
         // Get dashboard data for authenticated users
         // Token refresh is handled automatically by the API client interceptor
         try {
-          _dashboardData = await _homeService.getDashboardData();
+          _dashboardData = await _homeService.getDashboardData().timeout(const Duration(seconds: 15));
         } catch (e) {
           // If we get a 401 after refresh attempt, logout and fetch public data
           if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
             await authProvider.logout();
-            _homeData = await _homeService.getHomeData();
+            _homeData = await _homeService.getHomeData().timeout(const Duration(seconds: 15));
           } else {
             rethrow;
           }
         }
       } else {
         // Get public home data for non-authenticated users
-        _homeData = await _homeService.getHomeData();
+        _homeData = await _homeService.getHomeData().timeout(const Duration(seconds: 15));
       }
     } catch (e) {
       setState(() {
@@ -82,6 +83,21 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const SearchScreen()),
+        );
+        break;
+      case BottomNavItem.list:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canAccess = roles.contains('seller') || roles.contains('agent');
+        if (!canAccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Seller/Agent role required to list properties')),
+          );
+          return;
+        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const MyListingsScreen()),
         );
         break;
       case BottomNavItem.saved:
@@ -117,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bhoomisetu'),
+        title: const Text('BhoomiSetu'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),

@@ -328,7 +328,7 @@ export const LoginPage = () => {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-title">Welcome to Bhoomisetu</h1>
+        <h1 className="auth-title">Welcome to BhoomiSetu</h1>
         <p className="auth-subtitle">{purpose === 'login' ? 'Sign in to continue' : 'Create your account'}</p>
 
         {/* reCAPTCHA container (hidden) */}

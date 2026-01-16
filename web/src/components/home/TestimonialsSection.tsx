@@ -15,7 +15,7 @@ const testimonials: Testimonial[] = [
     name: 'Rajesh Kumar',
     role: 'Property Buyer',
     rating: 5,
-    text: 'Found my dream home through Bhoomisetu. The AI search made it so easy to find exactly what I was looking for. The customer service team was incredibly helpful throughout the process.',
+    text: 'Found my dream home through BhoomiSetu. The AI search made it so easy to find exactly what I was looking for. The customer service team was incredibly helpful throughout the process.',
   },
   {
     id: '2',

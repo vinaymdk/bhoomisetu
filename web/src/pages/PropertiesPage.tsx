@@ -1,9 +1,37 @@
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { PropertyCard } from '../components/property/PropertyCard';
+import { propertiesService } from '../services/properties.service';
+import type { Property } from '../types/property';
 import './PropertiesPage.css';
 
 export const PropertiesPage = () => {
   const [searchParams] = useSearchParams();
   const featured = searchParams.get('featured') === 'true';
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [items, setItems] = useState<Property[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        if (featured) {
+          const resp = await propertiesService.getAllProperties({ isFeatured: true, limit: 20 });
+          setItems(resp.properties || []);
+        } else {
+          const resp = await propertiesService.getAllProperties({ limit: 20 });
+          setItems(resp.properties || []);
+        }
+      } catch (e: any) {
+        setError(e.response?.data?.message || 'Failed to load properties.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    void load();
+  }, [featured]);
 
   return (
     <div className="properties-page">
@@ -18,21 +46,22 @@ export const PropertiesPage = () => {
         </div>
         
         <div className="properties-page-content">
-          <div className="properties-page-coming-soon">
-            <div className="coming-soon-icon">🏗️</div>
-            <h2>Properties Search Coming Soon</h2>
-            <p>We're building an advanced property search and filtering system.</p>
-            <p>This feature will be available in Module 3.</p>
-            <div className="coming-soon-features">
-              <h3>Coming Features:</h3>
-              <ul>
-                <li>Advanced search and filtering</li>
-                <li>Property listings with detailed views</li>
-                <li>Save and compare properties</li>
-                <li>AI-powered property recommendations</li>
-              </ul>
+          {loading && <div className="properties-page-coming-soon"><div className="coming-soon-icon">⏳</div><h2>Loading...</h2></div>}
+          {error && <div className="properties-page-coming-soon"><div className="coming-soon-icon">❌</div><h2>{error}</h2></div>}
+          {!loading && !error && items.length === 0 && (
+            <div className="properties-page-coming-soon">
+              <div className="coming-soon-icon">🔍</div>
+              <h2>No properties found</h2>
+              <p>Try again later.</p>
             </div>
-          </div>
+          )}
+          {!loading && !error && items.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+              {items.map((p) => (
+                <PropertyCard key={p.id} property={p} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -24,18 +24,18 @@ void main() async {
   // Initialize connectivity service for offline detection
   await ConnectivityService().initialize();
   
-  runApp(const BhoomisetuApp());
+  runApp(const BhoomiSetuApp());
 }
 
-class BhoomisetuApp extends StatelessWidget {
-  const BhoomisetuApp({super.key});
+class BhoomiSetuApp extends StatelessWidget {
+  const BhoomiSetuApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
       child: MaterialApp(
-        title: 'Bhoomisetu',
+        title: 'BhoomiSetu',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(

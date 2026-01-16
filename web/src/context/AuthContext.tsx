@@ -73,7 +73,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.setItem('accessToken', authResponse.tokens.accessToken);
     localStorage.setItem('refreshToken', authResponse.tokens.refreshToken);
     setUser(authResponse.user);
-    setRoles(authResponse.roles);
+    setRoles(authResponse.roles || []);
+    if (!authResponse.roles || authResponse.roles.length === 0) {
+      // Ensure roles are loaded for role-guarded routes
+      void refreshUser();
+    }
   };
 
   const logout = () => {

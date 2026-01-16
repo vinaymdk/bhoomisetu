@@ -1,0 +1,139 @@
+.my-listings-page {
+  padding: var(--spacing-xl, 32px) var(--spacing-md, 16px);
+  background: var(--color-bg-primary, #f5f5f5);
+  min-height: calc(100vh - 200px);
+}
+
+.my-listings-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.my-listings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.my-listings-header h1 {
+  margin: 0;
+}
+
+.my-listings-header p {
+  margin: 6px 0 0 0;
+  color: var(--color-text-secondary, #666);
+}
+
+.my-listings-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.my-listings-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.my-listings-filter select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+}
+
+.my-listings-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-primary, #2196F3);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  border: none;
+}
+
+.my-listings-secondary-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.my-listings-state {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.my-listings-error {
+  border-left: 4px solid #f44336;
+}
+
+.my-listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.my-listings-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.my-listings-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eee;
+  color: #333;
+  text-transform: capitalize;
+}
+
+.status-draft {
+  background: #fff3e0;
+  color: #e65100;
+}
+.status-pending_verification {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+.status-live {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.status-rejected {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.submit-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+

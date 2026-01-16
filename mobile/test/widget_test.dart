@@ -12,7 +12,7 @@ import 'package:bhoomisetu_mobile/main.dart';
 void main() {
   testWidgets('Bhoomisetu app loads correctly', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const BhoomisetuApp());
+    await tester.pumpWidget(const BhoomiSetuApp());
 
     // Wait for Firebase initialization and auth check
     await tester.pumpAndSettle();

@@ -13,5 +13,5 @@ export interface GeocodingResponseDto {
     };
   };
   confidence: number; // 0-1
-  source: 'google' | 'openstreetmap' | 'cache';
+  source: 'google' | 'mapbox' | 'openstreetmap' | 'cache';
 }

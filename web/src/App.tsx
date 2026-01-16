@@ -2,11 +2,14 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/routes/ProtectedRoute';
 import { PublicRoute } from './components/routes/PublicRoute';
+import { RoleProtectedRoute } from './components/routes/RoleProtectedRoute';
 import { LoginPage } from './components/auth/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PropertiesPage } from './pages/PropertiesPage';
 import { SearchPage } from './pages/SearchPage';
+import { CreateListingPage } from './pages/CreateListingPage';
+import { MyListingsPage } from './pages/MyListingsPage';
 
 function App() {
   return (
@@ -34,6 +37,24 @@ function App() {
             <ProtectedRoute>
               <DashboardPage />
             </ProtectedRoute>
+          }
+        />
+
+        {/* Seller/Agent routes */}
+        <Route
+          path="/list-property"
+          element={
+            <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
+              <CreateListingPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-listings"
+          element={
+            <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
+              <MyListingsPage />
+            </RoleProtectedRoute>
           }
         />
         

@@ -6,21 +6,176 @@
 - **Admin**: admin@example.com / +919876543215
 =================================================
 Login with "**Buyer**: buyer1@example.com / +919876543210"
+.env file: Check the following MAPBOX_API_KEY and execute to the project
+- Added MAPBOX_API_KEY=***** in /backent/.env file (For testing)
 
-Mobile: 
+You are Cursor AI running with GPT-5.2 Codex.
+Act as a senior full-stack + Flutter engineer working inside an existing production codebase.
+
+Your task is to REVIEW, FIX, and HARDEN Module 4 (My Listing / Create Listing)
+for both Web (React) and Mobile (Flutter), including environment configuration.
+
+==================================================
+RULES (IMPORTANT)
+==================================================
+• Work with the existing codebase only
+• Do NOT redesign UI unless required for fixing bugs
+• Identify ROOT CAUSE before changing code
+• Make minimal, clean, production-safe changes
+• Fix issues permanently (not temporary hacks)
+• Ensure fixes work across ALL devices
+• Verify changes by tracing real execution paths
+
+==================================================
+ENVIRONMENT CONFIGURATION (NEW – REQUIRED)
+==================================================
+1. Mapbox API Key
+   - Verify usage of MAPBOX_API_KEY in backend
+   - MAPBOX_API_KEY is already added for testing in:
+     /backend/.env
+       MAPBOX_API_KEY=*****
+
+2. Required Actions
+   - Ensure backend reads MAPBOX_API_KEY correctly from environment
+   - Validate Mapbox-related services/controllers use this key
+   - Ensure frontend/mobile location picker works via backend API
+   - Add safe fallback / error handling if key is missing or invalid
+   - Do NOT hardcode API keys anywhere in code
+
+==================================================
+WEB – ISSUES TO FIX
+==================================================
+1. Create Listing Form
+   - Add "*" indicator for all mandatory fields
+   - State field must be a dropdown containing ALL Indian states
+   - Add area unit options:
+     • sqft
+     • sqm
+     • acre
+     • sqyrd
+   - Fix "Save Listing Draft" button:
+     • Enable only when form is valid
+     • Disable when required fields are missing
+   - Implement proper field-level validation with clear error messages
+
+2. Property Search Page
+   - Search bar must remain STICKY in header while scrolling results
+   - Must not hide on scroll
+
+3. Authentication / Routing
+   - After login as seller1@example.com:
+     • Clicking "My Listing" must NOT redirect to login
+     • Fix auth guard / token persistence / route protection logic
+
+==================================================
+MOBILE (FLUTTER) – ISSUES TO FIX
+==================================================
+1. Search & AI Extracted Filters
+   - Add cancel "X" button for EACH AI extracted filter chip
+   - Fix runtime error:
+     "type 'Null' is not a subtype of type 'String'"
+     • Apply safe parsing
+     • Add null checks
+     • Avoid forced type casts
+
+2. My Listings Screen
+   - Fix 15-second loading issue (TimeoutException)
+   - Ensure API response is parsed correctly
+   - Display listings when data exists
+   - Handle empty and error states properly
+
+3. Create Listing Form
+   - Fix location picker (Mapbox-based) not showing
+   - Verify Mapbox integration end-to-end (backend → mobile)
+   - Fix ALL dropdown fields:
+     • Area Unit
+     • Bedrooms
+     • Bathrooms
+     • Any enum-based field
+   - Ensure consistent UX and validation
+
+4. App Stability
+   - After login, Home/Landing page stuck in loading → FIX
+   - Inspect state management, API calls, and lifecycle handling
+
+5. BottomSheet Layout Bugs
+   - Fix ALL overflow issues caused by incorrect Flexible / Expanded usage:
+     • BOTTOM OVERFLOWED BY 113 PIXELS
+     • BOTTOM OVERFLOWED BY 185 PIXELS
+     • BOTTOM OVERFLOWED BY 131 PIXELS
+   - Use correct layout strategy:
+     • mainAxisSize
+     • Flexible vs Expanded
+     • maxHeight constraints
+   - Ensure BottomSheet works across all screen sizes
+
+==================================================
+DELIVERABLES
+==================================================
+• Fixed Web + Mobile code
+• Verified Mapbox integration using MAPBOX_API_KEY
+• Production-ready, null-safe implementations
+• No runtime, console, or layout errors
+• Fully tested Module 4 end-to-end
+
+==================================================
+EXECUTION STRATEGY
+==================================================
+1. Validate environment variables
+2. Identify root causes
+3. Fix logic, layout, and integration issues
+4. Verify with real flows (login, listing, search, location)
+5. Final regression and stability check
+
+Start with environment verification, then proceed with root-cause fixes.
+
+
+My Listing/Create Listing: Errors
+- Add "*" for manditory fields 
+- State field should be dropdown with India level states
+Web:
+- Property Search stick on header(don't hide) while scrollig list of searched items/properties 
+- Use proper validation
+- Create listing -> Add sqyrd (sqft, sqm, acre, "sqyrd") also
+- Save-Listing-Draft buttom dissabled mode after fill the form also
+- After login seller1@example.com user, when click My Listing -> navigating to login page
+
+Mobile:
+- AI Extracted Filters: after cancle "X" selected filter chip new filtered items not adding
+- Error: type "Null" is not a subtype of type "String" in type cast - When search properties
+- My Listings loading for 15 seconds(Timeout Exception-error) but no data showing
+- Location picker not showing 
+- Fields are not proper manner dropdowns(Area Unit, Bedroom, Bathroom, check all the form fields) not working
+
+Verify and Fix the all issues, Review and testing the Module 4 completly prodection level
+
+Issues - Mobile: 
 - After User login Home/Landing page continues-loading
-- AI Extacted Filters are cance(X) option
+- AI Extracted Filters: add cance "X" option for each one
+- "BOTTOM OVERFLOWED BY 113 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
+- "BOTTOM OVERFLOWED BY 185 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
+- "BOTTOM OVERFLOWED BY 131 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
 
+Prepare Professional prompting for code assistant(GPT 5.2 Codex)
+
+Next Step:
 - Proceed with Module 4 (UI and UX) for both mobile and web 
 - Don't wait for my confirmation just doit with following manner
 - Plan -> Status/Next-Steps -> Implementation -> Review -> Testing
 
+Start Module 4 in the required format: Plan → Status/Next-Steps → Implementation → Review → Testing.
+
+Note: 
+- Create Module wise sample db data(**.sql and .sh files) If any need
+- Aplication/Project Name: "BhoomiSetu" "B & S" capital letters for UI
 
 No properties displaying
 Error: 
 - while input-search-field 'house' -> search -> "type 'Null' is not a subtype of type 'int' in type cast"
  
-- "BOTTOM OVERFLOWED BY 68 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
+- "BOTTOM OVERFLOWED BY 113 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
+- "BOTTOM OVERFLOWED BY 185 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
+- "BOTTOM OVERFLOWED BY 131 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
 
 - Create ***.sh files for db/migrations
 

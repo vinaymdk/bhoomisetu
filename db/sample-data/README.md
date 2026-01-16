@@ -7,6 +7,7 @@ This directory contains SQL sample data files for testing different modules of t
 1. **module1_auth_sample_data.sql** - Authentication and user management data
 2. **module2_properties_sample_data.sql** - Property listings for home page testing
 3. **module3_search_sample_data.sql** - Additional properties for search functionality testing
+4. **module4_listing_features_sample_data.sql** - Structured property features for listings (Module 4)
 
 ## Prerequisites
 
@@ -35,6 +36,7 @@ psql -U your_username -d bhoomisetu_db
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module1_auth_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module2_properties_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module3_search_sample_data.sql
+psql -U your_username -d bhoomisetu_db -f db/sample-data/module4_listing_features_sample_data.sql
 ```
 
 ### Option 3: Using Database GUI Tool
@@ -67,6 +69,10 @@ node scripts/load-sample-data.js
    - Creates additional properties for search testing
    - Enhances search functionality testing
 
+4. **module4_listing_features_sample_data.sql** (Optional)
+   - Adds structured features for properties (property_features table)
+   - Useful for Module 4 listing UX and future filtering
+
 ## What Gets Created
 
 ### Module 1: Authentication
@@ -87,6 +93,10 @@ node scripts/load-sample-data.js
 - Properties with special features (beach view, metro-connected, etc.)
 - Various price ranges and locations
 - Property images
+
+### Module 4: Listing Features (Optional)
+- Structured `property_features` rows for select properties
+- Helps test “dynamic fields” / feature display
 
 ## Verification
 

@@ -48,9 +48,9 @@ class PropertyImage {
 
   factory PropertyImage.fromJson(Map<String, dynamic> json) {
     return PropertyImage(
-      id: json['id'] as String,
-      imageUrl: json['imageUrl'] as String,
-      isPrimary: json['isPrimary'] as bool,
+      id: json['id'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String? ?? '',
+      isPrimary: json['isPrimary'] as bool? ?? false,
       displayOrder: json['displayOrder'] != null 
           ? (json['displayOrder'] as num).toInt()
           : (json['order'] != null ? (json['order'] as num).toInt() : 0),
@@ -71,8 +71,8 @@ class PropertyFeature {
 
   factory PropertyFeature.fromJson(Map<String, dynamic> json) {
     return PropertyFeature(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
       value: json['value'] as String?,
     );
   }

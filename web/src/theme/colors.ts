@@ -1,5 +1,5 @@
 /**
- * Bhoomisetu Color Palette
+ * BhoomiSetu Color Palette
  * Based on professional real estate branding
  * Colors should be extracted from logo for final implementation
  */

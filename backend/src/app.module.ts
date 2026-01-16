@@ -19,6 +19,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ConfigController } from './config/config.controller';
+import { LocationsModule } from './locations/locations.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ConfigController } from './config/config.controller';
     NotificationsModule,
     ReviewsModule,
     AdminModule,
+    LocationsModule,
   ],
   providers: [
     {

@@ -13,6 +13,7 @@ class _SearchScreenState extends State<SearchScreen> {
   final SearchService _searchService = SearchService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final Set<String> _dismissedExtracted = {};
   
   AiSearchResponse? _results;
   bool _isLoading = false;
@@ -568,92 +569,110 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              'Error: $_error',
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: $_error',
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _performSearch(reset: true),
+                  child: const Text('Try Again'),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _performSearch(reset: true),
-              child: const Text('Try Again'),
-            ),
-          ],
+          ),
         ),
       );
     }
 
     if (_results == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              'Start Your Property Search',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.search, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'Start Your Property Search',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    'Enter a natural language query or use filters to find your perfect property',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Example Searches:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildExampleSearch('"2BHK apartment in Hyderabad under 50L"'),
+                _buildExampleSearch('"3BHK villa near beach in Mumbai"'),
+                _buildExampleSearch('"commercial space in Bangalore"'),
+              ],
             ),
-            const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                'Enter a natural language query or use filters to find your perfect property',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Example Searches:',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildExampleSearch('"2BHK apartment in Hyderabad under 50L"'),
-            _buildExampleSearch('"3BHK villa near beach in Mumbai"'),
-            _buildExampleSearch('"commercial space in Bangalore"'),
-          ],
+          ),
         ),
       );
     }
 
     if (_results!.properties.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search_off, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              'No properties found',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'No properties found',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Try adjusting your search criteria or filters',
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _clearFilters,
+                  child: const Text('Clear Filters'),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Try adjusting your search criteria or filters',
-              style: TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _clearFilters,
-              child: const Text('Clear Filters'),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -714,14 +733,42 @@ class _SearchScreenState extends State<SearchScreen> {
                     if (_results!.extractedFilters.location != null && 
                         _results!.extractedFilters.location!.containsKey('city') &&
                         _results!.extractedFilters.location!['city'] != null)
-                      _buildExtractedTag('📍 ${_results!.extractedFilters.location!['city']}'),
+                      if (!_dismissedExtracted.contains('city'))
+                        _buildExtractedTag(
+                          '📍 ${_results!.extractedFilters.location!['city']}',
+                          onRemove: () {
+                            setState(() => _dismissedExtracted.add('city'));
+                            _updateFilter('city', null);
+                          },
+                        ),
                     if (_results!.extractedFilters.propertyType != null)
-                      _buildExtractedTag('🏠 ${_results!.extractedFilters.propertyType}'),
+                      if (!_dismissedExtracted.contains('propertyType'))
+                        _buildExtractedTag(
+                          '🏠 ${_results!.extractedFilters.propertyType}',
+                          onRemove: () {
+                            setState(() => _dismissedExtracted.add('propertyType'));
+                            _updateFilter('propertyType', null);
+                          },
+                        ),
                     if (_results!.extractedFilters.bedrooms != null)
-                      _buildExtractedTag('🛏️ ${_results!.extractedFilters.bedrooms} BHK'),
+                      if (!_dismissedExtracted.contains('bedrooms'))
+                        _buildExtractedTag(
+                          '🛏️ ${_results!.extractedFilters.bedrooms} BHK',
+                          onRemove: () {
+                            setState(() => _dismissedExtracted.add('bedrooms'));
+                            _updateFilter('bedrooms', null);
+                          },
+                        ),
                     if (_results!.extractedFilters.aiTags != null)
                       ..._results!.extractedFilters.aiTags!
-                          .map((tag) => _buildExtractedTag('✨ $tag', isAiTag: true)),
+                          .where((tag) => !_dismissedExtracted.contains('aiTag:$tag'))
+                          .map(
+                            (tag) => _buildExtractedTag(
+                              '✨ $tag',
+                              isAiTag: true,
+                              onRemove: () => setState(() => _dismissedExtracted.add('aiTag:$tag')),
+                            ),
+                          ),
                   ],
                 ),
               ],
@@ -852,19 +899,35 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildExtractedTag(String label, {bool isAiTag = false}) {
+  Widget _buildExtractedTag(String label, {bool isAiTag = false, VoidCallback? onRemove}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isAiTag ? Colors.orange[100] : Colors.white,
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: isAiTag ? Colors.orange[900] : Colors.black87,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isAiTag ? Colors.orange[900] : Colors.black87,
+            ),
+          ),
+          if (onRemove != null) ...[
+            const SizedBox(width: 6),
+            InkWell(
+              onTap: onRemove,
+              child: Icon(
+                Icons.close,
+                size: 14,
+                color: isAiTag ? Colors.orange[900] : Colors.black54,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -13,7 +13,9 @@ export interface PropertyImage {
   id: string;
   imageUrl: string;
   isPrimary: boolean;
-  order: number;
+  /** Backend uses `displayOrder`; keep `order` for backward compatibility. */
+  displayOrder?: number;
+  order?: number;
 }
 
 export interface PropertyFeature {
@@ -33,6 +35,34 @@ export type PropertyType =
   | 'other';
 
 export type ListingType = 'sale' | 'rent';
+
+export interface CreatePropertyImageInput {
+  imageUrl: string;
+  imageType?: string;
+  displayOrder?: number;
+  isPrimary?: boolean;
+}
+
+export interface CreatePropertyRequest {
+  propertyType: PropertyType;
+  listingType: ListingType;
+  location: PropertyLocation;
+  title: string;
+  description?: string;
+  price: number;
+  area: number;
+  areaUnit?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  balconies?: number;
+  floors?: number;
+  floorNumber?: number;
+  furnishingStatus?: string;
+  ageOfConstruction?: number;
+  features?: Record<string, any>;
+  featureKeys?: string[];
+  images?: CreatePropertyImageInput[];
+}
 
 export type PropertyStatus = 
   | 'draft'
