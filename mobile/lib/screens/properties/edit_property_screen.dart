@@ -2,14 +2,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../models/property.dart';
 import '../../services/app_config_service.dart';
 import '../../services/location_service.dart';
 import '../../services/properties_service.dart';
 import '../../viewmodels/listing_form_view_model.dart';
 import '../common/map_picker_screen.dart';
 
-class CreatePropertyScreen extends StatelessWidget {
-  const CreatePropertyScreen({super.key});
+class EditPropertyScreen extends StatelessWidget {
+  final Property property;
+  const EditPropertyScreen({super.key, required this.property});
 
   @override
   Widget build(BuildContext context) {
@@ -18,20 +20,23 @@ class CreatePropertyScreen extends StatelessWidget {
         PropertiesService(),
         AppConfigService(),
         LocationService(),
-      )..loadMapboxToken(),
-      child: const _CreatePropertyView(),
+      )
+        ..loadMapboxToken()
+        ..initFromProperty(property),
+      child: _EditPropertyView(propertyId: property.id),
     );
   }
 }
 
-class _CreatePropertyView extends StatefulWidget {
-  const _CreatePropertyView();
+class _EditPropertyView extends StatefulWidget {
+  final String propertyId;
+  const _EditPropertyView({required this.propertyId});
 
   @override
-  State<_CreatePropertyView> createState() => _CreatePropertyViewState();
+  State<_EditPropertyView> createState() => _EditPropertyViewState();
 }
 
-class _CreatePropertyViewState extends State<_CreatePropertyView> {
+class _EditPropertyViewState extends State<_EditPropertyView> {
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
 
@@ -79,7 +84,7 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Listing')),
+      appBar: AppBar(title: const Text('Edit Listing')),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -412,14 +417,14 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
                       ? null
                       : () async {
                           if (!_formKey.currentState!.validate()) return;
-                          final saved = await vm.save();
+                          final saved = await vm.save(propertyId: widget.propertyId);
                           if (!mounted || saved == null) return;
                           Navigator.pop(context, true);
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing saved as draft')));
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing updated')));
                         },
                   child: vm.loading
                       ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Save Listing (Draft)'),
+                      : const Text('Save Changes'),
                 ),
               ],
             ),
@@ -436,5 +441,4 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
     );
   }
 }
-
 

@@ -85,6 +85,7 @@ class _SearchScreenState extends State<SearchScreen> {
         _hasMore = response.properties.length >= response.limit && 
                    _results!.properties.length < response.total;
         _isLoading = false;
+        _filters.aiTags ??= response.extractedFilters.aiTags;
       });
     } catch (e) {
       setState(() {
@@ -142,6 +143,9 @@ class _SearchScreenState extends State<SearchScreen> {
         break;
       case 'rankBy':
         _filters.rankBy = value;
+        break;
+      case 'aiTags':
+        _filters.aiTags = value;
         break;
     }
     _performSearch(reset: true);
@@ -312,14 +316,19 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildFiltersSheet() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+    return SafeArea(
+      child: Container(
+        color: Colors.white,
+        padding: const EdgeInsets.all(16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -513,7 +522,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 onChanged: (value) => _updateFilter('rankBy', value),
               ),
             ),
-          ],
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -766,7 +779,12 @@ class _SearchScreenState extends State<SearchScreen> {
                             (tag) => _buildExtractedTag(
                               '✨ $tag',
                               isAiTag: true,
-                              onRemove: () => setState(() => _dismissedExtracted.add('aiTag:$tag')),
+                              onRemove: () {
+                                setState(() => _dismissedExtracted.add('aiTag:$tag'));
+                                final currentTags = List<String>.from(_filters.aiTags ?? []);
+                                currentTags.remove(tag);
+                                _updateFilter('aiTags', currentTags);
+                              },
                             ),
                           ),
                   ],

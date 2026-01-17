@@ -9,154 +9,207 @@ Login with "**Buyer**: buyer1@example.com / +919876543210"
 .env file: Check the following MAPBOX_API_KEY and execute to the project
 - Added MAPBOX_API_KEY=***** in /backent/.env file (For testing)
 
-You are Cursor AI running with GPT-5.2 Codex.
-Act as a senior full-stack + Flutter engineer working inside an existing production codebase.
+Yes continues as your plan...
+- Wire a proper map picker UI (map view) for mobile/web instead of text search.
+- Add Mapbox autocomplete suggestions with a selectable list.
+- Extend Module 4 to include edit listings + image reordering.
 
-Your task is to REVIEW, FIX, and HARDEN Module 4 (My Listing / Create Listing)
-for both Web (React) and Mobile (Flutter), including environment configuration.
 
-==================================================
-RULES (IMPORTANT)
-==================================================
-• Work with the existing codebase only
-• Do NOT redesign UI unless required for fixing bugs
-• Identify ROOT CAUSE before changing code
-• Make minimal, clean, production-safe changes
-• Fix issues permanently (not temporary hacks)
-• Ensure fixes work across ALL devices
-• Verify changes by tracing real execution paths
+After completion of your plan just follow the bellow things as well
+
+Your responsibility is to REVIEW, RESTRUCTURE (if required), FIX, and PRODUCTION-HARDEN
+Module 4 (My Listing / Create Listing) using ADVANCED UI ARCHITECTURE
+for both Web (React) and Mobile (Flutter).
 
 ==================================================
-ENVIRONMENT CONFIGURATION (NEW – REQUIRED)
+ARCHITECTURAL PRINCIPLES (MANDATORY)
 ==================================================
-1. Mapbox API Key
-   - Verify usage of MAPBOX_API_KEY in backend
-   - MAPBOX_API_KEY is already added for testing in:
-     /backend/.env
-       MAPBOX_API_KEY=*****
-
-2. Required Actions
-   - Ensure backend reads MAPBOX_API_KEY correctly from environment
-   - Validate Mapbox-related services/controllers use this key
-   - Ensure frontend/mobile location picker works via backend API
-   - Add safe fallback / error handling if key is missing or invalid
-   - Do NOT hardcode API keys anywhere in code
+• Follow clean architecture and separation of concerns
+• UI must be modular, reusable, and scalable
+• Business logic must NOT live inside UI widgets/components
+• Follow platform best practices:
+  - Web: container/presenter pattern, hooks, memoization
+  - Mobile: MVVM / Clean Architecture (UI → ViewModel → Service)
+• Fix root causes, not surface symptoms
+• Minimize rework and avoid breaking changes
+• Ensure performance, accessibility, and maintainability
 
 ==================================================
-WEB – ISSUES TO FIX
+GLOBAL RULES
 ==================================================
-1. Create Listing Form
-   - Add "*" indicator for all mandatory fields
-   - State field must be a dropdown containing ALL Indian states
+• Work strictly within the existing codebase
+• Do NOT redesign visuals unless required for correctness or UX
+• Identify ROOT CAUSES before coding
+• Use clean, scalable, production-ready patterns
+• No hardcoded values, no temporary hacks
+• Ensure behavior is consistent across ALL devices
+• Verify fixes through real execution flows
+
+==================================================
+ADVANCED UI / ARCHITECTURE EXTENSIONS (NEW)
+==================================================
+1. Map Picker (Web + Mobile)
+   - Replace text-only location search with a proper MAP VIEW picker
+   - Allow user to select location directly from the map
+   - Sync selected coordinates + address with form state
+
+2. Mapbox Autocomplete
+   - Integrate Mapbox autocomplete suggestions
+   - Show selectable suggestion list
+   - On selection:
+     • Update map marker
+     • Update address fields
+   - Ensure graceful handling if MAPBOX_API_KEY is missing or invalid
+
+3. Extend Module 4 Features
+   - Add Edit Listing functionality
+   - Enable image reordering (drag & drop / reorder controls)
+   - Ensure edit flow reuses Create Listing logic safely
+
+==================================================
+MANDATORY FIELD & FORM RULES (WEB + MOBILE)
+==================================================
+• Add "*" indicator for all mandatory fields
+• State field MUST be a dropdown with ONLY these India states:
+
+  Andhra Pradesh,
+  Arunachal Pradesh,
+  Assam,
+  Bihar,
+  Chandigarh,
+  Chhattisgarh,
+  Goa,
+  Gujarat,
+  Haryana,
+  Himachal Pradesh,
+  Jammu and Kashmir,
+  Jharkhand,
+  Karnataka,
+  Kerala,
+  Madhya Pradesh,
+  Maharashtra,
+  Manipur,
+  Meghalaya,
+  Mizoram,
+  Nagaland,
+  Odisha,
+  Punjab,
+  Rajasthan,
+  Sikkim,
+  Tamil Nadu,
+  Telangana,
+  Tripura,
+  Uttar Pradesh,
+  Uttarakhand,
+  West Bengal
+
+==================================================
+WEB – REVIEW & FIX
+==================================================
+1. Create Listing
+   - Use professional form validation (field-level + submit-level)
    - Add area unit options:
      • sqft
      • sqm
      • acre
      • sqyrd
    - Fix "Save Listing Draft" button:
-     • Enable only when form is valid
-     • Disable when required fields are missing
-   - Implement proper field-level validation with clear error messages
+     • Should ENABLE only when valid
+     • Currently stays disabled even after form completion → FIX
 
-2. Property Search Page
-   - Search bar must remain STICKY in header while scrolling results
-   - Must not hide on scroll
-
-3. Authentication / Routing
+2. Authentication
    - After login as seller1@example.com:
-     • Clicking "My Listing" must NOT redirect to login
-     • Fix auth guard / token persistence / route protection logic
+     • Navigating to My Listing
+     • Reloading any page
+     • Direct URL access
+     MUST NOT redirect to login
+   - Fix token/session persistence and auth guards
 
 ==================================================
-MOBILE (FLUTTER) – ISSUES TO FIX
+MOBILE (FLUTTER) – REVIEW & FIX
 ==================================================
-1. Search & AI Extracted Filters
-   - Add cancel "X" button for EACH AI extracted filter chip
-   - Fix runtime error:
-     "type 'Null' is not a subtype of type 'String'"
-     • Apply safe parsing
-     • Add null checks
-     • Avoid forced type casts
+1. AI Extracted Filters
+   - When "X" is tapped:
+     • Chip should be removed
+     • NEW filtered results must be fetched and displayed
+   - Fix state update logic (currently broken)
 
-2. My Listings Screen
-   - Fix 15-second loading issue (TimeoutException)
-   - Ensure API response is parsed correctly
-   - Display listings when data exists
-   - Handle empty and error states properly
+2. My Listings
+   - Fix 15-second loading / TimeoutException
+   - Ensure data renders if API returns results
+   - Proper empty + error states
 
-3. Create Listing Form
-   - Fix location picker (Mapbox-based) not showing
-   - Verify Mapbox integration end-to-end (backend → mobile)
-   - Fix ALL dropdown fields:
+3. Create Listing
+   - Fix Mapbox-based location picker not showing
+   - Fix ALL dropdowns:
      • Area Unit
      • Bedrooms
      • Bathrooms
      • Any enum-based field
-   - Ensure consistent UX and validation
+   - Ensure consistent validation and UX
 
-4. App Stability
-   - After login, Home/Landing page stuck in loading → FIX
-   - Inspect state management, API calls, and lifecycle handling
-
-5. BottomSheet Layout Bugs
-   - Fix ALL overflow issues caused by incorrect Flexible / Expanded usage:
-     • BOTTOM OVERFLOWED BY 113 PIXELS
-     • BOTTOM OVERFLOWED BY 185 PIXELS
-     • BOTTOM OVERFLOWED BY 131 PIXELS
-   - Use correct layout strategy:
-     • mainAxisSize
-     • Flexible vs Expanded
+4. BottomSheet Layout Issues
+   - Fix ALL overflow errors:
+     • "BOTTOM OVERFLOWED BY ***** PIXELS"
+   - Correct misuse of Flexible / Expanded
+   - Apply:
+     • mainAxisSize: MainAxisSize.min
      • maxHeight constraints
-   - Ensure BottomSheet works across all screen sizes
+     • Safe scrolling strategy
+   - Must work on all screen sizes
+
+==================================================
+ENVIRONMENT CONFIGURATION
+==================================================
+• MAPBOX_API_KEY is already added for testing in:
+  /backend/.env
+
+• Verify backend reads it correctly
+• Do NOT hardcode API keys
+• Ensure Web & Mobile Mapbox features work via backend
 
 ==================================================
 DELIVERABLES
 ==================================================
-• Fixed Web + Mobile code
-• Verified Mapbox integration using MAPBOX_API_KEY
-• Production-ready, null-safe implementations
-• No runtime, console, or layout errors
-• Fully tested Module 4 end-to-end
+• Fully fixed & extended Module 4
+• Map-based picker + autocomplete working
+• Edit listing + image reordering implemented
+• Production-grade validation & auth handling
+• No runtime, layout, or console errors
+• Tested end-to-end (login → listing → edit → search)
 
 ==================================================
-EXECUTION STRATEGY
+EXECUTION ORDER
 ==================================================
-1. Validate environment variables
-2. Identify root causes
-3. Fix logic, layout, and integration issues
-4. Verify with real flows (login, listing, search, location)
-5. Final regression and stability check
+1. Validate environment & Mapbox integration
+2. Fix authentication persistence
+3. Fix existing bugs (Web + Mobile)
+4. Implement map picker & autocomplete
+5. Extend edit listing & image reorder
+6. Final regression & production verification
 
-Start with environment verification, then proceed with root-cause fixes.
-
-
+Begin with root-cause analysis, then apply verified fixes.
+=====================================================================
+Lock at these are also REVIEW and FIX everything in production level...
 My Listing/Create Listing: Errors
 - Add "*" for manditory fields 
-- State field should be dropdown with India level states
+- State field should be dropdown with India level states are 
+"Andhra Pradesh, Arunachal Pradesh, Assam, Bihar, Chandigarh, Chhattisgarh, Goa, Gujarat, Haryana, Himachal Pradesh, Jammu and Kashmir, Jharkhand, Karnataka, Kerala, Madhya Pradesh, Maharashtra, Manipur, Meghalaya, Mizoram, Nagaland, Odisha, Punjab, Rajasthan, Sikkim, Tamil Nadu, Telangana, Tripura, Uttar Pradesh, Uttarakhand, West Bengal"
+
 Web:
-- Property Search stick on header(don't hide) while scrollig list of searched items/properties 
-- Use proper validation
+- Use proper validation in profesional form fields
 - Create listing -> Add sqyrd (sqft, sqm, acre, "sqyrd") also
 - Save-Listing-Draft buttom dissabled mode after fill the form also
-- After login seller1@example.com user, when click My Listing -> navigating to login page
+- After login seller1@example.com user, when click My Listing/any-page/reload -> navigating to login page(Authentication-problem)
 
 Mobile:
-- AI Extracted Filters: after cancle "X" selected filter chip new filtered items not adding
-- Error: type "Null" is not a subtype of type "String" in type cast - When search properties
+- AI Extracted Filters: after cancle "X" selected-filter-chip deleted but new filtered items not adding
 - My Listings loading for 15 seconds(Timeout Exception-error) but no data showing
 - Location picker not showing 
-- Fields are not proper manner dropdowns(Area Unit, Bedroom, Bathroom, check all the form fields) not working
+- Fields dropdowns(Area Unit, Bedroom, Bathroom, check all the form fields) not working
+- "BOTTOM OVERFLOWED BY ***** PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
 
-Verify and Fix the all issues, Review and testing the Module 4 completly prodection level
 
-Issues - Mobile: 
-- After User login Home/Landing page continues-loading
-- AI Extracted Filters: add cance "X" option for each one
-- "BOTTOM OVERFLOWED BY 113 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
-- "BOTTOM OVERFLOWED BY 185 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
-- "BOTTOM OVERFLOWED BY 131 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
-
-Prepare Professional prompting for code assistant(GPT 5.2 Codex)
 
 Next Step:
 - Proceed with Module 4 (UI and UX) for both mobile and web 
@@ -165,89 +218,39 @@ Next Step:
 
 Start Module 4 in the required format: Plan → Status/Next-Steps → Implementation → Review → Testing.
 
-Note: 
-- Create Module wise sample db data(**.sql and .sh files) If any need
-- Aplication/Project Name: "BhoomiSetu" "B & S" capital letters for UI
 
-No properties displaying
-Error: 
-- while input-search-field 'house' -> search -> "type 'Null' is not a subtype of type 'int' in type cast"
- 
-- "BOTTOM OVERFLOWED BY 113 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
-- "BOTTOM OVERFLOWED BY 185 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
-- "BOTTOM OVERFLOWED BY 131 PIXELS" Issue is inside BottomSheet Flexible / Expanded misuse fix.
-
-- Create ***.sh files for db/migrations
-
-
-"Implementation is complete and ready for testing. All components follow the existing codebase patterns and integrate with the backend API." YES PLEASE Cotinue with bellow requrements as well after complete testing
-
-You are a senior full-stack architect and authentication expert.
-
-### Current Issues (High Priority)
-1. **Authentication error after login**
-   - User is successfully logged in.
-   - On browser refresh / hard refresh, the application redirects back to the login page.
-   - Session / token persistence is not working as expected.
-
-2. **Access control issue**
-   - Once a user is logged in, the login page should NOT be accessible.
-   - Only after explicit logout, the login page should be accessible again.
-   - Proper route guards / middleware must be enforced for both authenticated and unauthenticated routes.
-
----
-
-### Requirements
-1. **Fix Authentication Flow**
-   - Implement correct session handling (JWT / refresh token / cookies / local storage as applicable).
-   - Ensure authentication state is restored on page refresh.
-   - Prevent unauthorized redirects.
-   - Handle token expiration and refresh correctly.
-   - Mobile pull-to-refresh (drag down) functionality.
-
-
-2. **Route Protection**
-   - Block authenticated users from accessing login/register pages.
-   - Block unauthenticated users from accessing protected routes.
-   - Follow best practices for frontend and backend authorization.
-
-3. **Roadmap & Progress Tracking**
-   - Maintain and update a clear **development roadmap**.
-   - After each development or implementation step:
-     - Update what is completed
-     - What is pending
-     - What is next
-   - Roadmap should be module-wise and easy to track.
-
-4. **Database & Testing Support**
-   - For each module, prepare **required sample / dummy / reference data**.
-   - Provide these data inserts as **module-wise `.sql` files**.
-   - The SQL should be realistic enough to test real-time application behavior.
-   - I will manually update the database using these SQL files to validate functionality.
-
----
-
-### Expectations
-- Follow clean architecture and production-ready practices.
-- Explain authentication fixes clearly (frontend + backend).
-- Ensure scalability and security best practices.
-- Keep communication concise, technical, and professional.
-
-Implement standard mobile UX features:
-- Pull-to-refresh
-- Loading, empty, and error states
-- Offline handling with retry
-- Session persistence and route protection
-- Pagination / infinite scroll
-Ensure features follow production-level mobile UX practices.
-
-Act like you are building this system for a real production environment.
-
-
-
-# =====================================
+# ==========================================================================
 Reference smart prompting
-# =====================================
+# ==========================================================================
+
+Your responsibility is to REVIEW, RESTRUCTURE (if required), FIX, and PRODUCTION-HARDEN
+Module 4 (My Listing / Create Listing) using ADVANCED UI ARCHITECTURE
+for both Web (React) and Mobile (Flutter).
+
+==================================================
+ARCHITECTURAL PRINCIPLES (MANDATORY)
+==================================================
+• Follow clean architecture and separation of concerns
+• UI must be modular, reusable, and scalable
+• Business logic must NOT live inside UI widgets/components
+• Follow platform best practices:
+  - Web: container/presenter pattern, hooks, memoization
+  - Mobile: MVVM / Clean Architecture (UI → ViewModel → Service)
+• Fix root causes, not surface symptoms
+• Minimize rework and avoid breaking changes
+• Ensure performance, accessibility, and maintainability
+
+==================================================
+GLOBAL RULES
+==================================================
+• Work strictly within the existing codebase
+• Do NOT redesign visuals unless required for correctness or UX
+• Identify ROOT CAUSES before coding
+• Use clean, scalable, production-ready patterns
+• No hardcoded values, no temporary hacks
+• Ensure behavior is consistent across ALL devices
+• Verify fixes through real execution flows
+
 - Proceed with Module 3 (UI and UX) for both mobile and web 
 - Don't wait for my confirmation just doit with following manner
 - Plan -> Status/Next-Steps -> Implementation -> Review -> Testing
@@ -269,4 +272,5 @@ Implement standard mobile UX features:
 - Pagination / infinite scroll
 Ensure features follow production-level mobile UX practices.
 
+Begin with root-cause analysis, then apply verified fixes.
 # =====================================

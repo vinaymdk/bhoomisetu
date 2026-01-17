@@ -88,3 +88,60 @@ psql -d bhoomisetu_db -f db/migrations/20260109_initial_auth_schema.sql
 
 
 Do it A, B, and C one by one let me know one it is completed and what can i do from my side
+
+
+# ==========================================================================
+Reference smart prompting
+# ==========================================================================
+
+Your responsibility is to REVIEW, RESTRUCTURE (if required), FIX, and PRODUCTION-HARDEN
+Module 4 (My Listing / Create Listing) using ADVANCED UI ARCHITECTURE
+for both Web (React) and Mobile (Flutter).
+
+==================================================
+ARCHITECTURAL PRINCIPLES (MANDATORY)
+==================================================
+• Follow clean architecture and separation of concerns
+• UI must be modular, reusable, and scalable
+• Business logic must NOT live inside UI widgets/components
+• Follow platform best practices:
+  - Web: container/presenter pattern, hooks, memoization
+  - Mobile: MVVM / Clean Architecture (UI → ViewModel → Service)
+• Fix root causes, not surface symptoms
+• Minimize rework and avoid breaking changes
+• Ensure performance, accessibility, and maintainability
+
+==================================================
+GLOBAL RULES
+==================================================
+• Work strictly within the existing codebase
+• Do NOT redesign visuals unless required for correctness or UX
+• Identify ROOT CAUSES before coding
+• Use clean, scalable, production-ready patterns
+• No hardcoded values, no temporary hacks
+• Ensure behavior is consistent across ALL devices
+• Verify fixes through real execution flows
+
+- Proceed with Module 3 (UI and UX) for both mobile and web 
+- Don't wait for my confirmation just doit with following manner
+- Plan -> Status/Next-Steps -> Implementation -> Review -> Testing
+
+Note:
+- Update Roadmap for every development / implementaion
+
+**Database & Testing Support**
+   - For each module, prepare **required sample / dummy / reference data**.
+   - Provide these data inserts as **module-wise `.sql` files**.
+   - The SQL should be realistic enough to test real-time application behavior.
+   - I will manually update the database using these SQL files to validate functionality.
+
+Implement standard mobile UX features:
+- Pull-to-refresh
+- Loading, empty, and error states
+- Offline handling with retry
+- Session persistence and route protection
+- Pagination / infinite scroll
+Ensure features follow production-level mobile UX practices.
+
+Begin with root-cause analysis, then apply verified fixes.
+# =====================================

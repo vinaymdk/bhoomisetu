@@ -5,6 +5,7 @@ import '../../models/property.dart';
 import '../../services/properties_service.dart';
 import '../../widgets/property_card.dart';
 import 'create_property_screen.dart';
+import 'edit_property_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -166,11 +167,29 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       _statusChip(p.status),
-                                      if (p.status == 'draft')
-                                        TextButton(
-                                          onPressed: () => _submit(p.id),
-                                          child: const Text('Submit'),
-                                        ),
+                                      Row(
+                                        children: [
+                                          TextButton(
+                                            onPressed: () async {
+                                              final updated = await Navigator.push<bool>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => EditPropertyScreen(property: p),
+                                                ),
+                                              );
+                                              if (updated == true) {
+                                                await _load();
+                                              }
+                                            },
+                                            child: const Text('Edit'),
+                                          ),
+                                          if (p.status == 'draft')
+                                            TextButton(
+                                              onPressed: () => _submit(p.id),
+                                              child: const Text('Submit'),
+                                            ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 8),

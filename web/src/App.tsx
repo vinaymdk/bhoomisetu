@@ -10,6 +10,7 @@ import { PropertiesPage } from './pages/PropertiesPage';
 import { SearchPage } from './pages/SearchPage';
 import { CreateListingPage } from './pages/CreateListingPage';
 import { MyListingsPage } from './pages/MyListingsPage';
+import { EditListingPage } from './pages/EditListingPage';
 
 function App() {
   return (
@@ -54,6 +55,14 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
               <MyListingsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-listings/:id/edit"
+          element={
+            <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
+              <EditListingPage />
             </RoleProtectedRoute>
           }
         />

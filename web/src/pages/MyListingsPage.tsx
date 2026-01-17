@@ -91,11 +91,16 @@ export const MyListingsPage = () => {
               <div key={p.id} className="my-listings-item">
                 <div className="my-listings-status-row">
                   <span className={`status-badge status-${p.status}`}>{p.status.replaceAll('_', ' ')}</span>
-                  {p.status === 'draft' && (
-                    <button className="submit-btn" onClick={() => submit(p.id)}>
-                      Submit for verification
-                    </button>
-                  )}
+                  <div className="listing-actions">
+                    <Link to={`/my-listings/${p.id}/edit`} className="submit-btn">
+                      Edit
+                    </Link>
+                    {p.status === 'draft' && (
+                      <button className="submit-btn" onClick={() => submit(p.id)}>
+                        Submit for verification
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <PropertyCard property={p} />
               </div>

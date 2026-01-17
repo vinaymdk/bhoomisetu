@@ -30,6 +30,16 @@ export const propertiesService = {
     return response.data;
   },
 
+  async getPropertyById(id: string): Promise<Property> {
+    const response = await apiClient.get(`/properties/${id}`);
+    return response.data;
+  },
+
+  async updateProperty(id: string, payload: Partial<CreatePropertyRequest>): Promise<Property> {
+    const response = await apiClient.patch(`/properties/${id}`, payload);
+    return response.data;
+  },
+
   async submitForVerification(propertyId: string): Promise<Property> {
     const response = await apiClient.post(`/properties/${propertyId}/submit`);
     return response.data;

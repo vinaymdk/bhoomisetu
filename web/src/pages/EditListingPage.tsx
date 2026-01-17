@@ -1,11 +1,31 @@
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { propertiesService } from '../services/properties.service';
+import type { Property } from '../types/property';
 import { ListingForm } from '../components/listing/ListingForm';
 import { useListingForm } from '../hooks/useListingForm';
 import './CreateListingPage.css';
 
-export const CreateListingPage = () => {
+export const EditListingPage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [property, setProperty] = useState<Property | null>(null);
+  const [loadingProperty, setLoadingProperty] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      if (!id) return;
+      setLoadingProperty(true);
+      try {
+        const data = await propertiesService.getPropertyById(id);
+        setProperty(data);
+      } finally {
+        setLoadingProperty(false);
+      }
+    };
+    void load();
+  }, [id]);
+
   const {
     state,
     setField,
@@ -28,29 +48,56 @@ export const CreateListingPage = () => {
     applySuggestion,
     reverseGeocode,
     buildPayload,
-  } = useListingForm();
+  } = useListingForm(property || undefined);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!id) return;
     setLoading(true);
     try {
       const payload = await buildPayload();
-      await propertiesService.createProperty(payload);
+      await propertiesService.updateProperty(id, payload);
       navigate('/my-listings');
     } catch (e: any) {
-      setFormError(e.response?.data?.message || 'Failed to create listing.');
+      setFormError(e.response?.data?.message || 'Failed to update listing.');
     } finally {
       setLoading(false);
     }
   };
 
+  if (loadingProperty) {
+    return (
+      <div className="create-listing-page">
+        <div className="create-listing-container">
+          <div className="create-listing-header">
+            <h1>Edit Listing</h1>
+            <p>Loading property...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="create-listing-page">
+        <div className="create-listing-container">
+          <div className="create-listing-header">
+            <h1>Edit Listing</h1>
+            <p>Property not found.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="create-listing-page">
       <div className="create-listing-container">
         <div className="create-listing-header">
-          <h1>Create Listing</h1>
-          <p>Fill the details carefully. You can submit for verification after saving.</p>
+          <h1>Edit Listing</h1>
+          <p>Update details and reorder images.</p>
         </div>
         <ListingForm
           state={state}
@@ -79,7 +126,7 @@ export const CreateListingPage = () => {
             setField('longitude', lng);
             void reverseGeocode(lat, lng);
           }}
-          submitLabel="Save listing (Draft)"
+          submitLabel="Save changes"
         />
       </div>
     </div>

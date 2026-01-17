@@ -14,6 +14,7 @@ Implement **Seller/Agent property listing UI/UX** for both **Web (React)** and *
 - Image upload + primary image selection
 - Location fields + optional lat/long (web uses browser location)
 - Mapbox location lookup via backend API (`/locations/geocode`)
+- Mapbox map picker + autocomplete suggestions
 - Loading / error / empty states
 - Role-based access: only **seller/agent** can create/manage listings
 

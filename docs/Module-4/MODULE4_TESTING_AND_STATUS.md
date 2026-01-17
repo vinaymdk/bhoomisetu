@@ -10,6 +10,8 @@
   - state dropdown (all Indian states)
   - area unit (sqft/sqm/acre/sqyrd)
   - Mapbox location lookup (backend `/locations/geocode`)
+- [ ] Use Mapbox map picker and click to update address
+- [ ] Edit listing and reorder images (up/down)
 - [ ] Confirm redirect to **My Listings**
 - [ ] Submit a **draft** listing for verification
 - [ ] Verify status becomes `pending_verification`
@@ -22,6 +24,8 @@
 - [ ] Tap **Create** → create listing with photos + required fields
 - [ ] Verify dropdowns (area unit, bedrooms, bathrooms)
 - [ ] Use **Search location (Mapbox)** and verify fields auto-fill
+- [ ] Use **Pick on map** and verify fields auto-fill
+- [ ] Edit listing and reorder images (up/down)
 - [ ] Save listing → should return to My Listings and show it as `draft`
 - [ ] Submit draft → should become `pending_verification`
 - [ ] Login as **Buyer** → List tab should show role warning (no access)

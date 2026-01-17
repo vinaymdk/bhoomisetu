@@ -133,6 +133,83 @@ export class GeocodingService {
     }
   }
 
+  async autocompleteLocation(query: string): Promise<{ success: boolean; suggestions: any[] }> {
+    if (!this.mapboxApiKey) {
+      this.logger.warn('Mapbox API key missing for autocomplete');
+      return { success: false, suggestions: [] };
+    }
+    if (!query || query.trim().length < 2) {
+      return { success: false, suggestions: [] };
+    }
+
+    const response = await firstValueFrom(
+      this.httpService.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json`, {
+        params: {
+          access_token: this.mapboxApiKey,
+          autocomplete: true,
+          limit: 5,
+          country: 'IN',
+          types: 'place,locality,neighborhood,address',
+        },
+        timeout: 5000,
+      }),
+    );
+
+    const suggestions = (response.data?.features || []).map((feature: any) => ({
+      id: feature.id,
+      name: feature.text,
+      placeName: feature.place_name,
+      center: feature.center,
+    }));
+
+    return { success: true, suggestions };
+  }
+
+  async reverseGeocode(lat: number, lng: number): Promise<GeocodingResponseDto | null> {
+    if (!this.mapboxApiKey) {
+      this.logger.warn('Mapbox API key missing for reverse geocoding');
+      return null;
+    }
+
+    const response = await firstValueFrom(
+      this.httpService.get(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json`, {
+        params: {
+          access_token: this.mapboxApiKey,
+          limit: 1,
+          country: 'IN',
+        },
+        timeout: 5000,
+      }),
+    );
+
+    const features = response.data?.features || [];
+    if (!features.length) return null;
+
+    const top = features[0];
+    const [longitude, latitude] = top.center || [];
+    const context = top.context || [];
+    const findContext = (idPrefix: string) =>
+      context.find((c: any) => String(c.id || '').startsWith(idPrefix))?.text;
+
+    return {
+      success: true,
+      location: {
+        formattedAddress: top.place_name || `${lat}, ${lng}`,
+        city: findContext('place') || findContext('locality') || '',
+        state: findContext('region') || '',
+        country: findContext('country') || 'India',
+        pincode: findContext('postcode'),
+        locality: findContext('locality') || findContext('neighborhood'),
+        coordinates: {
+          latitude: latitude || lat,
+          longitude: longitude || lng,
+        },
+      },
+      confidence: 0.85,
+      source: 'mapbox',
+    };
+  }
+
   /**
    * Basic location parsing when geocoding service is unavailable
    */

@@ -20,5 +20,26 @@ export class LocationsController {
 
     return result;
   }
+
+  @Public()
+  @Get('autocomplete')
+  async autocomplete(@Query('q') query: string) {
+    return this.geocodingService.autocompleteLocation(query);
+  }
+
+  @Public()
+  @Get('reverse')
+  async reverse(@Query('lat') lat: string, @Query('lng') lng: string) {
+    const latitude = Number(lat);
+    const longitude = Number(lng);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return { success: false, message: 'Valid lat/lng required' };
+    }
+    const result = await this.geocodingService.reverseGeocode(latitude, longitude);
+    if (!result) {
+      return { success: false, message: 'No results found' };
+    }
+    return result;
+  }
 }
 

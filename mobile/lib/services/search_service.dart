@@ -106,7 +106,9 @@ class ExtractedFilters {
       priceRange: json['priceRange'] != null ? Map<String, dynamic>.from(json['priceRange']) : null,
       bedrooms: json['bedrooms'] != null ? (json['bedrooms'] is int ? json['bedrooms'] as int : (json['bedrooms'] as num).toInt()) : null,
       bathrooms: json['bathrooms'] != null ? (json['bathrooms'] is int ? json['bathrooms'] as int : (json['bathrooms'] as num).toInt()) : null,
-      aiTags: json['aiTags'] != null ? List<String>.from(json['aiTags']) : null,
+      aiTags: json['aiTags'] != null
+          ? (json['aiTags'] as List).where((tag) => tag is String && tag.isNotEmpty).map((tag) => tag as String).toList()
+          : null,
     );
   }
 }

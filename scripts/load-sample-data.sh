@@ -56,6 +56,7 @@ echo -e "${YELLOW}Loading sample data files...${NC}\n"
 load_sql_file "$SAMPLE_DATA_DIR/module1_auth_sample_data.sql" "Module 1: Authentication & Users"
 load_sql_file "$SAMPLE_DATA_DIR/module2_properties_sample_data.sql" "Module 2: Properties"
 load_sql_file "$SAMPLE_DATA_DIR/module3_search_sample_data.sql" "Module 3: Search Properties"
+load_sql_file "$SAMPLE_DATA_DIR/module4_listing_features_sample_data.sql" "Module 4: Listing Features Properties"
 
 echo -e "${GREEN}=== Sample Data Loading Complete ===${NC}\n"
 
@@ -65,19 +66,22 @@ echo -e "${YELLOW}Verifying loaded data...${NC}"
 USER_COUNT=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM users;" | tr -d ' ')
 PROP_COUNT=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM properties;" | tr -d ' ')
 ROLE_COUNT=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM roles;" | tr -d ' ')
+FEATURE_COUNT=$(PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM property_features;" | tr -d ' ')
 
 # Default safety
 USER_COUNT=${USER_COUNT:-0}
 PROP_COUNT=${PROP_COUNT:-0}
 ROLE_COUNT=${ROLE_COUNT:-0}
+FEATURE_COUNT=${FEATURE_COUNT:-0}
 
 echo -e "${GREEN}Data Summary:${NC}"
 echo "  Users: $USER_COUNT"
 echo "  Properties: $PROP_COUNT"
 echo "  Roles: $ROLE_COUNT"
+echo "  Property Features: $FEATURE_COUNT"
 echo ""
 
-if [ "$USER_COUNT" -gt 0 ] && [ "$PROP_COUNT" -gt 0 ]; then
+if [ "$USER_COUNT" -gt 0 ] && [ "$PROP_COUNT" -gt 0 ] && [ "$FEATURE_COUNT" -gt 0 ]; then
     echo -e "${GREEN}✓ Sample data loaded successfully!${NC}"
 else
     echo -e "${YELLOW}⚠ Warning: Some data may not have loaded correctly.${NC}"

@@ -6,7 +6,9 @@
 - ✅ `CreateListingPage` (`/list-property`): create listing + multi-image upload + choose primary
 - ✅ Required fields, validation, state dropdown (all Indian states), area unit options (sqft/sqm/acre/sqyrd)
 - ✅ Mapbox location lookup via backend (`/locations/geocode`)
+- ✅ Mapbox map picker + autocomplete suggestions
 - ✅ `MyListingsPage` (`/my-listings`): list drafts/submitted + submit for verification
+- ✅ `EditListingPage` (`/my-listings/:id/edit`): edit listing + image reorder
 - ✅ `PropertiesPage`: now lists properties from backend (not placeholder)
 - ✅ Role guard: `RoleProtectedRoute` (seller/agent only)
 
@@ -14,7 +16,9 @@
 - ✅ `CreatePropertyScreen`: create listing + multi-image picker + upload + primary selection
 - ✅ Dropdowns for area unit / bedrooms / bathrooms
 - ✅ Mapbox location lookup via backend (`/locations/geocode`)
+- ✅ Mapbox map picker + autocomplete suggestions
 - ✅ `MyListingsScreen`: list drafts/submitted + submit for verification + create FAB
+- ✅ `EditPropertyScreen`: edit listing + image reorder
 - ✅ Bottom nav: added **List** tab with role check (seller/agent)
 
 ### Backend Integration (Used)
