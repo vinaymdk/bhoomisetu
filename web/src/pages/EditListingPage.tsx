@@ -35,6 +35,7 @@ export const EditListingPage = () => {
     setPrimary,
     removeImage,
     moveImage,
+    reorderImages,
     errors,
     validate,
     setFormError,
@@ -114,6 +115,7 @@ export const EditListingPage = () => {
           onSetPrimary={setPrimary}
           onRemoveImage={removeImage}
           onMoveImage={moveImage}
+          onReorderImages={reorderImages}
           onValidate={validate}
           onSubmit={submit}
           onLocationQueryChange={setLocationQuery}

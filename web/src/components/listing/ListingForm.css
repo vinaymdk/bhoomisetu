@@ -29,4 +29,27 @@
   color: #666;
 }
 
+.img-tile {
+  cursor: grab;
+  position: relative;
+}
+
+.img-tile.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
 

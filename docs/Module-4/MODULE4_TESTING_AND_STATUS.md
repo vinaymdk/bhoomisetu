@@ -11,6 +11,7 @@
   - area unit (sqft/sqm/acre/sqyrd)
   - Mapbox location lookup (backend `/locations/geocode`)
 - [ ] Use Mapbox map picker and click to update address
+- [ ] Drag map marker to update coordinates and address
 - [ ] Edit listing and reorder images (up/down)
 - [ ] Confirm redirect to **My Listings**
 - [ ] Submit a **draft** listing for verification
@@ -25,6 +26,7 @@
 - [ ] Verify dropdowns (area unit, bedrooms, bathrooms)
 - [ ] Use **Search location (Mapbox)** and verify fields auto-fill
 - [ ] Use **Pick on map** and verify fields auto-fill
+- [ ] Drag marker to update coordinates and address
 - [ ] Edit listing and reorder images (up/down)
 - [ ] Save listing → should return to My Listings and show it as `draft`
 - [ ] Submit draft → should become `pending_verification`

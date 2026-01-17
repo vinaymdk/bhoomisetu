@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CreatePropertyRequest, Property } from '../types/property';
 import { propertiesService } from '../services/properties.service';
-import { locationService, LocationSuggestion } from '../services/location.service';
+import { locationService } from '../services/location.service';
+import type { LocationSuggestion } from '../services/location.service';
 
 export interface ListingImage {
   id?: string;
@@ -185,6 +186,17 @@ export const useListingForm = (initialProperty?: Property) => {
     });
   };
 
+  const reorderImages = (from: number, to: number) => {
+    if (from === to) return;
+    setImages((prev) => {
+      if (from < 0 || to < 0 || from >= prev.length || to >= prev.length) return prev;
+      const next = prev.slice();
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
   const validate = () => {
     const next: Record<string, string> = {};
     if (state.title.trim().length < 5) next.title = 'Title is required (min 5 chars)';
@@ -282,6 +294,7 @@ export const useListingForm = (initialProperty?: Property) => {
     setPrimary,
     removeImage,
     moveImage,
+    reorderImages,
     errors,
     validate,
     setFormError,

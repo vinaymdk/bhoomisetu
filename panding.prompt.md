@@ -9,6 +9,14 @@ Login with "**Buyer**: buyer1@example.com / +919876543210"
 .env file: Check the following MAPBOX_API_KEY and execute to the project
 - Added MAPBOX_API_KEY=***** in /backent/.env file (For testing)
 
+
+Error: 
+Uncaught SyntaxError: The requested module '/src/services/location.service.ts' does not provide an export named 'LocationSuggestion' (at useListingForm.ts:4:27)
+
+"If you want, I can also add a small “drag handle” icon for web tiles to make drag affordance clearer."
+
+Yes please
+
 Yes continues as your plan...
 - Wire a proper map picker UI (map view) for mobile/web instead of text search.
 - Add Mapbox autocomplete suggestions with a selectable list.

@@ -1,5 +1,6 @@
 import type { ListingImage, ListingFormState } from '../../hooks/useListingForm';
 import type { ListingType, PropertyType } from '../../types/property';
+import { useState } from 'react';
 import { MapPicker } from '../location/MapPicker';
 import './ListingForm.css';
 
@@ -18,6 +19,7 @@ interface ListingFormProps {
   onSetPrimary: (idx: number) => void;
   onRemoveImage: (idx: number) => void;
   onMoveImage: (idx: number, direction: 'up' | 'down') => void;
+  onReorderImages: (from: number, to: number) => void;
   onValidate: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onLocationQueryChange: (value: string) => void;
@@ -74,6 +76,7 @@ export const ListingForm = ({
   onSetPrimary,
   onRemoveImage,
   onMoveImage,
+  onReorderImages,
   onValidate,
   onSubmit,
   onLocationQueryChange,
@@ -81,6 +84,14 @@ export const ListingForm = ({
   onMapSelect,
   submitLabel,
 }: ListingFormProps) => {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  const handleDrop = (targetIdx: number) => {
+    if (dragIndex == null || dragIndex === targetIdx) return;
+    onReorderImages(dragIndex, targetIdx);
+    setDragIndex(null);
+  };
+
   return (
     <form className="create-listing-form" onSubmit={onSubmit}>
       {errors.form && <div className="create-listing-error">❌ {errors.form}</div>}
@@ -270,7 +281,19 @@ export const ListingForm = ({
         {errors.images && <div className="field-error">{errors.images}</div>}
         <div className="images-grid">
           {images.map((img, idx) => (
-            <div key={img.previewUrl} className={`img-tile ${img.isPrimary ? 'primary' : ''}`}>
+            <div
+              key={img.previewUrl}
+              className={`img-tile ${img.isPrimary ? 'primary' : ''} ${dragIndex === idx ? 'dragging' : ''}`}
+              draggable
+              onDragStart={() => setDragIndex(idx)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => handleDrop(idx)}
+              onDragEnd={() => setDragIndex(null)}
+              aria-grabbed={dragIndex === idx}
+            >
+              <span className="drag-handle" aria-hidden="true">
+                ::
+              </span>
               <img src={img.previewUrl} alt="preview" />
               <div className="img-actions">
                 <button type="button" onClick={() => onSetPrimary(idx)}>
