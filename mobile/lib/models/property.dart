@@ -20,6 +20,12 @@ class PropertyLocation {
   });
 
   factory PropertyLocation.fromJson(Map<String, dynamic> json) {
+    double? parseNullableDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value);
+      return null;
+    }
     return PropertyLocation(
       address: json['address'] as String? ?? '',
       city: json['city'] as String? ?? '',
@@ -27,8 +33,8 @@ class PropertyLocation {
       pincode: json['pincode'] as String?,
       locality: json['locality'] as String?,
       landmark: json['landmark'] as String?,
-      latitude: json['latitude'] != null ? (json['latitude'] is double ? json['latitude'] as double : (json['latitude'] as num).toDouble()) : null,
-      longitude: json['longitude'] != null ? (json['longitude'] is double ? json['longitude'] as double : (json['longitude'] as num).toDouble()) : null,
+      latitude: parseNullableDouble(json['latitude']),
+      longitude: parseNullableDouble(json['longitude']),
     );
   }
 }
@@ -47,13 +53,19 @@ class PropertyImage {
   });
 
   factory PropertyImage.fromJson(Map<String, dynamic> json) {
+    int parseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
     return PropertyImage(
       id: json['id'] as String? ?? '',
       imageUrl: json['imageUrl'] as String? ?? '',
       isPrimary: json['isPrimary'] as bool? ?? false,
-      displayOrder: json['displayOrder'] != null 
-          ? (json['displayOrder'] as num).toInt()
-          : (json['order'] != null ? (json['order'] as num).toInt() : 0),
+      displayOrder: json['displayOrder'] != null
+          ? parseInt(json['displayOrder'])
+          : parseInt(json['order']),
     );
   }
 }
@@ -138,6 +150,19 @@ class Property {
   });
 
   factory Property.fromJson(Map<String, dynamic> json) {
+    double parseDouble(dynamic value) {
+      if (value == null) return 0;
+      if (value is num) return value.toDouble();
+      if (value is String) return double.tryParse(value) ?? 0;
+      return 0;
+    }
+
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toInt();
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
     // Handle location - can be nested object or flat structure
     Map<String, dynamic> locationData;
     if (json['location'] != null && json['location'] is Map) {
@@ -165,16 +190,16 @@ class Property {
       location: PropertyLocation.fromJson(locationData),
       title: json['title'] as String,
       description: json['description'] as String?,
-      price: (json['price'] as num).toDouble(),
-      area: (json['area'] as num).toDouble(),
+      price: parseDouble(json['price']),
+      area: parseDouble(json['area']),
       areaUnit: json['areaUnit'] as String,
-      bedrooms: json['bedrooms'] != null ? (json['bedrooms'] is int ? json['bedrooms'] as int : (json['bedrooms'] as num).toInt()) : null,
-      bathrooms: json['bathrooms'] != null ? (json['bathrooms'] is int ? json['bathrooms'] as int : (json['bathrooms'] as num).toInt()) : null,
-      balconies: json['balconies'] != null ? (json['balconies'] is int ? json['balconies'] as int : (json['balconies'] as num).toInt()) : null,
-      floors: json['floors'] != null ? (json['floors'] is int ? json['floors'] as int : (json['floors'] as num).toInt()) : null,
-      floorNumber: json['floorNumber'] != null ? (json['floorNumber'] is int ? json['floorNumber'] as int : (json['floorNumber'] as num).toInt()) : null,
+      bedrooms: parseInt(json['bedrooms']),
+      bathrooms: parseInt(json['bathrooms']),
+      balconies: parseInt(json['balconies']),
+      floors: parseInt(json['floors']),
+      floorNumber: parseInt(json['floorNumber']),
       furnishingStatus: json['furnishingStatus'] as String?,
-      ageOfConstruction: json['ageOfConstruction'] != null ? (json['ageOfConstruction'] is int ? json['ageOfConstruction'] as int : (json['ageOfConstruction'] as num).toInt()) : null,
+      ageOfConstruction: parseInt(json['ageOfConstruction']),
       images: json['images'] != null
           ? (json['images'] as List).map((i) => PropertyImage.fromJson(i as Map<String, dynamic>)).toList()
           : null,
@@ -184,8 +209,8 @@ class Property {
       isFeatured: json['isFeatured'] as bool,
       isPremium: json['isPremium'] as bool,
       featuredUntil: json['featuredUntil'] != null ? DateTime.parse(json['featuredUntil'] as String) : null,
-      viewsCount: json['viewsCount'] is int ? json['viewsCount'] as int : (json['viewsCount'] as num).toInt(),
-      interestedCount: json['interestedCount'] is int ? json['interestedCount'] as int : (json['interestedCount'] as num).toInt(),
+      viewsCount: parseInt(json['viewsCount']) ?? 0,
+      interestedCount: parseInt(json['interestedCount']) ?? 0,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

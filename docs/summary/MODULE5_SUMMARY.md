@@ -2,6 +2,11 @@
 
 ## ✅ Status: COMPLETE
 
+## ✅ UI/UX Status (Web + Mobile)
+- Added Customer Service dashboard UI (filters, stats, pagination).
+- Added property verification detail UI (seller info, images, verification form).
+- Role-gated navigation to CS dashboard for `customer_service` and `admin`.
+
 Module 5 (Customer Service Verification) has been successfully implemented. This is a **CRITICAL** module that enforces the core platform philosophy: **Properties cannot go LIVE without CS verification**.
 
 ## 🎯 Key Features Implemented

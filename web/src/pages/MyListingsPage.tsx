@@ -102,6 +102,9 @@ export const MyListingsPage = () => {
                 <div className="my-listings-status-row">
                   <span className={`status-badge status-${p.status}`}>{p.status.replaceAll('_', ' ')}</span>
                   <div className="listing-actions">
+                    <Link to={`/properties/${p.id}`} className="submit-btn secondary">
+                      View
+                    </Link>
                     <Link to={`/my-listings/${p.id}/edit`} className="submit-btn">
                       Edit
                     </Link>

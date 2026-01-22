@@ -7,6 +7,9 @@ cd backend && npm run start:dev
 # Run mobile app
 cd mobile && flutter clean && flutter pub get && flutter run
 
+<!-- Give permissions to load-******-sample-data.sh file -->
+chmod +x ./load-******-sample-data.sh 
+
 <!-- Network Testing -->
 http://192.168.0.108:3000/api/config/firebase
 

@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../services/search_service.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/property_card.dart';
+import '../../widgets/bottom_navigation.dart';
+import '../../providers/auth_provider.dart';
+import '../home/home_screen.dart';
+import '../properties/my_listings_screen.dart';
+import '../properties/property_details_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -356,6 +362,10 @@ class _SearchScreenState extends State<SearchScreen> {
             child: _buildResults(),
           ),
         ],
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: BottomNavItem.search,
+        onTap: _handleNavTap,
       ),
     );
   }
@@ -879,9 +889,14 @@ class _SearchScreenState extends State<SearchScreen> {
                   PropertyCard(
                     property: property,
                     onTap: () {
-                      // TODO: Navigate to property details
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Property: ${property.title}')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PropertyDetailsScreen(
+                            propertyId: property.id,
+                            initialTab: BottomNavItem.search,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -1028,6 +1043,46 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
     );
+  }
+
+  void _handleNavTap(BottomNavItem item) {
+    switch (item) {
+      case BottomNavItem.home:
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+        break;
+      case BottomNavItem.search:
+        // Already here
+        break;
+      case BottomNavItem.list:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canAccess = roles.contains('seller') || roles.contains('agent');
+        if (!canAccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Seller/Agent role required to list properties')),
+          );
+          return;
+        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyListingsScreen()),
+        );
+        break;
+      case BottomNavItem.saved:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved properties screen coming soon')),
+        );
+        break;
+      case BottomNavItem.profile:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+    }
   }
 }
 

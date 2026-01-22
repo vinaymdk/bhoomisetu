@@ -7,6 +7,7 @@ export const Header = () => {
   const { isAuthenticated, user, logout, roles } = useAuth();
   const navigate = useNavigate();
   const canList = roles.includes('seller') || roles.includes('agent');
+  const canVerify = roles.includes('customer_service') || roles.includes('admin');
 
   const handleLogout = () => {
     logout();
@@ -33,6 +34,11 @@ export const Header = () => {
               <Link to="/search" className="header-nav-link">
                 Search
               </Link>
+              {canVerify && (
+                <Link to="/cs/dashboard" className="header-nav-link">
+                  CS Dashboard
+                </Link>
+              )}
               {canList && (
                 <>
                   <Link to="/my-listings" className="header-nav-link">

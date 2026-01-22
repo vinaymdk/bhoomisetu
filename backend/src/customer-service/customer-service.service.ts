@@ -90,7 +90,7 @@ export class CustomerServiceService {
 
     // Apply city filter
     if (where.city) {
-      queryBuilder.andWhere('property.city = :city', { city: where.city });
+      queryBuilder.andWhere('property.city ILIKE :city', { city: where.city.trim() });
     }
 
     // Apply property type filter
@@ -325,29 +325,18 @@ export class CustomerServiceService {
       throw new ForbiddenException('Only customer service agents can access this endpoint');
     }
 
-    const [pending, verified, rejected, total] = await Promise.all([
-      this.verificationNoteRepository.count({
-        where: {
-          csAgentId,
-          property: { status: PropertyStatus.PENDING_VERIFICATION },
-        },
+    const [pending, verified, rejected] = await Promise.all([
+      this.propertyRepository.count({
+        where: { status: PropertyStatus.PENDING_VERIFICATION, deletedAt: IsNull() },
       }),
-      this.verificationNoteRepository.count({
-        where: {
-          csAgentId,
-          property: { status: PropertyStatus.LIVE },
-        },
+      this.propertyRepository.count({
+        where: { status: PropertyStatus.LIVE, deletedAt: IsNull() },
       }),
-      this.verificationNoteRepository.count({
-        where: {
-          csAgentId,
-          property: { status: PropertyStatus.REJECTED },
-        },
-      }),
-      this.verificationNoteRepository.count({
-        where: { csAgentId },
+      this.propertyRepository.count({
+        where: { status: PropertyStatus.REJECTED, deletedAt: IsNull() },
       }),
     ]);
+    const total = pending + verified + rejected;
 
     return {
       pending,

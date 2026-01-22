@@ -9,6 +9,9 @@ import '../../widgets/property_card.dart';
 import '../../widgets/bottom_navigation.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
+import '../auth/login_screen.dart';
+import '../properties/property_details_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -138,6 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final isAuthenticated = authProvider.isAuthenticated;
+    final roles = authProvider.roles;
+    final canVerify = roles.contains('customer_service') || roles.contains('admin');
     
     final data = isAuthenticated ? _dashboardData : _homeData;
     final featuredProperties = data?.featuredProperties ?? [];
@@ -147,6 +152,22 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('BhoomiSetu'),
         actions: [
+          if (isAuthenticated)
+            PopupMenuButton<String>(
+              onSelected: (value) async {
+                if (value == 'logout') {
+                  await authProvider.logout();
+                  if (!mounted) return;
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(value: 'logout', child: Text('Logout')),
+              ],
+            ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
@@ -155,6 +176,16 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+          if (canVerify)
+            IconButton(
+              icon: const Icon(Icons.verified_user_outlined),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CsDashboardScreen()),
+                );
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.person_outline),
             onPressed: () {
@@ -235,7 +266,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       property: newProperties[index],
                                       showFeaturedBadge: false,
                                       onTap: () {
-                                        // TODO: Navigate to property details
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => PropertyDetailsScreen(
+                                              propertyId: newProperties[index].id,
+                                              initialTab: BottomNavItem.home,
+                                            ),
+                                          ),
+                                        );
                                       },
                                     ),
                                   ),
@@ -286,7 +325,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                   property: featuredProperties[index],
                                   showFeaturedBadge: true,
                                   onTap: () {
-                                    // TODO: Navigate to property details
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => PropertyDetailsScreen(
+                                          propertyId: featuredProperties[index].id,
+                                          initialTab: BottomNavItem.home,
+                                        ),
+                                      ),
+                                    );
                                   },
                                 );
                               },

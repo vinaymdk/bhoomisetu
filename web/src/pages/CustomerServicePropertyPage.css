@@ -1,0 +1,114 @@
+.cs-property-page {
+  padding: 32px 16px;
+}
+
+.cs-property-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cs-property-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cs-property-header h1 {
+  margin: 0 0 6px;
+}
+
+.cs-property-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.cs-property-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cs-property-meta .label {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.cs-property-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cs-property-images img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.cs-property-description {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.cs-seller-card,
+.cs-latest-note,
+.cs-verify-form {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.cs-verify-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.cs-verify-form select,
+.cs-verify-form textarea {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.cs-verify-form .primary {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.secondary {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cs-error {
+  color: #b91c1c;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 980px) {
+  .cs-property-grid {
+    grid-template-columns: 1fr;
+  }
+}

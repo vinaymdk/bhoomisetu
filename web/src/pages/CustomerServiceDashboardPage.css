@@ -1,0 +1,227 @@
+.cs-dashboard-page {
+  padding: 32px 16px;
+}
+
+.cs-dashboard-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cs-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.cs-dashboard-header h1 {
+  margin: 0 0 6px;
+}
+
+.cs-refresh-btn {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cs-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.cs-stats > div {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cs-stat-label {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cs-filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.cs-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.cs-filters input,
+.cs-filters select {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.cs-filter-search {
+  grid-column: span 2;
+}
+
+.cs-filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.cs-filter-actions .primary,
+.cs-filter-actions .secondary {
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.cs-filter-actions .primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.cs-filter-actions .secondary {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+}
+
+.cs-state {
+  padding: 20px;
+  text-align: center;
+  color: #475569;
+}
+
+.cs-error {
+  color: #b91c1c;
+}
+
+.cs-list {
+  display: grid;
+  gap: 16px;
+}
+
+.cs-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+}
+
+.cs-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cs-card-header h3 {
+  margin: 0 0 6px;
+}
+
+.cs-status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  text-transform: capitalize;
+  background: #e2e8f0;
+  color: #475569;
+  height: fit-content;
+}
+
+.cs-status-pending_verification {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.cs-status-live {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.cs-status-rejected {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.cs-card-body {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cs-card-body .label {
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.cs-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cs-card-actions .primary {
+  background: #2563eb;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.cs-pagination {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  align-items: center;
+}
+
+.cs-pagination button {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 980px) {
+  .cs-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cs-filter-search {
+    grid-column: span 2;
+  }
+
+  .cs-card-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .cs-card-header {
+    flex-direction: column;
+  }
+}

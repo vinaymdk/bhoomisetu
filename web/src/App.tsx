@@ -11,6 +11,9 @@ import { SearchPage } from './pages/SearchPage';
 import { CreateListingPage } from './pages/CreateListingPage';
 import { MyListingsPage } from './pages/MyListingsPage';
 import { EditListingPage } from './pages/EditListingPage';
+import { PropertyDetailsPage } from './pages/PropertyDetailsPage';
+import { CustomerServiceDashboardPage } from './pages/CustomerServiceDashboardPage';
+import { CustomerServicePropertyPage } from './pages/CustomerServicePropertyPage';
 
 function App() {
   return (
@@ -19,6 +22,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/properties" element={<PropertiesPage />} />
+        <Route path="/properties/:id" element={<PropertyDetailsPage />} />
         <Route path="/search" element={<SearchPage />} />
         
         {/* Public routes that should redirect if authenticated */}
@@ -63,6 +67,24 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
               <EditListingPage />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Customer Service routes */}
+        <Route
+          path="/cs/dashboard"
+          element={
+            <RoleProtectedRoute allowedRoles={['customer_service', 'admin']}>
+              <CustomerServiceDashboardPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/cs/properties/:id"
+          element={
+            <RoleProtectedRoute allowedRoles={['customer_service', 'admin']}>
+              <CustomerServicePropertyPage />
             </RoleProtectedRoute>
           }
         />

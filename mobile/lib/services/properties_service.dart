@@ -126,6 +126,11 @@ class PropertiesService {
     return Property.fromJson(Map<String, dynamic>.from(response.data));
   }
 
+  Future<Property> getPropertyById(String id) async {
+    final response = await _apiClient.dio.get('/properties/$id');
+    return Property.fromJson(Map<String, dynamic>.from(response.data));
+  }
+
   Future<List<Property>> getMyProperties({String? status}) async {
     final response = await _apiClient.dio.get('/properties/my', queryParameters: status != null ? {'status': status} : null);
     return (response.data as List).map((p) => Property.fromJson(Map<String, dynamic>.from(p))).toList();
