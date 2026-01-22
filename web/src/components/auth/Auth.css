@@ -187,6 +187,15 @@
   margin-left: auto;
 }
 
+.auth-dev-otp {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background: #fff3e0;
+  border: 1px dashed #ffb74d;
+  color: #e65100;
+  font-size: 13px;
+}
+
 .auth-hint {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);

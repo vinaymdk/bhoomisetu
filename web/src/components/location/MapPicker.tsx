@@ -45,14 +45,19 @@ export const MapPicker = ({ mapboxToken, latitude, longitude, onSelect }: MapPic
     if (latitude == null || longitude == null) return;
     const map = mapRef.current;
     if (!markerRef.current) {
-      markerRef.current = new mapboxgl.Marker({ color: '#1976d2' })
+      const marker = new mapboxgl.Marker({ color: '#1976d2', draggable: true })
         .setLngLat([longitude, latitude])
         .addTo(map);
+      marker.on('dragend', () => {
+        const pos = marker.getLngLat();
+        onSelect(pos.lat, pos.lng);
+      });
+      markerRef.current = marker;
     } else {
       markerRef.current.setLngLat([longitude, latitude]);
     }
     map.easeTo({ center: [longitude, latitude], zoom: 14 });
-  }, [latitude, longitude]);
+  }, [latitude, longitude, onSelect]);
 
   if (!mapboxToken) {
     return (

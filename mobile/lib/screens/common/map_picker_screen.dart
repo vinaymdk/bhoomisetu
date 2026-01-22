@@ -17,7 +17,13 @@ class MapPickerScreen extends StatelessWidget {
     final center = LatLng(lat, lng);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pick Location')),
+      appBar: AppBar(
+        title: const Text('Pick Location'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: token == null
           ? const Center(child: Text('Mapbox token missing. Map view disabled.'))
           : FlutterMap(
@@ -27,6 +33,10 @@ class MapPickerScreen extends StatelessWidget {
                 onTap: (tapPosition, point) async {
                   vm.setCoordinates(point.latitude, point.longitude);
                   await vm.reverseGeocode(point.latitude, point.longitude);
+                  // Auto-pop after location is selected
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
                 },
               ),
               children: [
@@ -46,6 +56,10 @@ class MapPickerScreen extends StatelessWidget {
                       onDragEnd: (details, point) async {
                         vm.setCoordinates(point.latitude, point.longitude);
                         await vm.reverseGeocode(point.latitude, point.longitude);
+                        // Auto-pop after location is selected
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
                       },
                     ),
                   ],

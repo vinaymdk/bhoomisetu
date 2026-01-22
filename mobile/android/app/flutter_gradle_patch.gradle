@@ -1,0 +1,10 @@
+// Gradle patch for Flutter plugin file permissions issue
+// This script is applied by app/build.gradle
+
+gradle.taskGraph.whenReady { graph ->
+    graph.getAllTasks().findAll { 
+        it.name == ':gradle:compileKotlin' 
+    }.each { task ->
+        task.enabled = false
+    }
+}

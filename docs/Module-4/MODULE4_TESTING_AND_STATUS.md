@@ -1,10 +1,17 @@
 # Module 4: Seller Property Listing - Testing Checklist
 
+## Status / Notes (Jan 19, 2026)
+- Code updates applied for form validation + submit gating, Mapbox drag marker support, and AI filter removal refresh.
+- Backend app config now derives `apiBaseUrl` from environment/request host to avoid hardcoded IPs.
+- Manual testing still required; use the checklist below for web + mobile.
+
 ## Web
 - [ ] Login as **Seller** (`seller1@example.com`)
 - [ ] Verify header shows **My Listings** and **List Property**
 - [ ] Create listing with:
   - 1+ images (upload)
+  - drag-and-drop reorder in web grid
+  - remove image button visibility + functionality
   - title/address/city/state/price/area
   - optional lat/long via “Use my location”
   - state dropdown (all Indian states)
@@ -12,6 +19,8 @@
   - Mapbox location lookup (backend `/locations/geocode`)
 - [ ] Use Mapbox map picker and click to update address
 - [ ] Drag map marker to update coordinates and address
+- [ ] Select autocomplete suggestion and ensure list hides
+- [ ] Search → AI extracted filters show and can be removed (web)
 - [ ] Edit listing and reorder images (up/down)
 - [ ] Confirm redirect to **My Listings**
 - [ ] Submit a **draft** listing for verification
@@ -27,6 +36,7 @@
 - [ ] Use **Search location (Mapbox)** and verify fields auto-fill
 - [ ] Use **Pick on map** and verify fields auto-fill
 - [ ] Drag marker to update coordinates and address
+- [ ] Search → AI extracted filters show and can be removed (mobile)
 - [ ] Edit listing and reorder images (up/down)
 - [ ] Save listing → should return to My Listings and show it as `draft`
 - [ ] Submit draft → should become `pending_verification`

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -173,6 +173,27 @@ export class UsersService {
     await this.userRepository.update(userId, {
       lastLoginAt: new Date(),
     });
+  }
+
+  /**
+   * Ensure user is active after successful login verification.
+   * - Pending users are activated automatically.
+   * - Suspended/banned users are blocked.
+   */
+  async ensureActiveForLogin(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.status === 'pending') {
+      user.status = 'active' as any;
+      return await this.userRepository.save(user);
+    }
+    if (user.status !== 'active') {
+      // Keep consistent with auth guard expectations
+      throw new ForbiddenException(`User status not active: ${user.status}`);
+    }
+    return user;
   }
 
   /**

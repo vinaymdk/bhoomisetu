@@ -39,63 +39,41 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Check if tokens exist in secure storage
       final token = await _storage.read(key: 'accessToken');
       final refreshToken = await _storage.read(key: 'refreshToken');
       
-      if (token != null) {
+      if (token == null && refreshToken == null) {
+        // No tokens stored, user is not authenticated
+        _isAuthenticated = false;
+        _userData = null;
+        _roles = [];
+      } else {
+        // Tokens exist, consider user authenticated
+        // The API interceptor will handle token validation and refresh automatically
+        // on the first API call. Don't require getCurrentUser to succeed here because:
+        // 1. It can fail temporarily (network, server issues)
+        // 2. The interceptor will handle 401s and refresh tokens
+        // 3. We trust the tokens are valid unless proven otherwise
+        
+        _isAuthenticated = true;
+        
+        // Try to load user data, but don't logout if it fails
         try {
-          final userData = await _authService.getCurrentUser(token);
+          final userData = await _authService.getCurrentUser();
           _userData = userData['user'];
           _roles = List<String>.from(userData['roles'] ?? []);
-          _isAuthenticated = true;
         } catch (e) {
-          // If token expired, try to refresh
-          if (refreshToken != null && refreshToken.isNotEmpty) {
-            try {
-              final tokens = await _authService.refreshTokens(refreshToken);
-              final newAccessToken = tokens['tokens']?['accessToken'] ?? tokens['accessToken'];
-              final newRefreshToken = tokens['tokens']?['refreshToken'] ?? tokens['refreshToken'];
-              
-              await _storage.write(key: 'accessToken', value: newAccessToken);
-              if (newRefreshToken != null) {
-                await _storage.write(key: 'refreshToken', value: newRefreshToken);
-              }
-              
-              // Retry getting user with new token
-              final userData = await _authService.getCurrentUser(newAccessToken);
-              _userData = userData['user'];
-              _roles = List<String>.from(userData['roles'] ?? []);
-              _isAuthenticated = true;
-            } catch (refreshError) {
-              // Refresh failed, logout
-              await logout();
-            }
-          } else {
-            // No refresh token, logout
-            await logout();
-          }
-        }
-      } else if (refreshToken != null && refreshToken.isNotEmpty) {
-        // Only refresh token exists, try to refresh
-        try {
-          final tokens = await _authService.refreshTokens(refreshToken);
-          final newAccessToken = tokens['tokens']?['accessToken'] ?? tokens['accessToken'];
-          final newRefreshToken = tokens['tokens']?['refreshToken'] ?? tokens['refreshToken'];
-          
-          await _storage.write(key: 'accessToken', value: newAccessToken);
-          if (newRefreshToken != null) {
-            await _storage.write(key: 'refreshToken', value: newRefreshToken);
-          }
-          
-          final userData = await _authService.getCurrentUser(newAccessToken);
-          _userData = userData['user'];
-          _roles = List<String>.from(userData['roles'] ?? []);
-          _isAuthenticated = true;
-        } catch (refreshError) {
-          await logout();
+          // Log the error but don't logout
+          // The token will be validated on first actual API call
+          debugPrint('Initial user load failed, will be retried on first API call: $e');
+          // Keep user authenticated - data will be loaded when needed
+          _userData = null;
+          _roles = [];
         }
       }
     } catch (e) {
+      // Storage access error - logout as safety measure
       await logout();
     } finally {
       _isLoading = false;
@@ -131,13 +109,10 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> refreshUser() async {
     try {
-      final token = await _storage.read(key: 'accessToken');
-      if (token != null) {
-        final userData = await _authService.getCurrentUser(token);
-        _userData = userData['user'];
-        _roles = List<String>.from(userData['roles'] ?? []);
-        notifyListeners();
-      }
+      final userData = await _authService.getCurrentUser();
+      _userData = userData['user'];
+      _roles = List<String>.from(userData['roles'] ?? []);
+      notifyListeners();
     } catch (e) {
       await logout();
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchService, type SearchFilters, type AiSearchResponse } from '../services/search.service';
 import { PropertyCard } from '../components/property/PropertyCard';
@@ -11,6 +11,7 @@ type PropertyType = 'apartment' | 'house' | 'villa' | 'plot' | 'commercial' | 'i
 export const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   
   // Search state
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -18,6 +19,7 @@ export const SearchPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [dismissedExtracted, setDismissedExtracted] = useState<string[]>([]);
 
   // Filter state
   const [filters, setFilters] = useState<SearchFilters>({
@@ -39,6 +41,8 @@ export const SearchPage = () => {
   const performSearch = useCallback(async (searchFilters: SearchFilters) => {
     setLoading(true);
     setError(null);
+    // Clear dismissed extracted filters when performing new search
+    setDismissedExtracted([]);
     
     try {
       const response = await searchService.search(searchFilters);
@@ -84,6 +88,27 @@ export const SearchPage = () => {
 
   const handleFilterChange = (key: keyof SearchFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
+  };
+
+  // Debounced filter change for text inputs to preserve cursor position
+  const handleFilterChangeDebounced = (key: keyof SearchFilters, value: any) => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    debounceTimer.current = setTimeout(() => {
+      handleFilterChange(key, value);
+    }, 500);
+  };
+
+  const dismissExtracted = (key: string) => {
+    setDismissedExtracted(prev => (prev.includes(key) ? prev : [...prev, key]));
+  };
+
+  const handleRemoveAiTag = (tag: string) => {
+    dismissExtracted(`aiTag:${tag}`);
+    const currentTags = filters.aiTags ?? results?.extractedFilters.aiTags ?? [];
+    const nextTags = currentTags.filter((t) => t !== tag);
+    handleFilterChange('aiTags', nextTags.length ? nextTags : undefined);
   };
 
   const clearFilters = () => {
@@ -196,7 +221,7 @@ export const SearchPage = () => {
                   className="filter-input"
                   placeholder="Enter city"
                   value={filters.city || ''}
-                  onChange={(e) => handleFilterChange('city', e.target.value || undefined)}
+                  onChange={(e) => handleFilterChangeDebounced('city', e.target.value || undefined)}
                 />
               </div>
 
@@ -207,7 +232,7 @@ export const SearchPage = () => {
                   className="filter-input"
                   placeholder="Enter locality"
                   value={filters.locality || ''}
-                  onChange={(e) => handleFilterChange('locality', e.target.value || undefined)}
+                  onChange={(e) => handleFilterChangeDebounced('locality', e.target.value || undefined)}
                 />
               </div>
 
@@ -220,7 +245,7 @@ export const SearchPage = () => {
                     className="filter-input"
                     placeholder="Min Price"
                     value={filters.minPrice || ''}
-                    onChange={(e) => handleFilterChange('minPrice', e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => handleFilterChangeDebounced('minPrice', e.target.value ? Number(e.target.value) : undefined)}
                   />
                   <span className="price-separator">to</span>
                   <input
@@ -228,7 +253,7 @@ export const SearchPage = () => {
                     className="filter-input"
                     placeholder="Max Price"
                     value={filters.maxPrice || ''}
-                    onChange={(e) => handleFilterChange('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => handleFilterChangeDebounced('maxPrice', e.target.value ? Number(e.target.value) : undefined)}
                   />
                 </div>
               </div>
@@ -317,21 +342,76 @@ export const SearchPage = () => {
             {/* Extracted Filters Display */}
             {results?.extractedFilters && Object.keys(results.extractedFilters).length > 0 && (
               <div className="extracted-filters">
-                <h3>AI Extracted Filters:</h3>
+                <div className="extracted-filters-header">
+                  <h3>AI Extracted Filters:</h3>
+                  <button 
+                    type="button" 
+                    className="reset-extracted-button"
+                    title="Clear all extracted filters"
+                    onClick={() => {
+                      setDismissedExtracted([]);
+                      setFilters({
+                        ...filters,
+                        city: undefined,
+                        propertyType: undefined,
+                        bedrooms: undefined,
+                        aiTags: undefined,
+                        page: 1,
+                      });
+                    }}
+                  >
+                    ↻ Reset
+                  </button>
+                </div>
                 <div className="extracted-filters-tags">
-                  {results.extractedFilters.location?.city && (
-                    <span className="extracted-tag">📍 {results.extractedFilters.location.city}</span>
+                  {results.extractedFilters.location?.city && !dismissedExtracted.includes('city') && (
+                    <button
+                      type="button"
+                      className="extracted-tag"
+                      onClick={() => {
+                        dismissExtracted('city');
+                        handleFilterChange('city', undefined);
+                      }}
+                    >
+                      📍 {results.extractedFilters.location.city}
+                      <span className="tag-close">×</span>
+                    </button>
                   )}
-                  {results.extractedFilters.propertyType && (
-                    <span className="extracted-tag">🏠 {results.extractedFilters.propertyType}</span>
+                  {results.extractedFilters.propertyType && !dismissedExtracted.includes('propertyType') && (
+                    <button
+                      type="button"
+                      className="extracted-tag"
+                      onClick={() => {
+                        dismissExtracted('propertyType');
+                        handleFilterChange('propertyType', undefined);
+                      }}
+                    >
+                      🏠 {results.extractedFilters.propertyType}
+                      <span className="tag-close">×</span>
+                    </button>
                   )}
-                  {results.extractedFilters.bedrooms && (
-                    <span className="extracted-tag">🛏️ {results.extractedFilters.bedrooms} BHK</span>
+                  {results.extractedFilters.bedrooms && !dismissedExtracted.includes('bedrooms') && (
+                    <button
+                      type="button"
+                      className="extracted-tag"
+                      onClick={() => {
+                        dismissExtracted('bedrooms');
+                        handleFilterChange('bedrooms', undefined);
+                      }}
+                    >
+                      🛏️ {results.extractedFilters.bedrooms} BHK
+                      <span className="tag-close">×</span>
+                    </button>
                   )}
                   {results.extractedFilters.aiTags && results.extractedFilters.aiTags.length > 0 && (
-                    results.extractedFilters.aiTags.map((tag, idx) => (
-                      <span key={idx} className="extracted-tag ai-tag">✨ {tag}</span>
-                    ))
+                    results.extractedFilters.aiTags
+                      .filter((tag) => !dismissedExtracted.includes(`aiTag:${tag}`))
+                      .map((tag) => (
+                        <button key={tag} type="button" className="extracted-tag ai-tag" onClick={() => handleRemoveAiTag(tag)}>
+                          ✨ {tag}
+                          <span className="tag-close">×</span>
+                        </button>
+                      ))
                   )}
                 </div>
               </div>

@@ -114,6 +114,11 @@ export const useListingForm = (initialProperty?: Property) => {
         setSuggestions([]);
         return;
       }
+      // Don't fetch suggestions if we just applied one (i.e., if address is already filled)
+      if (state.address && state.address.trim().length > 5) {
+        setSuggestions([]);
+        return;
+      }
       try {
         const result = await locationService.autocomplete(locationQuery);
         setSuggestions(result);
@@ -122,11 +127,48 @@ export const useListingForm = (initialProperty?: Property) => {
       }
     }, 300);
     return () => clearTimeout(handle);
-  }, [locationQuery]);
+  }, [locationQuery, state.address]);
 
-  const setField = useCallback(<K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) => {
-    setState((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  const getFieldError = useCallback(
+    <K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) => {
+      switch (key) {
+        case 'title':
+          return String(value).trim().length < 5 ? 'Title is required (min 5 chars)' : '';
+        case 'address':
+          return String(value).trim().length < 5 ? 'Address is required' : '';
+        case 'city':
+          return String(value).trim().length < 2 ? 'City is required' : '';
+        case 'state':
+          return String(value).trim().length < 2 ? 'State is required' : '';
+        case 'price':
+          return value === '' || Number(value) <= 0 ? 'Valid price is required' : '';
+        case 'area':
+          return value === '' || Number(value) <= 0 ? 'Valid area is required' : '';
+        default:
+          return '';
+      }
+    },
+    [],
+  );
+
+  const setField = useCallback(
+    <K extends keyof ListingFormState>(key: K, value: ListingFormState[K]) => {
+      setState((prev) => ({ ...prev, [key]: value }));
+      if (['title', 'address', 'city', 'state', 'price', 'area'].includes(key)) {
+        const error = getFieldError(key, value);
+        setErrors((prev) => {
+          const next = { ...prev };
+          if (error) {
+            next[key] = error;
+          } else {
+            delete next[key];
+          }
+          return next;
+        });
+      }
+    },
+    [getFieldError],
+  );
 
   const addFiles = (files: FileList | null) => {
     if (!files) return;
@@ -139,6 +181,12 @@ export const useListingForm = (initialProperty?: Property) => {
       const merged = [...prev, ...next].slice(0, 20);
       if (!merged.some((i) => i.isPrimary) && merged.length > 0) merged[0].isPrimary = true;
       return merged;
+    });
+    setErrors((prev) => {
+      if (!prev.images) return prev;
+      const nextErrors = { ...prev };
+      delete nextErrors.images;
+      return nextErrors;
     });
   };
 
@@ -170,6 +218,9 @@ export const useListingForm = (initialProperty?: Property) => {
     setImages((prev) => {
       const next = prev.filter((_, i) => i !== idx);
       if (next.length > 0 && !next.some((i) => i.isPrimary)) next[0].isPrimary = true;
+      if (next.length === 0) {
+        setErrors((prevErrors) => ({ ...prevErrors, images: 'Add at least one photo' }));
+      }
       return next;
     });
   };
@@ -199,12 +250,18 @@ export const useListingForm = (initialProperty?: Property) => {
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (state.title.trim().length < 5) next.title = 'Title is required (min 5 chars)';
-    if (state.address.trim().length < 5) next.address = 'Address is required';
-    if (state.city.trim().length < 2) next.city = 'City is required';
-    if (state.state.trim().length < 2) next.state = 'State is required';
-    if (state.price === '' || Number(state.price) <= 0) next.price = 'Valid price is required';
-    if (state.area === '' || Number(state.area) <= 0) next.area = 'Valid area is required';
+    const titleError = getFieldError('title', state.title);
+    const addressError = getFieldError('address', state.address);
+    const cityError = getFieldError('city', state.city);
+    const stateError = getFieldError('state', state.state);
+    const priceError = getFieldError('price', state.price);
+    const areaError = getFieldError('area', state.area);
+    if (titleError) next.title = titleError;
+    if (addressError) next.address = addressError;
+    if (cityError) next.city = cityError;
+    if (stateError) next.state = stateError;
+    if (priceError) next.price = priceError;
+    if (areaError) next.area = areaError;
     if (images.length === 0) next.images = 'Add at least one photo';
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -221,18 +278,27 @@ export const useListingForm = (initialProperty?: Property) => {
       state.city.trim().length >= 2 &&
       state.state.trim().length >= 2 &&
       state.price !== '' &&
+      Number(state.price) > 0 &&
       state.area !== '' &&
-      images.length > 0 &&
-      Object.keys(errors).length === 0
+      Number(state.area) > 0 &&
+      images.length > 0
     );
-  }, [state, images, errors]);
+  }, [state, images]);
 
   const applySuggestion = (suggestion: LocationSuggestion) => {
     const [lng, lat] = suggestion.center;
+    // 1. Update location query with selected place name
     setLocationQuery(suggestion.placeName);
+    // 2. Immediately clear suggestions to remove the dropdown
     setSuggestions([]);
+    // 3. Update latitude and longitude
     setField('latitude', lat);
     setField('longitude', lng);
+    // Note: reverseGeocode will be called by the caller to fill in other address fields
+  };
+
+  const clearSuggestions = () => {
+    setSuggestions([]);
   };
 
   const reverseGeocode = async (lat: number, lng: number) => {
@@ -246,6 +312,34 @@ export const useListingForm = (initialProperty?: Property) => {
     setField('landmark', location.landmark || state.landmark);
     setField('latitude', location.coordinates?.latitude ?? lat);
     setField('longitude', location.coordinates?.longitude ?? lng);
+  };
+
+  const autodetectLocation = () => {
+    if (!navigator.geolocation) {
+      setFormError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setField('latitude', latitude);
+        setField('longitude', longitude);
+        void reverseGeocode(latitude, longitude).finally(() => {
+          setLoading(false);
+        });
+      },
+      (error) => {
+        setFormError(`Geolocation error: ${error.message}`);
+        setLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
   };
 
   const buildPayload = async (): Promise<CreatePropertyRequest> => {
@@ -306,7 +400,9 @@ export const useListingForm = (initialProperty?: Property) => {
     setLocationQuery,
     suggestions,
     applySuggestion,
+    clearSuggestions,
     reverseGeocode,
+    autodetectLocation,
     buildPayload,
   };
 };

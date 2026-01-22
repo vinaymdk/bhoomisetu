@@ -1,3 +1,5 @@
+// src/context/AuthContext.tsx
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authService } from '../services/auth.service';
@@ -19,78 +21,109 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const normalizeToken = (token?: string | null) => {
+    if (!token) return null;
+    const trimmed = token.trim();
+    if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return null;
+    return trimmed;
+  };
+
+  const clearSession = () => {
+    authService.logout();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    setUser(null);
+    setRoles([]);
+    setIsAuthenticated(false);
+  };
 
   useEffect(() => {
-    checkAuth();
+    void restoreSession(); // async - let it run in background
   }, []);
 
-  const checkAuth = async () => {
-    const token = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-    
-    if (!token && !refreshToken) {
+  /**
+   * Restore auth state on page refresh
+   * ✅ Trust tokens
+   * ✅ Load user data async (don't block)
+   */
+  const restoreSession = async () => {
+    const accessToken = normalizeToken(localStorage.getItem('accessToken'));
+    const refreshToken = normalizeToken(localStorage.getItem('refreshToken'));
+
+    if (!accessToken && !refreshToken) {
+      clearSession();
       setIsLoading(false);
       return;
     }
 
+    // Tokens exist → user is considered authenticated
+    setIsAuthenticated(true);
+    
+    // Load user data in background (don't block, don't fail if error)
     try {
-      // Try to get current user with existing token
       const data = await authService.getCurrentUser();
       setUser(data.user);
-      setRoles(data.roles);
+      setRoles(data.roles || []);
     } catch (error: any) {
-      // If token expired, try to refresh
-      if (error.response?.status === 401 && refreshToken) {
-        try {
-          const tokens = await authService.refreshTokens(refreshToken);
-          localStorage.setItem('accessToken', tokens.accessToken);
-          if (tokens.refreshToken) {
-            localStorage.setItem('refreshToken', tokens.refreshToken);
-          }
-          
-          // Retry getting user with new token
-          const data = await authService.getCurrentUser();
-          setUser(data.user);
-          setRoles(data.roles);
-        } catch (refreshError) {
-          console.error('Token refresh failed:', refreshError);
-          authService.logout();
-          setUser(null);
-          setRoles([]);
-        }
+      // Tokens are invalid or user inactive → force logout
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        clearSession();
       } else {
-        console.error('Auth check failed:', error);
-        authService.logout();
-        setUser(null);
-        setRoles([]);
+        console.debug('User data load on restore:', error);
       }
-    } finally {
-      setIsLoading(false);
     }
+    
+    setIsLoading(false);
   };
 
+  /**
+   * Login handler
+   */
   const login = (authResponse: AuthResponse) => {
-    localStorage.setItem('accessToken', authResponse.tokens.accessToken);
-    localStorage.setItem('refreshToken', authResponse.tokens.refreshToken);
+    const rawAccessToken = authResponse.tokens?.accessToken || (authResponse as any).accessToken;
+    const rawRefreshToken = authResponse.tokens?.refreshToken || (authResponse as any).refreshToken;
+    const accessToken = normalizeToken(rawAccessToken);
+    const refreshToken = normalizeToken(rawRefreshToken);
+
+    if (!accessToken || !refreshToken) {
+      console.error('Login failed: missing tokens in auth response');
+      setIsAuthenticated(false);
+      return;
+    }
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+
     setUser(authResponse.user);
     setRoles(authResponse.roles || []);
+    setIsAuthenticated(true);
+
+    // Ensure roles are loaded
     if (!authResponse.roles || authResponse.roles.length === 0) {
-      // Ensure roles are loaded for role-guarded routes
       void refreshUser();
     }
   };
 
+  /**
+   * Logout handler
+   */
   const logout = () => {
-    authService.logout();
-    setUser(null);
-    setRoles([]);
+    clearSession();
   };
 
+  /**
+   * Explicit user refresh
+   * (call after first protected API or when needed)
+   */
   const refreshUser = async () => {
     try {
       const data = await authService.getCurrentUser();
       setUser(data.user);
-      setRoles(data.roles);
+      setRoles(data.roles || []);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error('Failed to refresh user:', error);
       logout();
@@ -103,7 +136,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         user,
         roles,
         isLoading,
-        isAuthenticated: !!user,
+        isAuthenticated,
         login,
         logout,
         refreshUser,
@@ -116,7 +149,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

@@ -22,13 +22,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _step = 'method'; // 'method' or 'otp'
   String _channel = 'sms'; // 'sms' or 'email'
-  String _purpose = 'login'; // Default to login (tabs removed)
+  final String _purpose = 'login'; // Default to login (tabs removed)
   bool _isLoading = false;
   String? _error;
   String? _destination; // Store email/phone for OTP screen
   int _resendCooldown = 0;
   String _countryCode = '+91';
   String _phoneNumber = ''; // Store phone number for UnifiedPhoneInput
+  String? _devOtp;
 
   bool _isPhoneValid() {
     if (_channel != 'sms') return false;
@@ -38,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _requestOtp() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_channel == 'sms' && !_isPhoneValid()) {
       setState(() {
         _error = 'Please enter a valid 10-digit phone number';
@@ -58,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
         final formattedPhone = '$_countryCode$phoneNumber';
 
         // Request OTP from backend
-        await _authService.requestOtp(
+        final otpResponse = await _authService.requestOtp(
           channel: 'sms',
           destination: formattedPhone,
           purpose: _purpose,
@@ -67,6 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _destination = formattedPhone;
           _step = 'otp';
+          _devOtp = otpResponse['otp'] as String?;
           _isLoading = false;
         });
       } else {
@@ -81,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         // Request OTP from backend
-        await _authService.requestOtp(
+        final otpResponse = await _authService.requestOtp(
           channel: 'email',
           destination: email,
           purpose: _purpose,
@@ -90,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _destination = email;
           _step = 'otp';
+          _devOtp = otpResponse['otp'] as String?;
           _isLoading = false;
         });
       }
@@ -188,16 +191,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       String idToken;
-      
+
       if (provider == 'google') {
         // Google Sign-In
         idToken = await _socialAuthService.signInWithGoogle();
       } else if (provider == 'facebook') {
         // Facebook Sign-In - TODO: Implement when flutter_facebook_auth package is added
-        throw Exception('Facebook Sign-In is not yet implemented. Please use Google Sign-In for now.');
+        throw Exception(
+            'Facebook Sign-In is not yet implemented. Please use Google Sign-In for now.');
       } else if (provider == 'apple') {
         // Apple Sign-In - TODO: Implement when sign_in_with_apple package is added
-        throw Exception('Apple Sign-In is not yet implemented. Please use Google Sign-In for now.');
+        throw Exception(
+            'Apple Sign-In is not yet implemented. Please use Google Sign-In for now.');
       } else {
         throw Exception('Unknown provider: $provider');
       }
@@ -276,23 +281,27 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildChannelButton('Phone', _channel == 'sms', () {
+                      child:
+                          _buildChannelButton('Phone', _channel == 'sms', () {
                         setState(() {
                           _channel = 'sms';
                           _error = null;
                           _phoneNumber = '';
                           _emailController.clear();
+                          _devOtp = null;
                         });
                       }),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildChannelButton('Email', _channel == 'email', () {
+                      child:
+                          _buildChannelButton('Email', _channel == 'email', () {
                         setState(() {
                           _channel = 'email';
                           _error = null;
                           _phoneNumber = '';
                           _emailController.clear();
+                          _devOtp = null;
                         });
                       }),
                     ),
@@ -340,7 +349,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter email';
                       }
-                      if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value)) {
+                      if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                          .hasMatch(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -363,10 +373,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: (_isLoading || 
-                      (_channel == 'sms' && !_isPhoneValid()) ||
-                      (_channel == 'email' && (_emailController.text.trim().isEmpty || 
-                       !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(_emailController.text.trim()))))
+                  onPressed: (_isLoading ||
+                          (_channel == 'sms' && !_isPhoneValid()) ||
+                          (_channel == 'email' &&
+                              (_emailController.text.trim().isEmpty ||
+                                  !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                                      .hasMatch(_emailController.text.trim()))))
                       ? null
                       : _requestOtp,
                   style: ElevatedButton.styleFrom(
@@ -377,7 +389,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator()
-                      : Text('Send ${_channel == 'sms' ? 'OTP' : 'Verification Code'}'),
+                      : Text(
+                          'Send ${_channel == 'sms' ? 'OTP' : 'Verification Code'}'),
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -385,7 +398,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(child: Divider(color: Colors.grey.shade300)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('Or continue with', style: TextStyle(color: Colors.grey.shade600)),
+                      child: Text('Or continue with',
+                          style: TextStyle(color: Colors.grey.shade600)),
                     ),
                     Expanded(child: Divider(color: Colors.grey.shade300)),
                   ],
@@ -395,7 +409,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _isLoading ? null : () => _socialLogin('google'),
+                        onPressed:
+                            _isLoading ? null : () => _socialLogin('google'),
                         icon: const Icon(Icons.g_mobiledata, size: 24),
                         label: const Text('Google'),
                         style: OutlinedButton.styleFrom(
@@ -409,7 +424,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _isLoading ? null : () => _socialLogin('facebook'),
+                        onPressed:
+                            _isLoading ? null : () => _socialLogin('facebook'),
                         icon: const Icon(Icons.facebook, size: 24),
                         label: const Text('Facebook'),
                         style: OutlinedButton.styleFrom(
@@ -479,6 +495,24 @@ class _LoginScreenState extends State<LoginScreen> {
                   });
                 },
               ),
+              if (_devOtp != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Text(
+                    'Dev OTP: $_devOtp',
+                    style: TextStyle(
+                        color: Colors.orange.shade900,
+                        fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -496,7 +530,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: (_isLoading || _otpController.text.length != 6) ? null : _verifyOtp,
+                onPressed: (_isLoading || _otpController.text.length != 6)
+                    ? null
+                    : _verifyOtp,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -512,18 +548,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
-                    onPressed: _isLoading ? null : () {
-                      setState(() {
-                        _step = 'method';
-                        _otpController.clear();
-                        _error = null;
-                        _destination = null;
-                      });
-                    },
-                    child: Text('Change ${_channel == 'sms' ? 'phone number' : 'email'}'),
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            setState(() {
+                              _step = 'method';
+                              _otpController.clear();
+                              _error = null;
+                              _destination = null;
+                            });
+                          },
+                    child: Text(
+                        'Change ${_channel == 'sms' ? 'phone number' : 'email'}'),
                   ),
                   TextButton(
-                    onPressed: (_isLoading || _resendCooldown > 0) ? null : _resendCode,
+                    onPressed: (_isLoading || _resendCooldown > 0)
+                        ? null
+                        : _resendCode,
                     child: Text(
                       _resendCooldown > 0
                           ? 'Resend code (${_resendCooldown}s)'

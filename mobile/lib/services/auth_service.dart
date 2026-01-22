@@ -1,13 +1,8 @@
 import 'package:dio/dio.dart';
-import '../config/api_config.dart';
+import '../config/api_client.dart';
 
 class AuthService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
-      headers: {'Content-Type': 'application/json'},
-    ),
-  );
+  final ApiClient _apiClient = ApiClient();
 
   // Request OTP
   Future<Map<String, dynamic>> requestOtp({
@@ -15,7 +10,7 @@ class AuthService {
     required String destination,
     required String purpose,
   }) async {
-    final response = await _dio.post('/auth/otp/request', data: {
+    final response = await _apiClient.dio.post('/auth/otp/request', data: {
       'channel': channel,
       'destination': destination,
       'purpose': purpose,
@@ -31,7 +26,7 @@ class AuthService {
     String? otp,
     String? deviceId,
   }) async {
-    final response = await _dio.post('/auth/otp/verify', data: {
+    final response = await _apiClient.dio.post('/auth/otp/verify', data: {
       'channel': channel,
       'destination': destination,
       if (idToken != null) 'idToken': idToken,
@@ -47,7 +42,7 @@ class AuthService {
     required String idToken,
     String? deviceId,
   }) async {
-    final response = await _dio.post('/auth/social', data: {
+    final response = await _apiClient.dio.post('/auth/social', data: {
       'provider': provider,
       'idToken': idToken,
       if (deviceId != null) 'deviceId': deviceId,
@@ -56,17 +51,14 @@ class AuthService {
   }
 
   // Get current user
-  Future<Map<String, dynamic>> getCurrentUser(String token) async {
-    final response = await _dio.get(
-      '/users/me',
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-    );
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    final response = await _apiClient.dio.get('/users/me');
     return response.data;
   }
 
   // Refresh tokens
   Future<Map<String, dynamic>> refreshTokens(String refreshToken) async {
-    final response = await _dio.post('/auth/refresh', data: {
+    final response = await _apiClient.dio.post('/auth/refresh', data: {
       'refreshToken': refreshToken,
     });
     return response.data;

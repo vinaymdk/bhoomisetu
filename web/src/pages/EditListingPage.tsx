@@ -47,7 +47,9 @@ export const EditListingPage = () => {
     setLocationQuery,
     suggestions,
     applySuggestion,
+    clearSuggestions,
     reverseGeocode,
+    autodetectLocation,
     buildPayload,
   } = useListingForm(property || undefined);
 
@@ -123,9 +125,11 @@ export const EditListingPage = () => {
             applySuggestion(s);
             void reverseGeocode(s.center[1], s.center[0]);
           }}
+          onAutodetectLocation={autodetectLocation}
           onMapSelect={(lat, lng) => {
             setField('latitude', lat);
             setField('longitude', lng);
+            clearSuggestions();
             void reverseGeocode(lat, lng);
           }}
           submitLabel="Save changes"

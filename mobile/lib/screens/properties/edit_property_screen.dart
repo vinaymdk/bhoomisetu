@@ -184,7 +184,12 @@ class _EditPropertyViewState extends State<_EditPropertyView> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const MapPickerScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => ChangeNotifierProvider.value(
+                          value: vm,
+                          child: const MapPickerScreen(),
+                        ),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.map_outlined),

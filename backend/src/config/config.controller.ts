@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('config')
@@ -45,13 +46,12 @@ export class ConfigController {
 
   @Public()
   @Get('app')
-  getAppConfig() {
+  getAppConfig(@Req() req: Request) {
+    const host = req.get('host');
+    const protocol = req.protocol || 'http';
+    const inferredBaseUrl = host ? `${protocol}://${host}/api` : undefined;
     return {
-      // apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000/api',
-      // HMD Office IP: 192.168.0.8
-      // apiBaseUrl: process.env.API_BASE_URL || 'http://192.168.0.8:3000/api',
-      // Home IP: 192.168.0.108
-      apiBaseUrl: process.env.API_BASE_URL || 'http://192.168.0.108:3000/api',
+      apiBaseUrl: process.env.API_BASE_URL || inferredBaseUrl || 'http://localhost:3000/api',
       environment: process.env.NODE_ENV || 'development',
       mapboxEnabled: !!process.env.MAPBOX_API_KEY,
       mapboxToken: process.env.MAPBOX_API_KEY || null,

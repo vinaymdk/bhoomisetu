@@ -27,8 +27,10 @@ export const CreateListingPage = () => {
     setLocationQuery,
     suggestions,
     applySuggestion,
+    clearSuggestions,
     reverseGeocode,
     buildPayload,
+    autodetectLocation,
   } = useListingForm();
 
   const submit = async (e: React.FormEvent) => {
@@ -76,9 +78,11 @@ export const CreateListingPage = () => {
             applySuggestion(s);
             void reverseGeocode(s.center[1], s.center[0]);
           }}
+          onAutodetectLocation={autodetectLocation}
           onMapSelect={(lat, lng) => {
             setField('latitude', lat);
             setField('longitude', lng);
+            clearSuggestions();
             void reverseGeocode(lat, lng);
           }}
           submitLabel="Save listing (Draft)"

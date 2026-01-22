@@ -145,3 +145,19 @@ Ensure features follow production-level mobile UX practices.
 
 Begin with root-cause analysis, then apply verified fixes.
 # =====================================
+log and cache clean
+sudo apt clean
+sudo apt autoclean
+sudo apt autoremove -y
+
+sudo journalctl --vacuum-time=7d
+
+rm -rf ~/.cache/*
+rm -rf ~/.pub-cache
+rm -rf ~/.gradle/caches
+rm -rf ~/.gradle/daemon
+rm -rf ~/.android/build-cache
+rm -rf ~/.local/share/Trash/*
+
+sudo rm -rf /tmp/*
+sudo rm -rf /var/tmp/*

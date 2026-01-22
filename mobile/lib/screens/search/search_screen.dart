@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../../services/search_service.dart';
 import '../../widgets/property_card.dart';
 
@@ -22,6 +23,7 @@ class _SearchScreenState extends State<SearchScreen> {
   int _currentPage = 1;
   bool _hasMore = true;
   bool _isLoadingMore = false;
+  Timer? _debounceTimer;
 
   // Filter state
   final SearchFilters _filters = SearchFilters()
@@ -39,6 +41,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -50,11 +53,18 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  Future<void> _performSearch({bool reset = false}) async {
+  Future<void> _performSearch({
+    bool reset = false,
+    bool preserveDismissed = false,
+    bool applyExtractedFilters = true,
+  }) async {
     if (reset) {
       _currentPage = 1;
       _filters.page = 1;
       _hasMore = true;
+      if (!preserveDismissed) {
+        _dismissedExtracted.clear();
+      }
     }
 
     setState(() {
@@ -64,7 +74,34 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final response = await _searchService.search(_filters);
-      
+      if (reset && applyExtractedFilters && !preserveDismissed) {
+        final extracted = response.extractedFilters;
+        bool shouldApply = false;
+        final extractedCity = extracted.location?['city'];
+        if (_filters.city == null && extractedCity != null && extractedCity.toString().trim().isNotEmpty) {
+          _filters.city = extractedCity.toString();
+          shouldApply = true;
+        }
+        if (_filters.propertyType == null && extracted.propertyType != null) {
+          _filters.propertyType = extracted.propertyType;
+          shouldApply = true;
+        }
+        if (_filters.bedrooms == null && extracted.bedrooms != null) {
+          _filters.bedrooms = extracted.bedrooms;
+          shouldApply = true;
+        }
+        if ((_filters.aiTags == null || _filters.aiTags!.isEmpty) &&
+            extracted.aiTags != null &&
+            extracted.aiTags!.isNotEmpty) {
+          _filters.aiTags = List<String>.from(extracted.aiTags!);
+          shouldApply = true;
+        }
+        if (shouldApply) {
+          await _performSearch(reset: true, preserveDismissed: true, applyExtractedFilters: false);
+          return;
+        }
+      }
+
       setState(() {
         if (reset || _results == null) {
           _results = response;
@@ -85,7 +122,6 @@ class _SearchScreenState extends State<SearchScreen> {
         _hasMore = response.properties.length >= response.limit && 
                    _results!.properties.length < response.total;
         _isLoading = false;
-        _filters.aiTags ??= response.extractedFilters.aiTags;
       });
     } catch (e) {
       setState(() {
@@ -115,7 +151,7 @@ class _SearchScreenState extends State<SearchScreen> {
     _performSearch(reset: true);
   }
 
-  void _updateFilter(String key, dynamic value) {
+  void _updateFilter(String key, dynamic value, {bool preserveDismissed = false, bool applyExtractedFilters = true}) {
     switch (key) {
       case 'listingType':
         _filters.listingType = value;
@@ -148,7 +184,16 @@ class _SearchScreenState extends State<SearchScreen> {
         _filters.aiTags = value;
         break;
     }
-    _performSearch(reset: true);
+    _performSearch(reset: true, preserveDismissed: preserveDismissed, applyExtractedFilters: applyExtractedFilters);
+  }
+
+  /// Debounced filter update for text inputs (city, locality, prices)
+  /// Prevents search from triggering on every keystroke
+  void _updateFilterDebounced(String key, dynamic value, {bool preserveDismissed = false}) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _updateFilter(key, value, preserveDismissed: preserveDismissed);
+    });
   }
 
   void _clearFilters() {
@@ -406,7 +451,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 controller: TextEditingController(text: _filters.city ?? ''),
-                onChanged: (value) => _updateFilter('city', value.isEmpty ? null : value),
+                onChanged: (value) => _updateFilterDebounced('city', value.isEmpty ? null : value),
               ),
             ),
 
@@ -419,7 +464,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 controller: TextEditingController(text: _filters.locality ?? ''),
-                onChanged: (value) => _updateFilter('locality', value.isEmpty ? null : value),
+                onChanged: (value) => _updateFilterDebounced('locality', value.isEmpty ? null : value),
               ),
             ),
 
@@ -439,7 +484,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       controller: TextEditingController(
                         text: _filters.minPrice != null ? _filters.minPrice!.toStringAsFixed(0) : '',
                       ),
-                      onChanged: (value) => _updateFilter('minPrice', value.isEmpty ? null : value),
+                      onChanged: (value) => _updateFilterDebounced('minPrice', value.isEmpty ? null : value),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -456,7 +501,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       controller: TextEditingController(
                         text: _filters.maxPrice != null ? _filters.maxPrice!.toStringAsFixed(0) : '',
                       ),
-                      onChanged: (value) => _updateFilter('maxPrice', value.isEmpty ? null : value),
+                      onChanged: (value) => _updateFilterDebounced('maxPrice', value.isEmpty ? null : value),
                     ),
                   ),
                 ],
@@ -731,12 +776,29 @@ class _SearchScreenState extends State<SearchScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'AI Extracted Filters:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'AI Extracted Filters:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() => _dismissedExtracted.clear());
+                        _filters.city = null;
+                        _filters.propertyType = null;
+                        _filters.bedrooms = null;
+                        _filters.aiTags = null;
+                        _performSearch(reset: true);
+                      },
+                      icon: const Text('↻', style: TextStyle(fontSize: 14)),
+                      label: const Text('Reset', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -751,7 +813,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           '📍 ${_results!.extractedFilters.location!['city']}',
                           onRemove: () {
                             setState(() => _dismissedExtracted.add('city'));
-                            _updateFilter('city', null);
+                            _updateFilter('city', null, preserveDismissed: true, applyExtractedFilters: false);
                           },
                         ),
                     if (_results!.extractedFilters.propertyType != null)
@@ -760,7 +822,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           '🏠 ${_results!.extractedFilters.propertyType}',
                           onRemove: () {
                             setState(() => _dismissedExtracted.add('propertyType'));
-                            _updateFilter('propertyType', null);
+                            _updateFilter('propertyType', null, preserveDismissed: true, applyExtractedFilters: false);
                           },
                         ),
                     if (_results!.extractedFilters.bedrooms != null)
@@ -769,7 +831,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           '🛏️ ${_results!.extractedFilters.bedrooms} BHK',
                           onRemove: () {
                             setState(() => _dismissedExtracted.add('bedrooms'));
-                            _updateFilter('bedrooms', null);
+                            _updateFilter('bedrooms', null, preserveDismissed: true, applyExtractedFilters: false);
                           },
                         ),
                     if (_results!.extractedFilters.aiTags != null)
@@ -783,7 +845,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 setState(() => _dismissedExtracted.add('aiTag:$tag'));
                                 final currentTags = List<String>.from(_filters.aiTags ?? []);
                                 currentTags.remove(tag);
-                                _updateFilter('aiTags', currentTags);
+                                _updateFilter('aiTags', currentTags, preserveDismissed: true, applyExtractedFilters: false);
                               },
                             ),
                           ),

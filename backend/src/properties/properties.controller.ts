@@ -20,6 +20,7 @@ import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
@@ -74,11 +75,13 @@ export class PropertiesController {
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtAuthGuard)
   async findOne(
     @Param('id') id: string,
     @CurrentUser() currentUser?: CurrentUserData,
   ): Promise<PropertyResponseDto> {
-    const property = await this.propertiesService.findOne(id, currentUser?.userId, false);
+    const includeDraft = !!currentUser?.userId;
+    const property = await this.propertiesService.findOne(id, currentUser?.userId, includeDraft);
     return PropertyResponseDto.fromEntity(property);
   }
 

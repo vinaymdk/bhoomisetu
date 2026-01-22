@@ -59,14 +59,26 @@ class _HomeScreenState extends State<HomeScreen> {
         _homeData = await _homeService.getHomeData().timeout(const Duration(seconds: 15));
       }
     } catch (e) {
+      final errorMessage = e.toString();
+      final formattedError = _formatError(errorMessage);
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '');
+        _error = formattedError;
       });
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
+  }
+
+  String _formatError(String message) {
+    if (message.contains('TimeoutException')) {
+      return 'Unable to load properties. Please try again later.';
+    }
+    if (message.contains('SocketException') || message.contains('Connection refused')) {
+      return 'Connection error. Please check your internet connection.';
+    }
+    return message.replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '');
   }
 
   void _handleNavTap(BottomNavItem item) {

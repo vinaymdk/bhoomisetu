@@ -177,16 +177,27 @@ class ListingFormViewModel extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      // Don't show suggestions if address is already filled
+      if (address.text.trim().length > 5) {
+        suggestions = [];
+        notifyListeners();
+        return;
+      }
       suggestions = await _locationService.autocomplete(query);
       notifyListeners();
     });
   }
 
   Future<void> applySuggestion(LocationSuggestion suggestion) async {
-    latitude.text = suggestion.latitude.toStringAsFixed(6);
-    longitude.text = suggestion.longitude.toStringAsFixed(6);
+    // Clear suggestions immediately to hide the list
     suggestions = [];
     notifyListeners();
+    
+    // Update coordinates
+    latitude.text = suggestion.latitude.toStringAsFixed(6);
+    longitude.text = suggestion.longitude.toStringAsFixed(6);
+    
+    // Reverse geocode to fill other fields
     await reverseGeocode(suggestion.latitude, suggestion.longitude);
   }
 
@@ -200,6 +211,22 @@ class ListingFormViewModel extends ChangeNotifier {
     locality.text = (location['locality'] as String?) ?? locality.text;
     landmark.text = (location['landmark'] as String?) ?? landmark.text;
     notifyListeners();
+  }
+
+  Future<void> autodetectLocation() async {
+    loading = true;
+    error = null;
+    notifyListeners();
+    try {
+      final position = await _locationService.getCurrentPosition();
+      setCoordinates(position.latitude, position.longitude);
+      await reverseGeocode(position.latitude, position.longitude);
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
   }
 
   bool validate() {

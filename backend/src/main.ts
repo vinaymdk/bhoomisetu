@@ -31,11 +31,31 @@ if (!envLoaded) {
   console.log('⚠️  .env file not found in expected locations, using process environment variables');
 }
 
-console.log('DB_HOST=', process.env.DB_HOST);
-console.log('DB_PORT=', process.env.DB_PORT);
-console.log('DB_USERNAME=', process.env.DB_USERNAME);
-console.log('DB_PASSWORD=', process.env.DB_PASSWORD);
-console.log('DB_NAME=', process.env.DB_NAME);
+// console.log('DB_HOST=', process.env.DB_HOST);
+// console.log('DB_PORT=', process.env.DB_PORT);
+// console.log('DB_USERNAME=', process.env.DB_USERNAME);
+// console.log('DB_PASSWORD=', process.env.DB_PASSWORD);
+// console.log('DB_NAME=', process.env.DB_NAME);
+
+// import { createHash } from 'crypto';
+
+// console.log(
+//   'JWT_SECRET_HASH:',
+//   createHash('sha256')
+//     .update(process.env.JWT_SECRET || '')
+//     .digest('hex'),
+// );
+
+// console.log(
+//   'JWT_REFRESH_SECRET_HASH:',
+//   createHash('sha256')
+//     .update(process.env.JWT_REFRESH_SECRET || '')
+//     .digest('hex'),
+// );
+
+// console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
+// console.log("JWT_REFRESH_SECRET exists:", !!process.env.JWT_REFRESH_SECRET);
+
 
 
 async function bootstrap() {

@@ -309,6 +309,7 @@ export class PropertiesService {
   async submitForVerification(id: string, userId: string): Promise<PropertyResponseDto> {
     const property = await this.propertyRepository.findOne({
       where: { id, deletedAt: IsNull() },
+      relations: ['images'],
     });
 
     if (!property) {

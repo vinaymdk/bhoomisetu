@@ -22,6 +22,7 @@ export const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [devOtp, setDevOtp] = useState<string | null>(null);
 
   // Get purpose from URL params
   useEffect(() => {
@@ -64,6 +65,7 @@ export const LoginPage = () => {
     setPhoneNumber('');
     setOtp('');
     setVerificationId(null);
+    setDevOtp(null);
     clearRecaptchaVerifier(); // Clear reCAPTCHA when switching
   };
 
@@ -97,11 +99,12 @@ export const LoginPage = () => {
         setDestination(formattedPhone);
         
         // Also notify backend (for logging and fraud checks)
-        await authService.requestOtp({
+        const otpResponse = await authService.requestOtp({
           channel: 'sms',
           destination: formattedPhone,
           purpose,
         });
+        setDevOtp(otpResponse.otp || null);
       } else {
         // Email OTP via backend
         if (!validateEmail(destination)) {
@@ -111,11 +114,12 @@ export const LoginPage = () => {
         }
 
         // Request OTP from backend
-        await authService.requestOtp({
+        const otpResponse = await authService.requestOtp({
           channel: 'email',
           destination,
           purpose,
         });
+        setDevOtp(otpResponse.otp || null);
 
         // For email, backend sends OTP - set placeholder verification ID
         setVerificationId('email-otp-backend');
@@ -200,17 +204,19 @@ export const LoginPage = () => {
         setVerificationId(vid);
         setDestination(formattedPhone);
         
-        await authService.requestOtp({
+        const otpResponse = await authService.requestOtp({
           channel: 'sms',
           destination: formattedPhone,
           purpose,
         });
+        setDevOtp(otpResponse.otp || null);
       } else if (channel === 'email' && validateEmail(destination)) {
-        await authService.requestOtp({
+        const otpResponse = await authService.requestOtp({
           channel: 'email',
           destination,
           purpose,
         });
+        setDevOtp(otpResponse.otp || null);
         setVerificationId('email-otp-backend');
       }
     } catch (err: any) {
@@ -285,6 +291,11 @@ export const LoginPage = () => {
                 autoFocus
               />
             </div>
+            {devOtp && (
+              <div className="auth-dev-otp">
+                Dev OTP: <strong>{devOtp}</strong>
+              </div>
+            )}
 
             {error && <div className="auth-error">{error}</div>}
 

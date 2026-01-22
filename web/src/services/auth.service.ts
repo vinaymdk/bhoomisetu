@@ -9,7 +9,7 @@ import type {
 } from '../types/auth';
 
 export const authService = {
-  async requestOtp(data: RequestOtpRequest): Promise<{ message: string }> {
+  async requestOtp(data: RequestOtpRequest): Promise<{ message: string; otp?: string }> {
     const response = await apiClient.post('/auth/otp/request', data);
     return response.data;
   },

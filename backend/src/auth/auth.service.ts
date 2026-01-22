@@ -103,9 +103,11 @@ export class AuthService {
         throw new BadRequestException(`Failed to send email: ${error.message}`);
       }
 
+      const includeOtp = process.env.NODE_ENV !== 'production';
       return {
         success: true,
         message: 'OTP sent to your email address. Please check your inbox.',
+        otp: includeOtp ? otpCode : undefined,
       };
     } else {
       // Generate 6-digit OTP for SMS (same pattern as email)
@@ -136,9 +138,11 @@ export class AuthService {
         throw new BadRequestException(`Failed to send SMS: ${error.message}`);
       }
 
+      const includeOtp = process.env.NODE_ENV !== 'production';
       return {
         success: true,
         message: 'OTP sent to your phone number. Please check your SMS.',
+        otp: includeOtp ? otpCode : undefined,
       };
     }
   }
@@ -197,6 +201,7 @@ export class AuthService {
         email,
         fullName: null,
       });
+      user = await this.usersService.ensureActiveForLogin(user.id);
     } else if (dto.channel === 'sms' && dto.otp) {
       // SMS OTP verification (via backend SMS service)
       if (!dto.destination) {
@@ -245,6 +250,7 @@ export class AuthService {
         phone,
         fullName: null,
       });
+      user = await this.usersService.ensureActiveForLogin(user.id);
     } else if (dto.channel === 'sms' && dto.idToken) {
       // Phone OTP verification (via Firebase - for backward compatibility with social login)
       let firebaseUser;
@@ -266,6 +272,7 @@ export class AuthService {
         email: null,
         fullName: firebaseUser.displayName || null,
       });
+      user = await this.usersService.ensureActiveForLogin(user.id);
     } else {
       throw new BadRequestException('Invalid verification method. Provide otp+destination for SMS/email or idToken for social login.');
     }
@@ -358,12 +365,13 @@ export class AuthService {
     }
 
     // Find or create user
-    const user = await this.usersService.findOrCreateByFirebaseUid({
+    let user = await this.usersService.findOrCreateByFirebaseUid({
       firebaseUid: firebaseUser.uid,
       phone: firebaseUser.phoneNumber || null,
       email: firebaseUser.email || null,
       fullName: firebaseUser.displayName || null,
     });
+    user = await this.usersService.ensureActiveForLogin(user.id);
 
     // AI Duplicate Detection
     const duplicateCheck = await this.aiService.detectDuplicateAccounts({
@@ -470,7 +478,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async refreshTokens(refreshToken: string): Promise<AuthTokens> {
+  async refreshTokens(refreshToken: string): Promise<{ tokens: AuthTokens }> {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is required');
     }
@@ -508,7 +516,7 @@ export class AuthService {
       session.isRevoked = true;
       await this.loginSessionRepository.save(session);
 
-      return await this.generateTokens(
+      const tokens = await this.generateTokens(
         user.id,
         roles,
         user.primaryEmail,
@@ -518,6 +526,8 @@ export class AuthService {
         session.ipAddress || undefined,
         session.userAgent || undefined,
       );
+
+      return { tokens };
     } catch (error) {
       // If it's already an HTTP exception, rethrow it
       if (error instanceof UnauthorizedException || error instanceof BadRequestException) {

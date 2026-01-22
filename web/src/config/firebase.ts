@@ -23,8 +23,8 @@ export const initializeFirebase = async (): Promise<void> => {
   try {
     // Fetch Firebase config from backend
     // Use base URL without /api prefix for config endpoint
-    const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://192.168.0.10:3000'; // HMD Office
-    // const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://192.168.0.108:3000'; // Home
+    // const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://192.168.0.8:3000'; // Office
+    const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://192.168.0.108:3000'; // Home
     const response = await fetch(`${baseUrl}/api/config/firebase`);
     
     if (!response.ok) {

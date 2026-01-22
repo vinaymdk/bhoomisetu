@@ -11,6 +11,16 @@ export const MyListingsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const formatError = (message: string) => {
+    if (message.toLowerCase().includes('request timed out') || message.toLowerCase().includes('timeout')) {
+      return 'Unable to load listings. Please try again later.';
+    }
+    if (message.toLowerCase().includes('econnrefused') || message.toLowerCase().includes('network')) {
+      return 'Connection error. Please check your internet connection.';
+    }
+    return message;
+  };
+
   const filtered = useMemo(() => {
     if (statusFilter === 'all') return items;
     return items.filter((p) => p.status === statusFilter);
@@ -73,7 +83,7 @@ export const MyListingsPage = () => {
         </div>
 
         {loading && <div className="my-listings-state">Loading...</div>}
-        {error && <div className="my-listings-state my-listings-error">❌ {error}</div>}
+        {error && <div className="my-listings-state my-listings-error">❌ {formatError(error)}</div>}
 
         {!loading && !error && filtered.length === 0 && (
           <div className="my-listings-state">

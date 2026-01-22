@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_config.dart';
-import '../services/auth_service.dart';
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -20,10 +19,10 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiConfig.baseUrl,
-        headers: {'Content-Type': 'application/json'},
         connectTimeout: const Duration(seconds: 10),
         sendTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 15),
+        // Don't set default Content-Type - let Dio handle it for FormData
       ),
     );
 
@@ -34,6 +33,11 @@ class ApiClient {
           final token = await _storage.read(key: 'accessToken');
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
+            options.headers['X-Access-Token'] = token;
+          }
+          // Set Content-Type to application/json only if not FormData
+          if (options.data is! FormData) {
+            options.headers['Content-Type'] = 'application/json';
           }
           handler.next(options);
         },
@@ -82,15 +86,24 @@ class ApiClient {
     try {
       final refreshToken = await _storage.read(key: 'refreshToken');
       if (refreshToken == null || refreshToken.isEmpty) {
+        _isRefreshing = false;
         return null;
       }
 
-      final authService = AuthService();
-      final response = await authService.refreshTokens(refreshToken);
-      
-      final tokens = response['tokens'] ?? response;
-      final newAccessToken = tokens['accessToken'] as String;
+      // Make direct HTTP call instead of using AuthService to avoid circular dependency
+      final refreshResponse = await _dio.post(
+        '/auth/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+
+      final responseData = refreshResponse.data as Map<String, dynamic>;
+      final tokens = responseData['tokens'] ?? responseData;
+      final newAccessToken = tokens['accessToken'] as String?;
       final newRefreshToken = tokens['refreshToken'] as String?;
+
+      if (newAccessToken == null) {
+        throw Exception('No access token in refresh response');
+      }
 
       await _storage.write(key: 'accessToken', value: newAccessToken);
       if (newRefreshToken != null) {
@@ -116,6 +129,9 @@ class ApiClient {
         item.completer.complete(null);
       }
       _refreshQueue.clear();
+      // Delete tokens on refresh failure
+      await _storage.delete(key: 'accessToken');
+      await _storage.delete(key: 'refreshToken');
       return null;
     }
   }

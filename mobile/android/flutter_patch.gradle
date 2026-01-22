@@ -1,0 +1,13 @@
+// Workaround for Flutter 3.38.7 onVariants bug
+// This script is imported by app/build.gradle to patch the onVariants call
+
+gradle.beforeProject { project ->
+    if (project.name == 'app') {
+        afterEvaluate {
+            // This will prevent the problematic flutter tasks from running
+            tasks.withType(com.android.build.gradle.internal.tasks.DeletableFileAction) {
+                enabled = false
+            }
+        }
+    }
+}

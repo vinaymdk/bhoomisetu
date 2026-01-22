@@ -16,6 +16,16 @@ export const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const formatError = (message: string) => {
+    if (message.toLowerCase().includes('request timed out') || message.toLowerCase().includes('timeout')) {
+      return 'No properties available at the moment. Please try again later.';
+    }
+    if (message.toLowerCase().includes('econnrefused') || message.toLowerCase().includes('network')) {
+      return 'Connection error. Please check your internet connection.';
+    }
+    return message;
+  };
+
   useEffect(() => {
     const fetchHomeData = async () => {
       try {
@@ -51,7 +61,7 @@ export const HomePage = () => {
     return (
       <div className="home-page">
         <div className="home-error">
-          <p>⚠️ {error}</p>
+          <p>⚠️ {formatError(error)}</p>
           <button onClick={() => window.location.reload()}>Retry</button>
         </div>
       </div>

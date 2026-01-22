@@ -33,18 +33,29 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       _error = null;
     });
     try {
-      final data = await _service
-          .getMyProperties(status: _status == 'all' ? null : _status)
-          .timeout(const Duration(seconds: 15));
+      final data = await _service.getMyProperties(
+          status: _status == 'all' ? null : _status);
       setState(() => _items = data);
     } catch (e) {
-      final message = e.toString().contains('TimeoutException')
-          ? 'Request timed out. Please try again.'
-          : e.toString().replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '');
-      setState(() => _error = message);
+      final errorMessage = e.toString();
+      final formattedError = _formatError(errorMessage);
+      setState(() => _error = formattedError);
     } finally {
       setState(() => _loading = false);
     }
+  }
+
+  String _formatError(String message) {
+    if (message.contains('TimeoutException')) {
+      return 'Unable to load listings. Please try again later.';
+    }
+    if (message.contains('SocketException') ||
+        message.contains('Connection refused')) {
+      return 'Connection error. Please check your internet connection.';
+    }
+    return message
+        .replaceAll('Exception: ', '')
+        .replaceAll('DioException [bad response]: ', '');
   }
 
   Future<void> _submit(String id) async {
@@ -52,10 +63,12 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       await _service.submitForVerification(id);
       await _load();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Submitted for verification')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Submitted for verification')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submit failed: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Submit failed: $e')));
     }
   }
 
@@ -84,7 +97,8 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               onPressed: () async {
                 final created = await Navigator.push<bool>(
                   context,
-                  MaterialPageRoute(builder: (_) => const CreatePropertyScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const CreatePropertyScreen()),
                 );
                 if (created == true) {
                   await _load();
@@ -113,11 +127,15 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                            const Icon(Icons.error_outline,
+                                size: 64, color: Colors.red),
                             const SizedBox(height: 12),
-                            Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+                            Text(_error!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.red)),
                             const SizedBox(height: 12),
-                            ElevatedButton(onPressed: _load, child: const Text('Retry')),
+                            ElevatedButton(
+                                onPressed: _load, child: const Text('Retry')),
                           ],
                         ),
                       ),
@@ -132,18 +150,27 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<String>(
-                                  value: _status,
+                                  initialValue: _status,
                                   decoration: const InputDecoration(
                                     labelText: 'Status',
                                     border: OutlineInputBorder(),
                                   ),
                                   items: const [
-                                    DropdownMenuItem(value: 'all', child: Text('All')),
-                                    DropdownMenuItem(value: 'draft', child: Text('Draft')),
-                                    DropdownMenuItem(value: 'pending_verification', child: Text('Pending Verification')),
-                                    DropdownMenuItem(value: 'verified', child: Text('Verified')),
-                                    DropdownMenuItem(value: 'live', child: Text('Live')),
-                                    DropdownMenuItem(value: 'rejected', child: Text('Rejected')),
+                                    DropdownMenuItem(
+                                        value: 'all', child: Text('All')),
+                                    DropdownMenuItem(
+                                        value: 'draft', child: Text('Draft')),
+                                    DropdownMenuItem(
+                                        value: 'pending_verification',
+                                        child: Text('Pending Verification')),
+                                    DropdownMenuItem(
+                                        value: 'verified',
+                                        child: Text('Verified')),
+                                    DropdownMenuItem(
+                                        value: 'live', child: Text('Live')),
+                                    DropdownMenuItem(
+                                        value: 'rejected',
+                                        child: Text('Rejected')),
                                   ],
                                   onChanged: (v) async {
                                     setState(() => _status = v ?? 'all');
@@ -157,24 +184,30 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                           if (_items.isEmpty)
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 40),
-                              child: Center(child: Text('No listings yet. Tap Create to add one.')),
+                              child: Center(
+                                  child: Text(
+                                      'No listings yet. Tap Create to add one.')),
                             )
                           else
                             ..._items.map(
                               (p) => Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       _statusChip(p.status),
                                       Row(
                                         children: [
                                           TextButton(
                                             onPressed: () async {
-                                              final updated = await Navigator.push<bool>(
+                                              final updated =
+                                                  await Navigator.push<bool>(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (_) => EditPropertyScreen(property: p),
+                                                  builder: (_) =>
+                                                      EditPropertyScreen(
+                                                          property: p),
                                                 ),
                                               );
                                               if (updated == true) {
@@ -230,10 +263,11 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-      child: Text(status.replaceAll('_', ' '), style: TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 12)),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      child: Text(status.replaceAll('_', ' '),
+          style:
+              TextStyle(color: fg, fontWeight: FontWeight.w600, fontSize: 12)),
     );
   }
 }
-
-
