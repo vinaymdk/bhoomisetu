@@ -2,6 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../widgets/bottom_navigation.dart';
+import '../home/home_screen.dart';
+import '../search/search_screen.dart';
+import '../properties/my_listings_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../properties/saved_properties_screen.dart';
 import '../../models/property.dart';
 import '../../services/app_config_service.dart';
 import '../../services/location_service.dart';
@@ -84,7 +91,11 @@ class _EditPropertyViewState extends State<_EditPropertyView> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Listing')),
+      appBar: AppBar(
+        title: const Text('Edit Listing'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -436,6 +447,10 @@ class _EditPropertyViewState extends State<_EditPropertyView> {
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: BottomNavItem.list,
+        onTap: _handleNavTap,
+      ),
     );
   }
 
@@ -444,6 +459,51 @@ class _EditPropertyViewState extends State<_EditPropertyView> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
     );
+  }
+
+  void _handleNavTap(BottomNavItem item) {
+    switch (item) {
+      case BottomNavItem.home:
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+        break;
+      case BottomNavItem.search:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SearchScreen()),
+        );
+        break;
+      case BottomNavItem.list:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyListingsScreen()),
+        );
+        break;
+      case BottomNavItem.saved:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.profile:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+    }
   }
 }
 

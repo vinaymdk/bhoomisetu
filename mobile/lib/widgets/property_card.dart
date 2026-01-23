@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/property.dart';
+import '../services/saved_properties_service.dart';
+import '../providers/auth_provider.dart';
 
-class PropertyCard extends StatelessWidget {
+class PropertyCard extends StatefulWidget {
   final Property property;
   final bool showFeaturedBadge;
   final VoidCallback? onTap;
@@ -12,6 +15,30 @@ class PropertyCard extends StatelessWidget {
     this.showFeaturedBadge = true,
     this.onTap,
   });
+
+  @override
+  State<PropertyCard> createState() => _PropertyCardState();
+}
+
+class _PropertyCardState extends State<PropertyCard> {
+  final SavedPropertiesService _savedService = SavedPropertiesService();
+  bool _isSaved = false;
+  String _userId = 'guest';
+
+  @override
+  void initState() {
+    super.initState();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _userId = authProvider.userData?['id']?.toString() ?? 'guest';
+    _loadSaved();
+  }
+
+  Future<void> _loadSaved() async {
+    final saved = await _savedService.isSaved(_userId, widget.property.id);
+    if (mounted) {
+      setState(() => _isSaved = saved);
+    }
+  }
 
   String _formatPrice(double price) {
     if (price >= 10000000) {
@@ -25,19 +52,19 @@ class PropertyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     PropertyImage? primaryImage;
-    if (property.images != null && property.images!.isNotEmpty) {
+    if (widget.property.images != null && widget.property.images!.isNotEmpty) {
       try {
-        primaryImage = property.images!.firstWhere(
+        primaryImage = widget.property.images!.firstWhere(
           (img) => img.isPrimary,
-          orElse: () => property.images!.first,
+          orElse: () => widget.property.images!.first,
         );
       } catch (e) {
-        primaryImage = property.images!.first;
+        primaryImage = widget.property.images!.first;
       }
     }
     
     final imageUrl = primaryImage?.imageUrl ?? '';
-    final location = '${property.location.city}, ${property.location.state}';
+    final location = '${widget.property.location.city}, ${widget.property.location.state}';
 
     return Card(
       elevation: 2,
@@ -45,7 +72,7 @@ class PropertyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         borderRadius: BorderRadius.circular(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +100,7 @@ class PropertyCard extends StatelessWidget {
                           child: const Icon(Icons.image, size: 64, color: Colors.grey),
                         ),
                 ),
-                if (showFeaturedBadge && property.isFeatured)
+                if (widget.showFeaturedBadge && widget.property.isFeatured)
                   Positioned(
                     top: 8,
                     left: 8,
@@ -93,7 +120,7 @@ class PropertyCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (property.listingType == 'rent')
+                if (widget.property.listingType == 'rent')
                   Positioned(
                     top: 8,
                     right: 8,
@@ -113,6 +140,28 @@ class PropertyCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final next = await _savedService.toggle(_userId, widget.property.id);
+                      if (mounted) setState(() => _isSaved = next);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.45),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isSaved ? Icons.favorite : Icons.favorite_border,
+                        size: 18,
+                        color: _isSaved ? Colors.redAccent : Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
             
@@ -128,7 +177,7 @@ class PropertyCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          property.title,
+                          widget.property.title,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -139,7 +188,7 @@ class PropertyCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        _formatPrice(property.price),
+                        _formatPrice(widget.property.price),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -175,20 +224,20 @@ class PropertyCard extends StatelessWidget {
                   // Details
                   Row(
                     children: [
-                      if (property.bedrooms != null) ...[
+                      if (widget.property.bedrooms != null) ...[
                         const Icon(Icons.bed, size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
-                          '${property.bedrooms} BHK',
+                          '${widget.property.bedrooms} BHK',
                           style: const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                         const SizedBox(width: 16),
                       ],
-                      if (property.bathrooms != null) ...[
+                      if (widget.property.bathrooms != null) ...[
                         const Icon(Icons.bathtub, size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
-                          '${property.bathrooms} Bath',
+                          '${widget.property.bathrooms} Bath',
                           style: const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                         const SizedBox(width: 16),
@@ -196,7 +245,7 @@ class PropertyCard extends StatelessWidget {
                       const Icon(Icons.square_foot, size: 16, color: Colors.grey),
                       const SizedBox(width: 4),
                       Text(
-                        '${property.area} ${property.areaUnit}',
+                        '${widget.property.area} ${widget.property.areaUnit}',
                         style: const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                     ],
@@ -215,16 +264,16 @@ class PropertyCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          property.propertyType,
+                          widget.property.propertyType,
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
                           ),
                         ),
                       ),
-                      if (property.viewsCount > 0)
+                      if (widget.property.viewsCount > 0)
                         Text(
-                          '${property.viewsCount} views',
+                          '${widget.property.viewsCount} views',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,

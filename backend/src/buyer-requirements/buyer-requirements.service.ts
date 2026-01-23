@@ -220,6 +220,17 @@ export class BuyerRequirementsService {
     if (updateDto.bathrooms !== undefined) requirement.bathrooms = updateDto.bathrooms;
     if (updateDto.requiredFeatures !== undefined) requirement.requiredFeatures = updateDto.requiredFeatures;
     if (updateDto.metadata !== undefined) requirement.metadata = updateDto.metadata;
+    if (updateDto.expiresInDays !== undefined) {
+      const nextExpiry = new Date();
+      nextExpiry.setDate(nextExpiry.getDate() + updateDto.expiresInDays);
+      requirement.expiresAt = nextExpiry;
+    }
+    if (updateDto.status !== undefined) {
+      if (requirement.status === RequirementStatus.FULFILLED) {
+        throw new BadRequestException('Cannot update a fulfilled requirement');
+      }
+      requirement.status = updateDto.status;
+    }
 
     const updated = await this.requirementRepository.save(requirement);
 

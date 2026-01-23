@@ -12,6 +12,8 @@ import '../properties/my_listings_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
 import '../auth/login_screen.dart';
 import '../properties/property_details_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../properties/saved_properties_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -116,13 +118,22 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         break;
       case BottomNavItem.saved:
-        // TODO: Navigate to saved properties screen
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved properties screen coming soon')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SavedPropertiesScreen()),
         );
         break;
       case BottomNavItem.profile:
-        // TODO: Navigate to profile screen
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
         );
@@ -143,6 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isAuthenticated = authProvider.isAuthenticated;
     final roles = authProvider.roles;
     final canVerify = roles.contains('customer_service') || roles.contains('admin');
+    final canBuy = roles.contains('buyer') || roles.contains('admin');
     
     final data = isAuthenticated ? _dashboardData : _homeData;
     final featuredProperties = data?.featuredProperties ?? [];
@@ -151,9 +163,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('BhoomiSetu'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         actions: [
           if (isAuthenticated)
             PopupMenuButton<String>(
+              icon: const Icon(Icons.account_circle_outlined),
               onSelected: (value) async {
                 if (value == 'logout') {
                   await authProvider.logout();
@@ -187,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           IconButton(
-            icon: const Icon(Icons.person_outline),
+            icon: const Icon(Icons.assignment_outlined),
             onPressed: () {
               _handleNavTap(BottomNavItem.profile);
             },
@@ -227,6 +242,49 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // AI Search Bar
                         AISearchBar(onSearch: _handleSearch),
+
+                        if (isAuthenticated && canBuy)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: Colors.blue.shade100),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Post Your Requirement',
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Let us match verified listings based on your budget and location.',
+                                          style: TextStyle(color: Colors.blueGrey.shade700),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+                                      );
+                                    },
+                                    child: const Text('View'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
                         // New Properties Section
                         if (newProperties.isNotEmpty) ...[

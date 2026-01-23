@@ -26,4 +26,3 @@ echo -e "${YELLOW}Loading: Module 4 listing features sample data...${NC}"
 PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$FILE"
 
 echo -e "${GREEN}✓ Module 4 sample data loaded.${NC}"
-

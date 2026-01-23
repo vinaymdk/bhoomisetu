@@ -1,0 +1,151 @@
+.mediation-page {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mediation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mediation-header h1 {
+  margin: 0 0 6px 0;
+}
+
+.mediation-header p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.mediation-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mediation-filter select {
+  border: 1px solid #d6dbe6;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.mediation-state {
+  padding: 18px;
+  border-radius: 10px;
+  background: #f8f9fc;
+  color: #5f6b7a;
+}
+
+.mediation-state.error {
+  background: #fff0f0;
+  color: #b42318;
+}
+
+.mediation-state.empty {
+  background: #f7fafc;
+}
+
+.mediation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.mediation-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #edf0f7;
+  padding: 16px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.mediation-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mediation-card-header h3 {
+  margin: 0;
+}
+
+.mediation-meta {
+  margin: 6px 0 12px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.mediation-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.mediation-message {
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  margin: 8px 0 12px;
+}
+
+.mediation-link {
+  display: inline-flex;
+  align-items: center;
+  color: #1a73e8;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 8px;
+}
+
+.mediation-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mediation-actions button {
+  border: 1px solid #d6dbe6;
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mediation-actions button.primary {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+}
+
+.mediation-actions button.danger {
+  background: #fff0f0;
+  border-color: #f9caca;
+  color: #b42318;
+}
+
+.mediation-textarea,
+.mediation-input {
+  width: 100%;
+  border: 1px solid #d6dbe6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+
+.mediation-textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+

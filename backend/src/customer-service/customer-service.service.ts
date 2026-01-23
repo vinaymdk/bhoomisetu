@@ -90,7 +90,7 @@ export class CustomerServiceService {
 
     // Apply city filter
     if (where.city) {
-      queryBuilder.andWhere('property.city ILIKE :city', { city: where.city.trim() });
+      queryBuilder.andWhere('property.city ILIKE :city', { city: `%${where.city.trim()}%` });
     }
 
     // Apply property type filter

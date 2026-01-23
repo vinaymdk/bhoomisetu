@@ -8,6 +8,8 @@ import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../properties/property_details_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../properties/saved_properties_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -235,6 +237,8 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Property Search'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: Stack(
@@ -1073,11 +1077,22 @@ class _SearchScreenState extends State<SearchScreen> {
         );
         break;
       case BottomNavItem.saved:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved properties screen coming soon')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
         );
         break;
       case BottomNavItem.profile:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
         );

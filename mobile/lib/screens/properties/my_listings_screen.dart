@@ -4,8 +4,14 @@ import '../../providers/auth_provider.dart';
 import '../../models/property.dart';
 import '../../services/properties_service.dart';
 import '../../widgets/property_card.dart';
+import '../../widgets/bottom_navigation.dart';
+import '../home/home_screen.dart';
+import '../search/search_screen.dart';
 import 'create_property_screen.dart';
 import 'edit_property_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import 'saved_properties_screen.dart';
+import '../mediation/seller_interests_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -85,7 +91,19 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Listings'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.connect_without_contact_outlined),
+            tooltip: 'Property Interests',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SellerInterestsScreen()),
+              );
+            },
+          ),
           IconButton(
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh),
@@ -234,7 +252,52 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                         ],
                       ),
                     ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: BottomNavItem.list,
+        onTap: _handleNavTap,
+      ),
     );
+  }
+
+  void _handleNavTap(BottomNavItem item) {
+    switch (item) {
+      case BottomNavItem.home:
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+        break;
+      case BottomNavItem.search:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SearchScreen()),
+        );
+        break;
+      case BottomNavItem.list:
+        break;
+      case BottomNavItem.saved:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.profile:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+    }
   }
 
   Widget _statusChip(String status) {

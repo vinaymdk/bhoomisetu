@@ -1,0 +1,139 @@
+.buyer-req-create {
+  padding: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.buyer-req-create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.buyer-req-create-header h1 {
+  margin: 0 0 4px 0;
+}
+
+.buyer-req-create-header p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.outline-btn {
+  border: 1px solid #d0d7e2;
+  background: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.buyer-req-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-card {
+  background: #fff;
+  border: 1px solid #edf0f7;
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.form-card h3 {
+  margin: 0 0 14px 0;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.field-grid label {
+  display: block;
+  font-size: 12px;
+  color: #5f6b7a;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.field-grid input,
+.field-grid select {
+  width: 100%;
+  border: 1px solid #d6dbe6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8b95a5;
+}
+
+.suggestions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.suggestion-chip {
+  border: 1px solid #d6dbe6;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.suggestion-chip:hover {
+  border-color: #1a73e8;
+  color: #1a73e8;
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #b42318;
+}
+
+.form-error {
+  background: #fff0f0;
+  border: 1px solid #fbd5d5;
+  color: #b42318;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.primary-btn {
+  align-self: flex-start;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .buyer-req-create-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

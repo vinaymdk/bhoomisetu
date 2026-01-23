@@ -1,0 +1,204 @@
+.buyer-req-page {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.buyer-req-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.buyer-req-header h1 {
+  margin: 0 0 6px 0;
+  font-size: 28px;
+}
+
+.buyer-req-subtitle {
+  margin: 0;
+  color: #666;
+}
+
+.buyer-req-primary-btn {
+  background: #1a73e8;
+  color: #fff;
+  text-decoration: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.buyer-req-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: #f5f8ff;
+  border: 1px solid #e0e7ff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #5b6b88;
+}
+
+.summary-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a3d8f;
+}
+
+.buyer-req-filters {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-size: 12px;
+  color: #5f6b7a;
+  font-weight: 600;
+}
+
+.filter-group input,
+.filter-group select {
+  border: 1px solid #d6dbe6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.buyer-req-state {
+  padding: 20px;
+  border-radius: 10px;
+  background: #f8f9fc;
+  color: #5f6b7a;
+  margin-bottom: 16px;
+}
+
+.buyer-req-state.error {
+  background: #fff0f0;
+  color: #b42318;
+}
+
+.buyer-req-state.empty {
+  background: #f7fafc;
+}
+
+.buyer-req-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.buyer-req-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #edf0f7;
+  padding: 16px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.buyer-req-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.buyer-req-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.buyer-req-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-active {
+  background: #e7f8ef;
+  color: #1d7f4a;
+}
+
+.status-fulfilled {
+  background: #e9f3ff;
+  color: #1a73e8;
+}
+
+.status-cancelled {
+  background: #fff1f0;
+  color: #c62828;
+}
+
+.status-expired {
+  background: #f4f4f4;
+  color: #7b7b7b;
+}
+
+.buyer-req-card-meta {
+  margin: 8px 0 12px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.buyer-req-card-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.buyer-req-card-row .label {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.buyer-req-card-row .value {
+  font-weight: 600;
+  color: #111827;
+}
+
+@media (max-width: 720px) {
+  .buyer-req-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .buyer-req-card-row {
+    flex-direction: column;
+  }
+}
+

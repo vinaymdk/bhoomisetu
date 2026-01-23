@@ -4,9 +4,13 @@ import '../../services/customer_service.dart';
 import '../../models/customer_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/bottom_navigation.dart';
+import '../../widgets/property_card.dart';
 import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../properties/saved_properties_screen.dart';
+import '../mediation/cs_mediation_screen.dart';
 import 'cs_property_screen.dart';
 
 class CsDashboardScreen extends StatefulWidget {
@@ -82,7 +86,19 @@ class _CsDashboardScreenState extends State<CsDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CS Dashboard'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.connect_without_contact_outlined),
+            tooltip: 'Mediation',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CsMediationScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loading ? null : () => _load(reset: true),
@@ -258,22 +274,43 @@ class _CsDashboardScreenState extends State<CsDashboardScreen> {
 
   Widget _buildCard(PendingVerificationProperty item) {
     final property = item.property;
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        title: Text(property.title),
-        subtitle: Text('${property.location.city}, ${property.location.state}'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => CsPropertyScreen(propertyId: property.id)),
-          );
-          if (mounted) {
-            _load();
-          }
-        },
-      ),
+    return Column(
+      children: [
+        PropertyCard(
+          property: property,
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => CsPropertyScreen(propertyId: property.id)),
+            );
+            if (mounted) {
+              _load();
+            }
+          },
+        ),
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 6, bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                item.seller.fullName ?? 'Seller',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              Text(
+                item.seller.primaryPhone ?? item.seller.primaryEmail ?? 'No contact',
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -348,11 +385,22 @@ class _CsDashboardScreenState extends State<CsDashboardScreen> {
         );
         break;
       case BottomNavItem.saved:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved properties screen coming soon')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
         );
         break;
       case BottomNavItem.profile:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
         );

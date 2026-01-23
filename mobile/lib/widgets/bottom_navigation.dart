@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/saved_properties_service.dart';
 
 enum BottomNavItem {
   home,
@@ -8,7 +11,7 @@ enum BottomNavItem {
   profile,
 }
 
-class BottomNavigation extends StatelessWidget {
+class BottomNavigation extends StatefulWidget {
   final BottomNavItem currentIndex;
   final ValueChanged<BottomNavItem> onTap;
 
@@ -17,6 +20,30 @@ class BottomNavigation extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
   });
+
+  @override
+  State<BottomNavigation> createState() => _BottomNavigationState();
+}
+
+class _BottomNavigationState extends State<BottomNavigation> {
+  final SavedPropertiesService _savedService = SavedPropertiesService();
+  String _userId = 'guest';
+  late ValueNotifier<int> _countNotifier;
+  late ValueNotifier<bool> _badgeNotifier;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final nextUserId = authProvider.userData?['id']?.toString() ?? 'guest';
+    if (nextUserId != _userId) {
+      _userId = nextUserId;
+      _countNotifier = _savedService.countNotifier(_userId);
+      _badgeNotifier = _savedService.badgeNotifier(_userId);
+      _savedService.getBadgeEnabled(_userId);
+      _savedService.refreshCount(_userId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +83,7 @@ class BottomNavigation extends StatelessWidget {
                 label: 'List',
                 item: BottomNavItem.list,
               ),
-              _buildNavItem(
+              _buildSavedNavItem(
                 context,
                 icon: Icons.favorite_border,
                 label: 'Saved',
@@ -64,8 +91,8 @@ class BottomNavigation extends StatelessWidget {
               ),
               _buildNavItem(
                 context,
-                icon: Icons.person,
-                label: 'Profile',
+                icon: Icons.assignment_outlined,
+                label: 'Reqs',
                 item: BottomNavItem.profile,
               ),
             ],
@@ -81,14 +108,13 @@ class BottomNavigation extends StatelessWidget {
     required String label,
     required BottomNavItem item,
   }) {
-    final isSelected = currentIndex == item;
-    final color = isSelected
-        ? Theme.of(context).colorScheme.primary
-        : Colors.grey[600]!;
+    final isSelected = widget.currentIndex == item;
+    final color =
+        isSelected ? Theme.of(context).colorScheme.primary : Colors.grey[600]!;
 
     return Expanded(
       child: InkWell(
-        onTap: () => onTap(item),
+        onTap: () => widget.onTap(item),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -104,6 +130,75 @@ class BottomNavigation extends StatelessWidget {
                 fontSize: 12,
                 color: color,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required BottomNavItem item,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => widget.onTap(item),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ValueListenableBuilder<bool>(
+              valueListenable: _badgeNotifier,
+              builder: (context, showBadge, _) {
+                return ValueListenableBuilder<int>(
+                  valueListenable: _countNotifier,
+                  builder: (context, count, __) {
+                    final isSelected = widget.currentIndex == item;
+                    final color = isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey[600]!;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          icon,
+                          color: color,
+                          size: 24,
+                        ),
+                        if (showBadge && count > 0)
+                          Positioned(
+                            right: -6,
+                            top: -4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : count.toString(),
+                                style: const TextStyle(color: Colors.white, fontSize: 9),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: widget.currentIndex == item
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey[600]!,
+                fontWeight: widget.currentIndex == item ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],

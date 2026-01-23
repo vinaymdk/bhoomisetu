@@ -8,6 +8,8 @@ export const Header = () => {
   const navigate = useNavigate();
   const canList = roles.includes('seller') || roles.includes('agent');
   const canVerify = roles.includes('customer_service') || roles.includes('admin');
+  const canBuy = roles.includes('buyer') || roles.includes('admin');
+  const isSeller = roles.includes('seller') || roles.includes('agent');
 
   const handleLogout = () => {
     logout();
@@ -34,9 +36,24 @@ export const Header = () => {
               <Link to="/search" className="header-nav-link">
                 Search
               </Link>
+              {canBuy && (
+                <Link to="/buyer-requirements" className="header-nav-link">
+                  Buyer Requirements
+                </Link>
+              )}
+              {canBuy && (
+                <Link to="/mediation/my-interests" className="header-nav-link">
+                  My Interests
+                </Link>
+              )}
               {canVerify && (
                 <Link to="/cs/dashboard" className="header-nav-link">
                   CS Dashboard
+                </Link>
+              )}
+              {canVerify && (
+                <Link to="/mediation/pending" className="header-nav-link">
+                  Mediation
                 </Link>
               )}
               {canList && (
@@ -44,6 +61,11 @@ export const Header = () => {
                   <Link to="/my-listings" className="header-nav-link">
                     My Listings
                   </Link>
+                  {isSeller && (
+                    <Link to="/mediation/property-interests" className="header-nav-link">
+                      Interests
+                    </Link>
+                  )}
                   <Link to="/list-property" className="header-nav-link header-nav-link-primary">
                     List Property
                   </Link>

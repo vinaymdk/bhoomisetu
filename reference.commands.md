@@ -54,6 +54,16 @@ git reset --soft HEAD~1 <!-- Latest commited branch restore-->
 git fetch origin dev <!-- New branch fetch from remote repo-->
 git checkout -b dev origin/dev <!-- New branch checkout from remote repo>
 
+<!-- # daily dev work -->
+git checkout dev
+git pull --rebase origin dev
+git push origin dev
+
+<!-- # release / sync to main -->
+git checkout main
+git pull --no-rebase origin main
+git merge dev
+git push origin main
 
 
 

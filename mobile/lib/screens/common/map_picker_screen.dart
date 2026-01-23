@@ -19,6 +19,8 @@ class MapPickerScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pick Location'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
