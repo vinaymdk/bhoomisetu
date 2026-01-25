@@ -8,6 +8,7 @@ import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../../services/app_config_service.dart';
 import '../../services/location_service.dart';
@@ -95,7 +96,12 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -591,6 +597,12 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
         );
         break;
     }

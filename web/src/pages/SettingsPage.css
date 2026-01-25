@@ -1,0 +1,46 @@
+.settings-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--spacing-lg) var(--spacing-md);
+}
+
+.settings-header {
+  margin-bottom: var(--spacing-lg);
+}
+
+.settings-header h1 {
+  margin: 0 0 6px 0;
+  font-size: var(--font-size-xl);
+}
+
+.settings-header p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.settings-card {
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  max-width: 520px;
+}
+
+.settings-card h3 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+}
+
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-size-sm);
+}
+
+.settings-toggle-row:last-child {
+  border-bottom: none;
+}

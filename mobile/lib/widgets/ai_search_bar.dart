@@ -65,15 +65,19 @@ class _AISearchBarState extends State<AISearchBar> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: ElevatedButton(
-                    onPressed: _handleSearch,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: ElevatedButton(
+                      onPressed: _handleSearch,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
+                      child: const Text('Search'),
                     ),
-                    child: const Text('Search'),
                   ),
                 ),
               ],

@@ -20,6 +20,10 @@ import { BuyerRequirementDetailsPage } from './pages/BuyerRequirementDetailsPage
 import { BuyerInterestsPage } from './pages/BuyerInterestsPage';
 import { SellerInterestsPage } from './pages/SellerInterestsPage';
 import { CsMediationPage } from './pages/CsMediationPage';
+import { SavedPropertiesPage } from './pages/SavedPropertiesPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage';
+import { AIChatPage } from './pages/AIChatPage';
 
 function App() {
   return (
@@ -30,6 +34,7 @@ function App() {
         <Route path="/properties" element={<PropertiesPage />} />
         <Route path="/properties/:id" element={<PropertyDetailsPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/ai-chat" element={<AIChatPage />} />
         
         {/* Public routes that should redirect if authenticated */}
         <Route
@@ -96,6 +101,30 @@ function App() {
             <RoleProtectedRoute allowedRoles={['customer_service', 'admin']}>
               <CsMediationPage />
             </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/saved"
+          element={
+            <ProtectedRoute>
+              <SavedPropertiesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
           }
         />
         <Route

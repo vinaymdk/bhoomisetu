@@ -9,6 +9,7 @@ import '../properties/saved_properties_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 
 class CsMediationScreen extends StatefulWidget {
   const CsMediationScreen({super.key});
@@ -23,7 +24,7 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
   bool _isLoading = true;
   String? _error;
   String _status = '';
-  BottomNavItem _currentNavItem = BottomNavItem.profile;
+  BottomNavItem _currentNavItem = BottomNavItem.cs;
   final Map<String, TextEditingController> _notes = {};
   final Map<String, TextEditingController> _scores = {};
 
@@ -92,6 +93,9 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
       case BottomNavItem.profile:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()));
         break;
+      case BottomNavItem.cs:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const CsDashboardScreen()));
+        break;
     }
   }
 
@@ -114,7 +118,12 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
           children: [
             _filterRow(),
             const SizedBox(height: 12),
@@ -147,7 +156,7 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
               border: OutlineInputBorder(),
             ),
             items: const [
-              DropdownMenuItem(value: '', child: Text('Pending')),
+              DropdownMenuItem(value: '', child: Text('All')),
               DropdownMenuItem(value: 'pending', child: Text('Pending')),
               DropdownMenuItem(value: 'cs_reviewing', child: Text('CS Reviewing')),
               DropdownMenuItem(value: 'seller_checking', child: Text('Seller Checking')),
@@ -180,6 +189,14 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
             Text(propertyTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text('Buyer: $buyerName', style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _statusPill(item.connectionStatus),
+                _infoPill('Priority', item.priority),
+              ],
+            ),
             const SizedBox(height: 10),
             TextField(
               controller: _noteController(item.id),
@@ -199,10 +216,20 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
+            GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 2.6,
               children: [
                 OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    minimumSize: const Size.fromHeight(44),
+                  ),
                   onPressed: () async {
                     await _service.reviewBuyerSeriousness({
                       'interestExpressionId': item.id,
@@ -214,9 +241,14 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
                     });
                     _load();
                   },
-                  child: const Text('Buyer Seriousness'),
+                  child: const Text('Buyer Seriousness', maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
                 OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    minimumSize: const Size.fromHeight(44),
+                  ),
                   onPressed: () async {
                     await _service.reviewSellerWillingness({
                       'interestExpressionId': item.id,
@@ -228,9 +260,14 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
                     });
                     _load();
                   },
-                  child: const Text('Seller Willingness'),
+                  child: const Text('Seller Willingness', maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    minimumSize: const Size.fromHeight(44),
+                  ),
                   onPressed: () async {
                     await _service.approveConnection({
                       'interestExpressionId': item.id,
@@ -240,14 +277,19 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
                     });
                     _load();
                   },
-                  child: const Text('Approve'),
+                  child: const Text('Approve', maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
                 OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    minimumSize: const Size.fromHeight(44),
+                  ),
                   onPressed: () async {
                     await _service.rejectConnection(item.id, reason: _noteController(item.id).text);
                     _load();
                   },
-                  child: const Text('Reject'),
+                  child: const Text('Reject', maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ],
             ),
@@ -255,6 +297,56 @@ class _CsMediationScreenState extends State<CsMediationScreen> {
         ),
       ),
     );
+  }
+
+  Widget _statusPill(String status) {
+    final color = _statusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Text(
+        _formatStatus(status),
+        style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+      ),
+    );
+  }
+
+  Widget _infoPill(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange.shade700;
+      case 'cs_reviewing':
+        return Colors.blue.shade700;
+      case 'seller_checking':
+        return Colors.deepPurple.shade400;
+      case 'approved':
+        return Colors.green.shade700;
+      case 'rejected':
+        return Colors.red.shade700;
+      case 'connected':
+        return Colors.teal.shade600;
+      default:
+        return Colors.grey.shade600;
+    }
+  }
+
+  String _formatStatus(String status) {
+    return status.replaceAll('_', ' ');
   }
 
   Widget _stateCard(String message) {

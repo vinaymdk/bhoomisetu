@@ -9,6 +9,7 @@ import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import 'buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 
 class BuyerRequirementCreateScreen extends StatefulWidget {
   final BuyerRequirement? requirement;
@@ -227,7 +228,12 @@ class _BuyerRequirementCreateScreenState extends State<BuyerRequirementCreateScr
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
             children: [
               _sectionTitle('Requirement Summary'),
               _textField(_titleController, 'Title'),
@@ -381,6 +387,9 @@ class _BuyerRequirementCreateScreenState extends State<BuyerRequirementCreateScr
         break;
       case BottomNavItem.profile:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()));
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const CsDashboardScreen()));
         break;
     }
   }

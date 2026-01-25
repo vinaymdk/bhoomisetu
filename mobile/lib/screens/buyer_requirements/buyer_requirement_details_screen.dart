@@ -9,6 +9,7 @@ import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../properties/property_details_screen.dart';
 import '../properties/saved_properties_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 import 'buyer_requirement_create_screen.dart';
 import 'buyer_requirements_screen.dart';
 
@@ -120,6 +121,12 @@ class _BuyerRequirementDetailsScreenState
         Navigator.push(context,
             MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()));
         break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
+        );
+        break;
     }
   }
 
@@ -138,7 +145,12 @@ class _BuyerRequirementDetailsScreenState
               : _requirement == null
                   ? _stateCard('Requirement not found.')
                   : ListView(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        MediaQuery.of(context).viewInsets.bottom + 16,
+                      ),
                       children: [
                         _overviewCard(_requirement!),
                         const SizedBox(height: 12),

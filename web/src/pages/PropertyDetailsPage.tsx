@@ -19,6 +19,7 @@ export const PropertyDetailsPage = () => {
   const [interestType, setInterestType] = useState('viewing');
   const [priority, setPriority] = useState('normal');
   const [interestStatus, setInterestStatus] = useState<string | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -72,9 +73,62 @@ export const PropertyDetailsPage = () => {
 
         {property.images && property.images.length > 0 && (
           <div className="property-details-images">
-            {property.images.map((img) => (
-              <img key={img.id} src={img.imageUrl} alt={property.title} />
+            {property.images.map((img, index) => (
+              <button
+                key={img.id}
+                className="property-image-btn"
+                onClick={() => setActiveImageIndex(index)}
+                aria-label="Open image"
+              >
+                <img src={img.imageUrl} alt={property.title} />
+              </button>
             ))}
+          </div>
+        )}
+        {activeImageIndex !== null && property.images && (
+          <div
+            className="property-image-modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setActiveImageIndex(null)}
+          >
+            <button className="property-image-close" onClick={() => setActiveImageIndex(null)}>
+              ✕
+            </button>
+            <div className="property-image-viewer" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="property-image-nav"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev === null ? 0 : (prev - 1 + property.images!.length) % property.images!.length,
+                  )
+                }
+              >
+                ‹
+              </button>
+              <img src={property.images[activeImageIndex].imageUrl} alt="Property" />
+              <button
+                className="property-image-nav"
+                onClick={() =>
+                  setActiveImageIndex((prev) =>
+                    prev === null ? 0 : (prev + 1) % property.images!.length,
+                  )
+                }
+              >
+                ›
+              </button>
+            </div>
+            <div className="property-image-thumbs" onClick={(e) => e.stopPropagation()}>
+              {property.images.map((img, index) => (
+                <button
+                  key={img.id}
+                  className={`property-thumb ${index === activeImageIndex ? 'active' : ''}`}
+                  onClick={() => setActiveImageIndex(index)}
+                >
+                  <img src={img.imageUrl} alt="Thumbnail" />
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

@@ -8,6 +8,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   ParseEnumPipe,
+  HttpException,
 } from '@nestjs/common';
 import { AiChatService } from './ai-chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,11 +27,18 @@ export class AiChatController {
    * POST /api/ai-chat/message
    */
   @Post('message')
-  sendMessage(
+  async sendMessage(
     @CurrentUser() currentUser: CurrentUserData,
     @Body() chatDto: ChatRequestDto,
   ) {
-    return this.aiChatService.sendMessage(currentUser.userId, chatDto);
+    try {
+      return await this.aiChatService.sendMessage(currentUser.userId, chatDto);
+    } catch (error: any) {
+      throw new HttpException(
+        error.message || 'Failed to send message',
+        error.status || 500,
+      );
+    }
   }
 
   /**

@@ -549,7 +549,7 @@ export class MediationService {
     // Filter by connection status
     if (filterDto.connectionStatus) {
       queryBuilder.andWhere('interest.connectionStatus = :status', { status: filterDto.connectionStatus });
-    } else {
+    } else if (!filterDto.includeAll) {
       // Default: show pending and in-review statuses
       queryBuilder.andWhere('interest.connectionStatus IN (:...statuses)', {
         statuses: [ConnectionStatus.PENDING, ConnectionStatus.CS_REVIEWING, ConnectionStatus.SELLER_CHECKING],

@@ -30,6 +30,7 @@ class MediationService {
   Future<MediationListResponse> getPendingInterests({String? status, int page = 1, int limit = 20}) async {
     final response = await _apiClient.dio.get('/mediation/pending', queryParameters: {
       if (status != null && status.isNotEmpty) 'connectionStatus': status,
+      if (status == null || status.isEmpty) 'includeAll': true,
       'page': page,
       'limit': limit,
     });

@@ -49,6 +49,7 @@ MIGRATIONS=(
     "20260109_notifications_schema.sql"
     "20260109_payments_subscriptions_schema.sql"
     "20260109_reviews_feedback_schema.sql"
+    "2026_01_24_add_profile_fields.sql"
 )
 
 # Run migration function

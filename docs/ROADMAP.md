@@ -726,6 +726,18 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 
 ---
 
-**Last Updated**: 2024-01-09
+## Recent UX / Platform Updates (Jan 24, 2026)
+
+- ✅ Web: compact header sizing + account dropdown (Profile/Settings/Logout)
+- ✅ Web: new Settings page for badge preferences
+- ✅ Web: property image zoom modal on details page
+- ✅ Mobile: Settings screen for badge preferences (moved out of Profile/Reqs)
+- ✅ Mobile: property image zoom viewer on details page
+- ✅ Backend: profile updates tolerate empty email/phone values
+- ✅ Backend: Cloudinary AVIF uploads allowed
+
+---
+
+**Last Updated**: 2026-01-24
 **Current Phase**: Phase 2 - Core Features
 **Next Milestone**: Module 2 Completion

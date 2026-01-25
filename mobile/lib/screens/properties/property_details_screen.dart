@@ -8,6 +8,7 @@ import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../../services/saved_properties_service.dart';
 import '../../services/mediation_service.dart';
@@ -138,10 +139,13 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          img.imageUrl,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                        child: GestureDetector(
+                          onTap: () => _openImageViewer(index, property.images!),
+                          child: Image.network(
+                            img.imageUrl,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     );
@@ -311,6 +315,70 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     );
   }
 
+  void _openImageViewer(int initialIndex, List<PropertyImage> images) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) {
+        final controller = PageController(initialPage: initialIndex);
+        int activeIndex = initialIndex;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(12),
+              backgroundColor: Colors.transparent,
+              child: Stack(
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.75,
+                    width: double.infinity,
+                    child: PageView.builder(
+                      controller: controller,
+                      itemCount: images.length,
+                      onPageChanged: (index) => setState(() => activeIndex = index),
+                      itemBuilder: (context, index) {
+                        return InteractiveViewer(
+                          maxScale: 5,
+                          child: Image.network(images[index].imageUrl, fit: BoxFit.contain),
+                        );
+                      },
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${activeIndex + 1} / ${images.length}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _infoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -373,6 +441,12 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
         );
         break;
     }

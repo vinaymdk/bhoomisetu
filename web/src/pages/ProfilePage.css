@@ -1,0 +1,120 @@
+.profile-page {
+  padding: 32px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.profile-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #edf0f7;
+  padding: 16px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.profile-avatar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-form input,
+.profile-form textarea {
+  border: 1px solid #d6dbe6;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.profile-form input.read-only {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.profile-form button {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.profile-status {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+
+.profile-share {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-share .share-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+.profile-share .share-icon.whatsapp {
+  background: #25d366;
+}
+
+.profile-share .share-icon.facebook {
+  background: #1877f2;
+}
+
+.profile-share .share-icon.twitter {
+  background: #111827;
+}
+
+.profile-bottom-nav {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  border-top: 1px solid #edf0f7;
+}
+
+.profile-bottom-nav a {
+  color: #1a73e8;
+  font-weight: 600;
+  text-decoration: none;
+}

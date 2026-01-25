@@ -26,6 +26,7 @@ export const CsMediationPage = () => {
     try {
       const resp = await mediationService.getPendingInterests({
         connectionStatus: status || undefined,
+        includeAll: !status,
         page: 1,
         limit: 20,
       });
@@ -90,7 +91,7 @@ export const CsMediationPage = () => {
         <div className="mediation-filter">
           <label>Status</label>
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">Pending</option>
+            <option value="">All</option>
             {Object.keys(statusLabels).map((key) => (
               <option key={key} value={key}>
                 {statusLabels[key]}

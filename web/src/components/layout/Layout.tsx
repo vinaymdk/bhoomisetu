@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { AIChatButton } from '../home/AIChatButton';
 import './Layout.css';
 
 interface LayoutProps {
@@ -14,6 +15,7 @@ export const Layout = ({ children }: LayoutProps) => {
       <main className="layout-main">
         {children}
       </main>
+      <AIChatButton />
       <Footer />
     </div>
   );

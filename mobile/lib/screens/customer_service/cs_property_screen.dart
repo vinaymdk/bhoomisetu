@@ -8,6 +8,7 @@ import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 import '../properties/saved_properties_screen.dart';
 
 class CsPropertyScreen extends StatefulWidget {
@@ -118,7 +119,12 @@ class _CsPropertyScreenState extends State<CsPropertyScreen> {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -245,7 +251,7 @@ class _CsPropertyScreenState extends State<CsPropertyScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigation(
-        currentIndex: BottomNavItem.home,
+        currentIndex: BottomNavItem.cs,
         onTap: _handleNavTap,
       ),
     );
@@ -313,6 +319,12 @@ class _CsPropertyScreenState extends State<CsPropertyScreen> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
         );
         break;
     }

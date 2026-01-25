@@ -9,7 +9,7 @@ class ApiConfig {
   static String get defaultBaseUrl {
     // For physical device testing - use your computer's IP address
     const String physicalDeviceIP = '192.168.0.108'; // Home
-    // const String physicalDeviceIP = '192.168.0.10'; // Office
+    // const String physicalDeviceIP = '192.168.0.11'; // Office
 
     if (Platform.isAndroid) {
       // Uncomment the one you need:

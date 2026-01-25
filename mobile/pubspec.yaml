@@ -130,6 +130,8 @@ dependencies:
   latlong2: ^0.9.1        # <-- change this
   flutter_map_dragmarker: ^8.0.3
   geolocator: ^14.0.2
+  share_plus: ^10.0.2
+  font_awesome_flutter: ^10.8.0
 
 
 dev_dependencies:

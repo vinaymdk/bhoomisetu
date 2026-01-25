@@ -10,6 +10,7 @@ import '../properties/my_listings_screen.dart';
 import '../properties/property_details_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../properties/saved_properties_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -21,6 +22,8 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final SearchService _searchService = SearchService();
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _localityController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final Set<String> _dismissedExtracted = {};
   
@@ -43,11 +46,15 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _cityController.text = _filters.city ?? '';
+    _localityController.text = _filters.locality ?? '';
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _cityController.dispose();
+    _localityController.dispose();
     _scrollController.dispose();
     _debounceTimer?.cancel();
     super.dispose();
@@ -88,6 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
         final extractedCity = extracted.location?['city'];
         if (_filters.city == null && extractedCity != null && extractedCity.toString().trim().isNotEmpty) {
           _filters.city = extractedCity.toString();
+          _syncControllerText(_cityController, _filters.city ?? '');
           shouldApply = true;
         }
         if (_filters.propertyType == null && extracted.propertyType != null) {
@@ -169,9 +177,11 @@ class _SearchScreenState extends State<SearchScreen> {
         break;
       case 'city':
         _filters.city = value;
+        _syncControllerText(_cityController, value?.toString() ?? '');
         break;
       case 'locality':
         _filters.locality = value;
+        _syncControllerText(_localityController, value?.toString() ?? '');
         break;
       case 'minPrice':
         _filters.minPrice = value != null ? double.tryParse(value.toString()) : null;
@@ -199,7 +209,17 @@ class _SearchScreenState extends State<SearchScreen> {
   /// Prevents search from triggering on every keystroke
   void _updateFilterDebounced(String key, dynamic value, {bool preserveDismissed = false}) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () {
+      if (key == 'city') {
+        final next = value?.toString().trim() ?? '';
+        if (next.isEmpty) {
+          _updateFilter('city', null, preserveDismissed: preserveDismissed);
+          return;
+        }
+        if (next.length < 2) {
+          return;
+        }
+      }
       _updateFilter(key, value, preserveDismissed: preserveDismissed);
     });
   }
@@ -215,8 +235,18 @@ class _SearchScreenState extends State<SearchScreen> {
     _filters.bathrooms = null;
     _filters.rankBy = 'relevance';
     _searchController.clear();
+    _cityController.clear();
+    _localityController.clear();
     _filters.query = null;
     _performSearch(reset: true);
+  }
+
+  void _syncControllerText(TextEditingController controller, String text) {
+    if (controller.text == text) return;
+    controller.value = controller.value.copyWith(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
   }
 
   int _getActiveFiltersCount() {
@@ -464,7 +494,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   hintText: 'Enter city',
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                controller: TextEditingController(text: _filters.city ?? ''),
+                controller: _cityController,
                 onChanged: (value) => _updateFilterDebounced('city', value.isEmpty ? null : value),
               ),
             ),
@@ -477,7 +507,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   hintText: 'Enter locality',
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                controller: TextEditingController(text: _filters.locality ?? ''),
+                controller: _localityController,
                 onChanged: (value) => _updateFilterDebounced('locality', value.isEmpty ? null : value),
               ),
             ),
@@ -1095,6 +1125,12 @@ class _SearchScreenState extends State<SearchScreen> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
         );
         break;
     }

@@ -10,8 +10,9 @@ import 'buyer_requirement_details_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-import '../../services/saved_properties_service.dart';
 import '../mediation/buyer_interests_screen.dart';
+import '../../services/badge_service.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 
 class BuyerRequirementsScreen extends StatefulWidget {
   const BuyerRequirementsScreen({super.key});
@@ -23,14 +24,13 @@ class BuyerRequirementsScreen extends StatefulWidget {
 
 class _BuyerRequirementsScreenState extends State<BuyerRequirementsScreen> {
   final BuyerRequirementsService _service = BuyerRequirementsService();
-  final SavedPropertiesService _savedService = SavedPropertiesService();
+  final BadgeService _badgeService = BadgeService();
   final TextEditingController _searchController = TextEditingController();
   List<BuyerRequirement> _items = [];
   bool _isLoading = true;
   String? _error;
   String _statusFilter = 'active';
   BottomNavItem _currentNavItem = BottomNavItem.profile;
-  bool _savedBadgeEnabled = true;
   String _userId = 'guest';
 
   @override
@@ -38,7 +38,6 @@ class _BuyerRequirementsScreenState extends State<BuyerRequirementsScreen> {
     super.initState();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     _userId = authProvider.userData?['id']?.toString() ?? 'guest';
-    _loadSavedBadgeSetting();
     _load();
   }
 
@@ -63,6 +62,7 @@ class _BuyerRequirementsScreenState extends State<BuyerRequirementsScreen> {
       setState(() {
         _items = response.requirements;
       });
+      _badgeService.setReqsCount(_userId, response.requirements.length);
     } catch (e) {
       setState(() {
         _error = e.toString().replaceAll('Exception: ', '');
@@ -70,15 +70,6 @@ class _BuyerRequirementsScreenState extends State<BuyerRequirementsScreen> {
     } finally {
       setState(() {
         _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _loadSavedBadgeSetting() async {
-    final enabled = await _savedService.getBadgeEnabled(_userId);
-    if (mounted) {
-      setState(() {
-        _savedBadgeEnabled = enabled;
       });
     }
   }
@@ -108,6 +99,12 @@ class _BuyerRequirementsScreenState extends State<BuyerRequirementsScreen> {
         break;
       case BottomNavItem.profile:
         break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
+        );
+        break;
     }
   }
 
@@ -124,15 +121,18 @@ class _BuyerRequirementsScreenState extends State<BuyerRequirementsScreen> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
           children: [
             _summaryCard(_items.length.toString(), totalMatches.toString()),
             const SizedBox(height: 16),
             _filtersSection(),
             const SizedBox(height: 12),
             _interestsShortcut(),
-            const SizedBox(height: 12),
-            _savedBadgeToggle(),
             const SizedBox(height: 12),
             if (_isLoading)
               const Center(child: CircularProgressIndicator())
@@ -272,25 +272,6 @@ class _BuyerRequirementsScreenState extends State<BuyerRequirementsScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _savedBadgeToggle() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: SwitchListTile(
-        title: const Text('Show Saved count badge'),
-        subtitle: const Text('Control visibility of Saved count on bottom nav'),
-        value: _savedBadgeEnabled,
-        onChanged: (value) async {
-          await _savedService.setBadgeEnabled(_userId, value);
-          if (mounted) {
-            setState(() {
-              _savedBadgeEnabled = value;
-            });
-          }
-        },
       ),
     );
   }

@@ -31,7 +31,7 @@ CRITICAL RULES (NON-NEGOTIABLE):
 3. ALWAYS escalate serious intent (purchase interest, negotiation, deal closing) to customer service
 4. You can provide property information, suggest properties, answer FAQs, and help with general queries
 5. If user asks for seller contact, politely explain that customer service will connect them after verification
-6. Support both English and Telugu languages
+6. Support English, Telugu, and Hindi languages
 
 CAPABILITIES:
 - Answer FAQs about properties, pricing, verification process
@@ -73,284 +73,384 @@ When escalating, provide clear reason and suggest next steps.`;
    * Main entry point for AI chat support
    */
   async sendMessage(userId: string, chatDto: ChatRequestDto): Promise<ChatResponseDto> {
-    const language = chatDto.language || ChatLanguage.EN;
+    try {
+      const language = chatDto.language || ChatLanguage.EN;
 
-    // Get or create conversation
-    let conversation: AiChatConversation;
-    if (chatDto.conversationId) {
-      const existingConversation = await this.conversationRepository.findOne({
-        where: { id: chatDto.conversationId, userId },
-        relations: ['messages'],
-      });
+      // Get or create conversation
+      let conversation: AiChatConversation;
+      if (chatDto.conversationId) {
+        const existingConversation = await this.conversationRepository.findOne({
+          where: { id: chatDto.conversationId, userId },
+          relations: ['messages'],
+        });
 
-      if (!existingConversation) {
-        throw new NotFoundException('Conversation not found');
-      }
-
-      conversation = existingConversation;
-
-      // Update conversation if context changed
-      if (chatDto.contextType && conversation.contextType !== chatDto.contextType) {
-        conversation.contextType = chatDto.contextType;
-      }
-      if (chatDto.contextPropertyId && conversation.contextPropertyId !== chatDto.contextPropertyId) {
-        conversation.contextPropertyId = chatDto.contextPropertyId;
-      }
-      if (chatDto.contextRequirementId && conversation.contextRequirementId !== chatDto.contextRequirementId) {
-        conversation.contextRequirementId = chatDto.contextRequirementId;
-      }
-      await this.conversationRepository.save(conversation);
-    } else {
-      // Create new conversation
-      conversation = this.conversationRepository.create({
-        userId,
-        sessionId: chatDto.sessionId || this.generateSessionId(),
-        language,
-        status: ConversationStatus.ACTIVE,
-        contextType: chatDto.contextType || ChatContextType.GENERAL,
-        contextPropertyId: chatDto.contextPropertyId || undefined,
-        contextRequirementId: chatDto.contextRequirementId || undefined,
-      });
-      conversation = await this.conversationRepository.save(conversation);
-    }
-
-    // Save user message
-    const userMessage = this.messageRepository.create({
-      conversationId: conversation.id,
-      senderType: SenderType.USER,
-      senderId: userId,
-      messageType: MessageType.TEXT,
-      content: chatDto.message,
-      contentEnglish: language === ChatLanguage.TE ? null : chatDto.message,
-      contentTelugu: language === ChatLanguage.TE ? chatDto.message : null,
-    });
-    await this.messageRepository.save(userMessage);
-
-    // Get conversation history
-    const conversationHistory = await this.messageRepository.find({
-      where: { conversationId: conversation.id },
-      order: { createdAt: 'ASC' },
-      take: 20, // Last 20 messages for context
-    });
-
-    const historyForAI = conversationHistory.map((msg) => ({
-      role: msg.senderType === SenderType.USER ? ('user' as const) : ('assistant' as const),
-      content: msg.content,
-    }));
-
-    // Get context (property, requirement) if available
-    let contextProperty: Property | null = null;
-    let contextRequirement: BuyerRequirement | null = null;
-
-    if (conversation.contextPropertyId) {
-      contextProperty = await this.propertyRepository.findOne({
-        where: { id: conversation.contextPropertyId },
-      });
-    }
-
-    if (conversation.contextRequirementId) {
-      contextRequirement = await this.requirementRepository.findOne({
-        where: { id: conversation.contextRequirementId, buyerId: userId },
-      });
-    }
-
-    // Get user roles for context
-    const userRoles = await this.usersService.getUserRoles(userId);
-
-    // Enrich AI context with FAQs if this is an FAQ-type query
-    const detectedIntentFromMessage = this.detectIntentFromMessage(chatDto.message);
-    let faqContext: string | undefined;
-    if (detectedIntentFromMessage === 'faq' || conversation.contextType === ChatContextType.FAQ) {
-      const relevantFaqs = await this.getRelevantFaqs(chatDto.message, language);
-      if (relevantFaqs.length > 0) {
-        faqContext = relevantFaqs
-          .slice(0, 5) // Top 5 relevant FAQs
-          .map((faq) => {
-            const question = language === ChatLanguage.TE ? faq.questionTelugu : faq.questionEnglish;
-            const answer = language === ChatLanguage.TE ? faq.answerTelugu : faq.answerEnglish;
-            return `Q: ${question}\nA: ${answer}`;
-          })
-          .join('\n\n');
-      }
-    }
-
-    // Enrich AI context with property suggestions if this is a property search query
-    let propertyContext: string | undefined;
-    if (detectedIntentFromMessage === 'property_search' || conversation.contextType === ChatContextType.PROPERTY_SEARCH) {
-      // Extract search criteria from message (simplified - AI can enhance this)
-      const searchCriteria = this.extractSearchCriteria(chatDto.message);
-      if (searchCriteria) {
-        const suggestedProperties = await this.findSuggestedProperties(searchCriteria, userId);
-        if (suggestedProperties.length > 0) {
-          propertyContext = suggestedProperties
-            .slice(0, 5) // Top 5 properties
-            .map((prop) => {
-              return `Property: ${prop.title}, ${prop.city}, ₹${prop.price.toLocaleString()}, ${prop.bedrooms || 'N/A'} BHK, ID: ${prop.id}`;
-            })
-            .join('\n');
+        if (!existingConversation) {
+          throw new NotFoundException('Conversation not found');
         }
+
+        conversation = existingConversation;
+
+        // Update conversation if context changed
+        if (chatDto.contextType && conversation.contextType !== chatDto.contextType) {
+          conversation.contextType = chatDto.contextType;
+        }
+        if (chatDto.contextPropertyId && conversation.contextPropertyId !== chatDto.contextPropertyId) {
+          conversation.contextPropertyId = chatDto.contextPropertyId;
+        }
+        if (chatDto.contextRequirementId && conversation.contextRequirementId !== chatDto.contextRequirementId) {
+          conversation.contextRequirementId = chatDto.contextRequirementId;
+        }
+        await this.conversationRepository.save(conversation);
+      } else {
+        // Create new conversation
+        conversation = this.conversationRepository.create({
+          userId,
+          sessionId: chatDto.sessionId || this.generateSessionId(),
+          language,
+          status: ConversationStatus.ACTIVE,
+          contextType: chatDto.contextType || ChatContextType.GENERAL,
+          contextPropertyId: chatDto.contextPropertyId || undefined,
+          contextRequirementId: chatDto.contextRequirementId || undefined,
+        });
+        conversation = await this.conversationRepository.save(conversation);
       }
-    }
 
-    // Build enhanced system prompt with FAQs and property context
-    let enhancedSystemPrompt = this.SYSTEM_PROMPT;
-    if (faqContext) {
-      enhancedSystemPrompt += `\n\nRELEVANT FAQs:\n${faqContext}\n\nUse these FAQs to answer user questions accurately.`;
-    }
-    if (propertyContext) {
-      enhancedSystemPrompt += `\n\nSUGGESTED PROPERTIES:\n${propertyContext}\n\nYou can suggest these properties to the user. Always mention property IDs when suggesting.`;
-    }
+      if (!conversation?.id) {
+        this.logger.warn(
+          `Conversation missing id for user ${userId}. Recreating conversation.`,
+        );
+        conversation = await this.conversationRepository.save(
+          this.conversationRepository.create({
+            userId,
+            sessionId: chatDto.sessionId || this.generateSessionId(),
+            language,
+            status: ConversationStatus.ACTIVE,
+            contextType: chatDto.contextType || ChatContextType.GENERAL,
+            contextPropertyId: chatDto.contextPropertyId || undefined,
+            contextRequirementId: chatDto.contextRequirementId || undefined,
+          }),
+        );
+      }
 
-    // Call AI service
-    const aiResponse = await this.aiService.chatCompletion({
-      message: chatDto.message,
-      conversationHistory: historyForAI,
-      language: language,
-      context: {
-        contextType: conversation.contextType || undefined,
-        propertyId: conversation.contextPropertyId || undefined,
-        requirementId: conversation.contextRequirementId || undefined,
-        userId,
-        userRole: userRoles[0] || 'buyer',
-      },
-      systemPrompt: enhancedSystemPrompt,
-    });
+      if (!conversation?.id) {
+        throw new BadRequestException('Failed to initialize conversation');
+      }
 
-    // Detect if this requires escalation
-    const requiresEscalation = aiResponse.requiresEscalation || this.detectEscalationTriggers(chatDto.message);
-
-    if (requiresEscalation && !conversation.escalatedToCs) {
-      // Escalate to CS
-      conversation.escalatedToCs = true;
-      conversation.escalatedAt = new Date();
-      conversation.escalationReason = aiResponse.escalationReason || 'Serious intent detected by AI';
-      conversation.status = ConversationStatus.ESCALATED;
-
-      // Create escalation action
-      const escalationAction = this.actionRepository.create({
+      // Save user message
+      // const userMessage = this.messageRepository.create({
+      //   conversationId: conversation.id,
+      //   conversation,
+      //   senderType: SenderType.USER,
+      //   senderId: userId,
+      //   messageType: MessageType.TEXT,
+      //   content: chatDto.message,
+      //   contentEnglish: language === ChatLanguage.TE ? null : chatDto.message,
+      //   contentTelugu: language === ChatLanguage.TE ? chatDto.message : null,
+      // });
+      const userMessage = this.messageRepository.create({
         conversationId: conversation.id,
-        messageId: userMessage.id,
-        actionType: ActionType.ESCALATED_TO_CS,
-        actionData: {
-          reason: conversation.escalationReason,
-          originalMessage: chatDto.message,
-          detectedIntent: aiResponse.detectedIntent,
-        },
-        status: ActionStatus.PENDING,
+        senderType: SenderType.USER,
+        senderId: userId,
+        messageType: MessageType.TEXT,
+        content: chatDto.message,
+        contentEnglish: language === ChatLanguage.TE ? null : chatDto.message,
+        contentTelugu: language === ChatLanguage.TE ? chatDto.message : null,
       });
-      await this.actionRepository.save(escalationAction);
+      
+      await this.messageRepository.save(userMessage);
 
-      // Notify CS agents about escalation
-      if (conversation.escalationReason) {
+      // Get conversation history
+      const conversationHistory = await this.messageRepository.find({
+        where: { conversationId: conversation.id },
+        order: { createdAt: 'ASC' },
+        take: 20, // Last 20 messages for context
+      });
+
+      const historyForAI = conversationHistory.map((msg) => ({
+        role: msg.senderType === SenderType.USER ? ('user' as const) : ('assistant' as const),
+        content: msg.content,
+      }));
+
+      // Get context (property, requirement) if available
+      let contextProperty: Property | null = null;
+      let contextRequirement: BuyerRequirement | null = null;
+
+      if (conversation.contextPropertyId) {
+        contextProperty = await this.propertyRepository.findOne({
+          where: { id: conversation.contextPropertyId },
+        });
+      }
+
+      if (conversation.contextRequirementId) {
+        contextRequirement = await this.requirementRepository.findOne({
+          where: { id: conversation.contextRequirementId, buyerId: userId },
+        });
+      }
+
+      // Get user roles for context
+      const userRoles = await this.usersService.getUserRoles(userId);
+
+      // Enrich AI context with FAQs if this is an FAQ-type query
+      const detectedIntentFromMessage = this.detectIntentFromMessage(chatDto.message);
+      let faqContext: string | undefined;
+      if (detectedIntentFromMessage === 'faq' || conversation.contextType === ChatContextType.FAQ) {
         try {
-          const csAgents = await this.usersService.findByRole('customer_service');
-          if (csAgents.length > 0) {
-            // Notify all CS agents about escalation (round-robin assignment can be added later)
-            const notificationPromises = csAgents.map((agent) =>
-              this.notificationsService
-                .notifyAiChatEscalation(agent.id, conversation.id, conversation.escalationReason!)
-                .catch((error) => {
-                  this.logger.error(`Failed to notify CS agent ${agent.id}: ${error.message}`);
-                }),
-            );
-            await Promise.allSettled(notificationPromises);
-            this.logger.log(
-              `Conversation ${conversation.id} escalated. Notified ${csAgents.length} CS agent(s). Reason: ${conversation.escalationReason}`,
-            );
-          } else {
-            this.logger.warn(`No CS agents found. Conversation ${conversation.id} escalated but no notifications sent.`);
+          const relevantFaqs = await this.getRelevantFaqs(chatDto.message, language);
+          if (relevantFaqs.length > 0) {
+            faqContext = relevantFaqs
+              .slice(0, 5) // Top 5 relevant FAQs
+              .map((faq) => {
+                let question = '';
+                let answer = '';
+                
+                const langStr = language as string;
+                if (langStr === 'te' || langStr === ChatLanguage.TE) {
+                  question = faq.questionTelugu || faq.questionEnglish;
+                  answer = faq.answerTelugu || faq.answerEnglish;
+                } else if (langStr === 'hi' || langStr === ChatLanguage.HI) {
+                  question = faq.questionEnglish; // Hindi translations can be added later
+                  answer = faq.answerEnglish;
+                } else {
+                  question = faq.questionEnglish;
+                  answer = faq.answerEnglish;
+                }
+                
+                return `Q: ${question || 'N/A'}\nA: ${answer || 'N/A'}`;
+              })
+              .join('\n\n');
           }
-        } catch (error: any) {
-          this.logger.error(`Failed to notify CS agents about escalation: ${error.message}`);
+        } catch (error) {
+          this.logger.warn(`Error fetching FAQs for language ${language}: ${error}`);
         }
       }
-    }
 
-    // Update conversation with AI insights
-    if (aiResponse.detectedIntent) {
-      conversation.userIntent = this.mapIntentToUserIntent(aiResponse.detectedIntent);
-      conversation.intentConfidence = aiResponse.confidence * 100;
-    }
-
-    if (aiResponse.suggestions) {
-      // Process suggestions (property suggestions, actions, etc.)
-      await this.processAiSuggestions(conversation.id, userMessage.id, aiResponse.suggestions);
-    }
-
-    await this.conversationRepository.save(conversation);
-
-    // Save AI response message
-    const aiMessage = this.messageRepository.create({
-      conversationId: conversation.id,
-      senderType: SenderType.AI,
-      senderId: null,
-      messageType: MessageType.TEXT,
-      content: aiResponse.response,
-      contentEnglish: language === ChatLanguage.TE ? null : aiResponse.response,
-      contentTelugu: language === ChatLanguage.TE ? aiResponse.response : null,
-      aiModelVersion: 'openai-compatible-v1',
-      aiConfidence: aiResponse.confidence * 100,
-      detectedIntent: aiResponse.detectedIntent as DetectedIntent,
-      requiresEscalation,
-      escalationReason: aiResponse.escalationReason,
-      suggestedActions: aiResponse.suggestions
-        ? {
-            suggestions: aiResponse.suggestions.map((s) => ({
-              type: s.type,
-              data: s.data,
-            })),
+      // Enrich AI context with property suggestions if this is a property search query
+      let propertyContext: string | undefined;
+      if (detectedIntentFromMessage === 'property_search' || conversation.contextType === ChatContextType.PROPERTY_SEARCH) {
+        // Extract search criteria from message (simplified - AI can enhance this)
+        const searchCriteria = this.extractSearchCriteria(chatDto.message);
+        if (searchCriteria) {
+          const suggestedProperties = await this.findSuggestedProperties(searchCriteria, userId);
+          if (suggestedProperties.length > 0) {
+            propertyContext = suggestedProperties
+              .slice(0, 5) // Top 5 properties
+              .map((prop) => {
+                return `Property: ${prop.title}, ${prop.city}, ₹${prop.price.toLocaleString()}, ${prop.bedrooms || 'N/A'} BHK, ID: ${prop.id}`;
+              })
+              .join('\n');
           }
-        : null,
-    });
-    const savedAiMessage = await this.messageRepository.save(aiMessage);
-
-    // Build response DTO
-    const response: ChatResponseDto = {
-      conversationId: conversation.id,
-      messageId: savedAiMessage.id,
-      content: aiResponse.response,
-      messageType: MessageType.TEXT,
-      requiresEscalation,
-      escalationReason: aiResponse.escalationReason,
-      detectedIntent: aiResponse.detectedIntent as any,
-      aiConfidence: aiResponse.confidence * 100,
-      createdAt: savedAiMessage.createdAt,
-    };
-
-    // Add property suggestions if available
-    if (aiResponse.suggestions) {
-      const propertySuggestions = aiResponse.suggestions
-        .filter((s) => s.type === 'property_suggestion')
-        .map((s) => ({
-          propertyId: s.data?.propertyId || '',
-          title: s.data?.title || '',
-          price: s.data?.price || 0,
-          location: s.data?.location || '',
-          matchScore: s.data?.matchScore || 0,
-          matchReasons: s.data?.matchReasons || [],
-        }));
-
-      if (propertySuggestions.length > 0) {
-        response.propertySuggestions = propertySuggestions as any;
+        }
       }
-    }
 
-    // Add action suggestions if available
-    if (aiResponse.suggestions) {
-      const actionSuggestions = aiResponse.suggestions
-        .filter((s) => s.type !== 'property_suggestion')
-        .map((s) => ({
-          actionType: s.type as any,
-          actionData: s.data || {},
-          description: s.data?.description || '',
-        }));
-
-      if (actionSuggestions.length > 0) {
-        response.actionSuggestions = actionSuggestions as any;
+      // Build enhanced system prompt with FAQs and property context
+      let enhancedSystemPrompt = this.SYSTEM_PROMPT;
+      if (faqContext) {
+        enhancedSystemPrompt += `\n\nRELEVANT FAQs:\n${faqContext}\n\nUse these FAQs to answer user questions accurately.`;
       }
-    }
+      if (propertyContext) {
+        enhancedSystemPrompt += `\n\nSUGGESTED PROPERTIES:\n${propertyContext}\n\nYou can suggest these properties to the user. Always mention property IDs when suggesting.`;
+      }
 
-    return response;
+      // Call AI service
+      const aiResponse = await this.aiService.chatCompletion({
+        message: chatDto.message,
+        conversationHistory: historyForAI,
+        language: language,
+        context: {
+          contextType: conversation.contextType || undefined,
+          propertyId: conversation.contextPropertyId || undefined,
+          requirementId: conversation.contextRequirementId || undefined,
+          userId,
+          userRole: userRoles[0] || 'buyer',
+        },
+        systemPrompt: enhancedSystemPrompt,
+      });
+
+      // Detect if this requires escalation
+      const requiresEscalation = aiResponse.requiresEscalation || this.detectEscalationTriggers(chatDto.message);
+
+      if (requiresEscalation && !conversation.escalatedToCs) {
+        // Escalate to CS
+        conversation.escalatedToCs = true;
+        conversation.escalatedAt = new Date();
+        conversation.escalationReason = aiResponse.escalationReason || 'Serious intent detected by AI';
+        conversation.status = ConversationStatus.ESCALATED;
+
+        // Create escalation action
+        const escalationAction = this.actionRepository.create({
+          conversationId: conversation.id,
+          messageId: userMessage.id,
+          actionType: ActionType.ESCALATED_TO_CS,
+          actionData: {
+            reason: conversation.escalationReason,
+            originalMessage: chatDto.message,
+            detectedIntent: aiResponse.detectedIntent,
+          },
+          status: ActionStatus.PENDING,
+        });
+        await this.actionRepository.save(escalationAction);
+
+        // Notify CS agents about escalation
+        if (conversation.escalationReason) {
+          try {
+            const csAgents = await this.usersService.findByRole('customer_service');
+            if (csAgents.length > 0) {
+              // Notify all CS agents about escalation (round-robin assignment can be added later)
+              const notificationPromises = csAgents.map((agent) =>
+                this.notificationsService
+                  .notifyAiChatEscalation(agent.id, conversation.id, conversation.escalationReason!)
+                  .catch((error) => {
+                    this.logger.error(`Failed to notify CS agent ${agent.id}: ${error.message}`);
+                  }),
+              );
+              await Promise.allSettled(notificationPromises);
+              this.logger.log(
+                `Conversation ${conversation.id} escalated. Notified ${csAgents.length} CS agent(s). Reason: ${conversation.escalationReason}`,
+              );
+            } else {
+              this.logger.warn(`No CS agents found. Conversation ${conversation.id} escalated but no notifications sent.`);
+            }
+          } catch (error: any) {
+            this.logger.error(`Failed to notify CS agents about escalation: ${error.message}`);
+          }
+        }
+      }
+
+      // Update conversation with AI insights
+      if (aiResponse.detectedIntent) {
+        conversation.userIntent = this.mapIntentToUserIntent(aiResponse.detectedIntent);
+        conversation.intentConfidence = aiResponse.confidence * 100;
+      }
+
+      if (aiResponse.suggestions) {
+        // Process suggestions (property suggestions, actions, etc.)
+        await this.processAiSuggestions(conversation.id, userMessage.id, aiResponse.suggestions);
+      }
+
+      // await this.conversationRepository.save(conversation);
+
+      await this.conversationRepository.update(
+        { id: conversation.id },
+        {
+          escalatedToCs: conversation.escalatedToCs,
+          escalatedAt: conversation.escalatedAt,
+          escalationReason: conversation.escalationReason,
+          status: conversation.status,
+          userIntent: conversation.userIntent,
+          intentConfidence: conversation.intentConfidence,
+        },
+      );
+      
+
+      // Save AI response message
+      // const aiMessage = this.messageRepository.create({
+      //   conversationId: conversation.id,
+      //   conversation,
+      //   senderType: SenderType.AI,
+      //   senderId: null,
+      //   messageType: MessageType.TEXT,
+      //   content: aiResponse.response,
+      //   contentEnglish: (language as string) === 'en' || (language as string) === ChatLanguage.EN ? aiResponse.response : null,
+      //   contentTelugu: (language as string) === 'te' || (language as string) === ChatLanguage.TE ? aiResponse.response : null,
+      //   aiModelVersion: 'openai-compatible-v1',
+      //   aiConfidence: aiResponse.confidence * 100,
+      //   detectedIntent: aiResponse.detectedIntent as DetectedIntent,
+      //   requiresEscalation,
+      //   escalationReason: aiResponse.escalationReason,
+      //   suggestedActions: aiResponse.suggestions
+      //     ? {
+      //         suggestions: aiResponse.suggestions.map((s) => ({
+      //           type: s.type,
+      //           data: s.data,
+      //         })),
+      //       }
+      //     : null,
+      // });
+
+      const aiMessage = this.messageRepository.create({
+        conversationId: conversation.id,
+        senderType: SenderType.AI,
+        senderId: null,
+        messageType: MessageType.TEXT,
+        content: aiResponse.response,
+        contentEnglish:
+          language === ChatLanguage.EN ? aiResponse.response : null,
+        contentTelugu:
+          language === ChatLanguage.TE ? aiResponse.response : null,
+        aiModelVersion: 'openai-compatible-v1',
+        aiConfidence: aiResponse.confidence * 100,
+        detectedIntent: aiResponse.detectedIntent as DetectedIntent,
+        requiresEscalation,
+        escalationReason: aiResponse.escalationReason,
+        suggestedActions: aiResponse.suggestions
+          ? {
+              suggestions: aiResponse.suggestions.map((s) => ({
+                type: s.type,
+                data: s.data,
+              })),
+            }
+          : null,
+      });      
+
+      // Ensure conversationId is set before saving
+      if (!aiMessage.conversationId) {
+        this.logger.error(`AI message conversation_id is null. Conversation: ${JSON.stringify(conversation)}`);
+        throw new BadRequestException('Failed to link AI message to conversation');
+      }
+
+      const savedAiMessage = await this.messageRepository.save(aiMessage);
+
+      // Build response DTO
+      const response: ChatResponseDto = {
+        conversationId: conversation.id,
+        messageId: savedAiMessage.id,
+        content: aiResponse.response,
+        messageType: MessageType.TEXT,
+        requiresEscalation,
+        escalationReason: aiResponse.escalationReason,
+        detectedIntent: aiResponse.detectedIntent as any,
+        aiConfidence: aiResponse.confidence * 100,
+        createdAt: savedAiMessage.createdAt,
+      };
+
+      // Add property suggestions if available
+      if (aiResponse.suggestions) {
+        const propertySuggestions = aiResponse.suggestions
+          .filter((s) => s.type === 'property_suggestion')
+          .map((s) => ({
+            propertyId: s.data?.propertyId || '',
+            title: s.data?.title || '',
+            price: s.data?.price || 0,
+            location: s.data?.location || '',
+            matchScore: s.data?.matchScore || 0,
+            matchReasons: s.data?.matchReasons || [],
+          }));
+
+        if (propertySuggestions.length > 0) {
+          response.propertySuggestions = propertySuggestions as any;
+        }
+      }
+
+      // Add action suggestions if available
+      if (aiResponse.suggestions) {
+        const actionSuggestions = aiResponse.suggestions
+          .filter((s) => s.type !== 'property_suggestion')
+          .map((s) => ({
+            actionType: s.type as any,
+            actionData: s.data || {},
+            description: s.data?.description || '',
+          }));
+
+        if (actionSuggestions.length > 0) {
+          response.actionSuggestions = actionSuggestions as any;
+        }
+      }
+
+      return response;
+    } catch (error: any) {
+      this.logger.error(`Error in sendMessage: ${error.message}`, error.stack);
+      throw new BadRequestException(`Failed to process chat message: ${error.message}`);
+    }
   }
 
   /**

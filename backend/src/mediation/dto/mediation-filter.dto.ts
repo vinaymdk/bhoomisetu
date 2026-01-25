@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ConnectionStatus } from '../entities/interest-expression.entity';
 
@@ -6,6 +6,10 @@ export class MediationFilterDto {
   @IsOptional()
   @IsEnum(ConnectionStatus)
   connectionStatus?: ConnectionStatus;
+
+  @IsOptional()
+  @IsBoolean()
+  includeAll?: boolean;
 
   @IsOptional()
   @IsString()

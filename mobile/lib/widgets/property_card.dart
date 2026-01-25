@@ -222,33 +222,36 @@ class _PropertyCardState extends State<PropertyCard> {
                   const SizedBox(height: 12),
                   
                   // Details
-                  Row(
-                    children: [
-                      if (widget.property.bedrooms != null) ...[
-                        const Icon(Icons.bed, size: 16, color: Colors.grey),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        if (widget.property.bedrooms != null) ...[
+                          const Icon(Icons.bed, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${widget.property.bedrooms} BHK',
+                            style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                        if (widget.property.bathrooms != null) ...[
+                          const Icon(Icons.bathtub, size: 16, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${widget.property.bathrooms} Bath',
+                            style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                        const Icon(Icons.square_foot, size: 16, color: Colors.grey),
                         const SizedBox(width: 4),
                         Text(
-                          '${widget.property.bedrooms} BHK',
+                          '${widget.property.area} ${widget.property.areaUnit}',
                           style: const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
-                        const SizedBox(width: 16),
                       ],
-                      if (widget.property.bathrooms != null) ...[
-                        const Icon(Icons.bathtub, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${widget.property.bathrooms} Bath',
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                      const Icon(Icons.square_foot, size: 16, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${widget.property.area} ${widget.property.areaUnit}',
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                    ],
+                    ),
                   ),
                   
                   const SizedBox(height: 12),

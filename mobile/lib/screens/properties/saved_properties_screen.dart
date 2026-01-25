@@ -8,6 +8,7 @@ import '../../models/property.dart';
 import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 import 'my_listings_screen.dart';
 import 'property_details_screen.dart';
 
@@ -111,6 +112,12 @@ class _SavedPropertiesScreenState extends State<SavedPropertiesScreen> {
           const SnackBar(content: Text('Profile screen coming soon')),
         );
         break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
+        );
+        break;
     }
   }
 
@@ -125,7 +132,12 @@ class _SavedPropertiesScreenState extends State<SavedPropertiesScreen> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
           children: [
             if (_isLoading)
               const Center(child: CircularProgressIndicator())

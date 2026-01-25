@@ -10,8 +10,10 @@ import '../search/search_screen.dart';
 import 'create_property_screen.dart';
 import 'edit_property_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 import 'saved_properties_screen.dart';
 import '../mediation/seller_interests_screen.dart';
+import '../../services/badge_service.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -22,14 +24,18 @@ class MyListingsScreen extends StatefulWidget {
 
 class _MyListingsScreenState extends State<MyListingsScreen> {
   final _service = PropertiesService();
+  final BadgeService _badgeService = BadgeService();
   bool _loading = true;
   String? _error;
   List<Property> _items = [];
   String _status = 'all';
+  String _userId = 'guest';
 
   @override
   void initState() {
     super.initState();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    _userId = auth.userData?['id']?.toString() ?? 'guest';
     _load();
   }
 
@@ -42,6 +48,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       final data = await _service.getMyProperties(
           status: _status == 'all' ? null : _status);
       setState(() => _items = data);
+      _badgeService.setListCount(_userId, data.length);
     } catch (e) {
       final errorMessage = e.toString();
       final formattedError = _formatError(errorMessage);
@@ -295,6 +302,12 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
         );
         break;
     }

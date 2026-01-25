@@ -11,6 +11,7 @@ export interface ExpressInterestPayload {
 
 export interface MediationFilter {
   connectionStatus?: string;
+  includeAll?: boolean;
   propertyId?: string;
   buyerId?: string;
   sellerId?: string;

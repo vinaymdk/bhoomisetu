@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.10:3000/api'; // Office
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.11:3000/api'; // Office
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.0.108:3000/api'; // Home
 
 export const apiClient = axios.create({

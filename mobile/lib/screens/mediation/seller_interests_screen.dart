@@ -7,6 +7,7 @@ import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 
 class SellerInterestsScreen extends StatefulWidget {
   const SellerInterestsScreen({super.key});
@@ -68,6 +69,9 @@ class _SellerInterestsScreenState extends State<SellerInterestsScreen> {
       case BottomNavItem.profile:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()));
         break;
+      case BottomNavItem.cs:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const CsDashboardScreen()));
+        break;
     }
   }
 
@@ -82,7 +86,12 @@ class _SellerInterestsScreenState extends State<SellerInterestsScreen> {
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
           children: [
             _filterRow(),
             const SizedBox(height: 12),
@@ -152,8 +161,8 @@ class _SellerInterestsScreenState extends State<SellerInterestsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _chip('Status', item.connectionStatus),
-                _chip('Priority', item.priority),
+                _statusPill(item.connectionStatus),
+                _infoPill('Priority', item.priority),
               ],
             ),
             if (item.message != null && item.message!.isNotEmpty) ...[
@@ -166,15 +175,54 @@ class _SellerInterestsScreenState extends State<SellerInterestsScreen> {
     );
   }
 
-  Widget _chip(String label, String value) {
+  Widget _statusPill(String status) {
+    final color = _statusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Text(
+        _formatStatus(status),
+        style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+      ),
+    );
+  }
+
+  Widget _infoPill(String label, String value) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange.shade700;
+      case 'cs_reviewing':
+        return Colors.blue.shade700;
+      case 'seller_checking':
+        return Colors.deepPurple.shade400;
+      case 'approved':
+        return Colors.green.shade700;
+      case 'rejected':
+        return Colors.red.shade700;
+      case 'connected':
+        return Colors.teal.shade600;
+      default:
+        return Colors.grey.shade600;
+    }
+  }
+
+  String _formatStatus(String status) {
+    return status.replaceAll('_', ' ');
   }
 
   Widget _stateCard(String message) {

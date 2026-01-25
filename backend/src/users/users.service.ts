@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -50,6 +50,57 @@ export class UsersService {
       relations: ['role'],
     });
     return userRoles.map((ur) => ur.role.code);
+  }
+
+  async updateProfile(userId: string, update: {
+    fullName?: string;
+    primaryPhone?: string;
+    primaryEmail?: string;
+    address?: string;
+    avatarUrl?: string;
+  }): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const normalizedEmail = this.normalizeOptionalString(update.primaryEmail);
+    const normalizedPhone = this.normalizeOptionalString(update.primaryPhone);
+    const normalizedFullName = this.normalizeOptionalString(update.fullName);
+    const normalizedAddress = this.normalizeOptionalString(update.address);
+
+    if (normalizedEmail !== undefined) {
+      if (normalizedEmail) {
+        const existing = await this.userRepository.findOne({ where: { primaryEmail: normalizedEmail } });
+        if (existing && existing.id !== userId) {
+          throw new BadRequestException('Email already in use');
+        }
+      }
+      user.primaryEmail = normalizedEmail;
+    }
+
+    if (normalizedPhone !== undefined) {
+      if (normalizedPhone) {
+        const existing = await this.userRepository.findOne({ where: { primaryPhone: normalizedPhone } });
+        if (existing && existing.id !== userId) {
+          throw new BadRequestException('Phone number already in use');
+        }
+      }
+      user.primaryPhone = normalizedPhone;
+    }
+
+    if (normalizedFullName !== undefined) user.fullName = normalizedFullName;
+    if (normalizedAddress !== undefined) user.address = normalizedAddress;
+    if (update.avatarUrl !== undefined) user.avatarUrl = this.normalizeOptionalString(update.avatarUrl);
+
+    await this.userRepository.save(user);
+    return this.findById(userId) as Promise<User>;
+  }
+
+  private normalizeOptionalString(value?: string): string | null | undefined {
+    if (value === undefined) return undefined;
+    const trimmed = typeof value === 'string' ? value.trim() : '';
+    return trimmed.length > 0 ? trimmed : null;
   }
 
   async findOrCreateByFirebaseUid(payload: {

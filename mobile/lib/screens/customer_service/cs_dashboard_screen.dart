@@ -108,7 +108,12 @@ class _CsDashboardScreenState extends State<CsDashboardScreen> {
       body: RefreshIndicator(
         onRefresh: () => _load(reset: true),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
           children: [
             _buildStats(),
             const SizedBox(height: 12),
@@ -131,7 +136,7 @@ class _CsDashboardScreenState extends State<CsDashboardScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigation(
-        currentIndex: BottomNavItem.home,
+        currentIndex: BottomNavItem.cs,
         onTap: _handleNavTap,
       ),
     );
@@ -404,6 +409,8 @@ class _CsDashboardScreenState extends State<CsDashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
         );
+        break;
+      case BottomNavItem.cs:
         break;
     }
   }
