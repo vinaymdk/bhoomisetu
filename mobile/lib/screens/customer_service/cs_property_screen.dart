@@ -7,6 +7,9 @@ import '../../widgets/bottom_navigation.dart';
 import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
+import '../properties/saved_properties_screen.dart';
 
 class CsPropertyScreen extends StatefulWidget {
   final String propertyId;
@@ -97,7 +100,11 @@ class _CsPropertyScreenState extends State<CsPropertyScreen> {
     }
     if (_error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Property Verification')),
+        appBar: AppBar(
+          title: const Text('Property Verification'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+        ),
         body: Center(child: Text(_error!, style: const TextStyle(color: Colors.red))),
       );
     }
@@ -106,9 +113,18 @@ class _CsPropertyScreenState extends State<CsPropertyScreen> {
     final property = data.property;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Property Verification')),
+      appBar: AppBar(
+        title: const Text('Property Verification'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -235,7 +251,7 @@ class _CsPropertyScreenState extends State<CsPropertyScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigation(
-        currentIndex: BottomNavItem.home,
+        currentIndex: BottomNavItem.cs,
         onTap: _handleNavTap,
       ),
     );
@@ -285,13 +301,30 @@ class _CsPropertyScreenState extends State<CsPropertyScreen> {
         );
         break;
       case BottomNavItem.saved:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved properties screen coming soon')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
         );
         break;
       case BottomNavItem.profile:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
         );
         break;
     }

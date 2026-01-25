@@ -231,6 +231,13 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 - ✅ `DELETE /api/buyer-requirements/:id` - Delete requirement
 - ✅ `GET /api/buyer-requirements/:id/matches` - Get matches for a requirement
 
+**Frontend Implementation (Web + Mobile):**
+- ✅ Buyer requirements list + status/search filters
+- ✅ Buyer requirement creation form (validation + area units)
+- ✅ Requirement detail view with match scores + matched properties
+- ✅ Role-based access (buyer/admin only)
+- ✅ Loading/empty/error states + pull-to-refresh (mobile)
+
 **Matching Algorithm:**
 1. **Location Match**: Same city (or locality if available)
 2. **Budget Overlap**: Property price must overlap with requirement budget range by >=80%
@@ -299,6 +306,13 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 - ✅ Chat/call session management (created only after CS approval)
 - ✅ Message moderation support (CS can moderate messages)
 - ✅ Access control (only participants can access chat sessions)
+
+**Frontend Implementation (Web + Mobile):**
+- ✅ Buyer express interest from property details
+- ✅ Buyer interests list with status filters
+- ✅ Seller interests list for properties
+- ✅ CS mediation queue with review/approve/reject actions
+- ✅ Loading/empty/error states
 
 ---
 
@@ -712,6 +726,18 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 
 ---
 
-**Last Updated**: 2024-01-09
+## Recent UX / Platform Updates (Jan 24, 2026)
+
+- ✅ Web: compact header sizing + account dropdown (Profile/Settings/Logout)
+- ✅ Web: new Settings page for badge preferences
+- ✅ Web: property image zoom modal on details page
+- ✅ Mobile: Settings screen for badge preferences (moved out of Profile/Reqs)
+- ✅ Mobile: property image zoom viewer on details page
+- ✅ Backend: profile updates tolerate empty email/phone values
+- ✅ Backend: Cloudinary AVIF uploads allowed
+
+---
+
+**Last Updated**: 2026-01-24
 **Current Phase**: Phase 2 - Core Features
 **Next Milestone**: Module 2 Completion

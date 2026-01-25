@@ -18,6 +18,7 @@ import { AiChatAction } from './ai-chat-action.entity';
 export enum ChatLanguage {
   EN = 'en',
   TE = 'te', // Telugu
+  HI = 'hi', // Hindi
 }
 
 export enum ConversationStatus {

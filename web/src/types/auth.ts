@@ -3,6 +3,8 @@ export interface User {
   fullName: string;
   primaryPhone?: string;
   primaryEmail?: string;
+  address?: string;
+  avatarUrl?: string;
   status: 'pending' | 'active' | 'suspended' | 'banned';
   fraudRiskScore?: number;
   lastLoginAt?: string;

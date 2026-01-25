@@ -212,7 +212,7 @@ export class AiService {
   async chatCompletion(request: {
     message: string;
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
-    language?: 'en' | 'te';
+    language?: 'en' | 'te' | 'hi';
     context?: {
       contextType?: string;
       propertyId?: string;
@@ -297,7 +297,7 @@ export class AiService {
    */
   private getFallbackChatResponse(
     message: string,
-    language: 'en' | 'te' = 'en',
+    language: 'en' | 'te' | 'hi' = 'en',
   ): {
     response: string;
     detectedIntent?: string;
@@ -349,6 +349,15 @@ export class AiService {
         response = 'మేము మీకు అనుకూలమైన ఆస్తులను కనుగొనడంలో సహాయం చేయగలము. దయచేసి మీ అవసరాలను (స్థలం, బడ్జెట్, ఆస్తి రకం) పంచుకోండి.';
       } else {
         response = 'మేము మీకు సహాయం చేయగలము. దయచేసి మీ ప్రశ్నను వివరంగా అడగండి.';
+      }
+    } else if (language === 'hi') {
+      // Hindi fallback responses
+      if (requiresEscalation) {
+        response = 'आपकी रुचि गंभीर लगती है। कृपया हमारी ग्राहक सेवा टीम से संपर्क करें। वे सत्यापित प्रक्रिया के माध्यम से सहायता करेंगे।';
+      } else if (detectedIntent === 'property_search') {
+        response = 'मैं आपकी आवश्यकताओं के अनुसार प्रॉपर्टी खोजने में मदद कर सकता हूँ। कृपया स्थान, बजट और प्रॉपर्टी प्रकार बताएं।';
+      } else {
+        response = 'मैं मदद के लिए यहाँ हूँ। कृपया अपनी जरूरत या सवाल बताएं।';
       }
     } else {
       // English fallback responses

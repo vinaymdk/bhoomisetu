@@ -73,7 +73,7 @@ export class StorageService {
           {
             folder: folder,
             resource_type: 'image',
-            allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+            allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'avif'],
             transformation: [
               { quality: 'auto' },
               { fetch_format: 'auto' },

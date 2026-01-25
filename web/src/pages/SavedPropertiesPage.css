@@ -1,0 +1,85 @@
+.saved-page {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.saved-header h1 {
+  margin: 0 0 6px;
+}
+
+.saved-header p {
+  margin: 0 0 20px;
+  color: #6b7280;
+}
+
+.saved-state {
+  background: #f8f9fc;
+  padding: 18px;
+  border-radius: 10px;
+  color: #5f6b7a;
+}
+
+.saved-state.error {
+  background: #fff0f0;
+  color: #b42318;
+}
+
+.saved-state.empty {
+  background: #f7fafc;
+}
+
+.saved-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.saved-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #edf0f7;
+  overflow: hidden;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.saved-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.saved-card-body {
+  padding: 14px;
+}
+
+.saved-card-body h3 {
+  margin: 0 0 6px;
+}
+
+.saved-card-body p {
+  margin: 0 0 10px;
+  color: #6b7280;
+}
+
+.saved-card-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.saved-card-actions a {
+  color: #1a73e8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.saved-card-actions button {
+  border: 1px solid #d0d7e2;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+

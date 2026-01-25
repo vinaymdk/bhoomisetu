@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../services/saved_properties_service.dart';
+import '../services/badge_service.dart';
 
 enum BottomNavItem {
   home,
@@ -6,9 +11,10 @@ enum BottomNavItem {
   list,
   saved,
   profile,
+  cs,
 }
 
-class BottomNavigation extends StatelessWidget {
+class BottomNavigation extends StatefulWidget {
   final BottomNavItem currentIndex;
   final ValueChanged<BottomNavItem> onTap;
 
@@ -19,7 +25,96 @@ class BottomNavigation extends StatelessWidget {
   });
 
   @override
+  State<BottomNavigation> createState() => _BottomNavigationState();
+}
+
+class _BottomNavigationState extends State<BottomNavigation> {
+  final SavedPropertiesService _savedService = SavedPropertiesService();
+  final BadgeService _badgeService = BadgeService();
+  String _userId = 'guest';
+  late ValueNotifier<int> _countNotifier;
+  late ValueNotifier<bool> _badgeNotifier;
+  late ValueNotifier<int> _listCountNotifier;
+  late ValueNotifier<int> _reqsCountNotifier;
+  late ValueNotifier<bool> _listBadgeNotifier;
+  late ValueNotifier<bool> _reqsBadgeNotifier;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final nextUserId = authProvider.userData?['id']?.toString() ?? 'guest';
+    if (nextUserId != _userId) {
+      _userId = nextUserId;
+      _countNotifier = _savedService.countNotifier(_userId);
+      _badgeNotifier = _savedService.badgeNotifier(_userId);
+      _listCountNotifier = _badgeService.listCountNotifier(_userId);
+      _reqsCountNotifier = _badgeService.reqsCountNotifier(_userId);
+      _listBadgeNotifier = _badgeService.listBadgeNotifier(_userId);
+      _reqsBadgeNotifier = _badgeService.reqsBadgeNotifier(_userId);
+      _savedService.getBadgeEnabled(_userId);
+      _savedService.refreshCount(_userId);
+      _badgeService.getListBadgeEnabled(_userId);
+      _badgeService.getReqsBadgeEnabled(_userId);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final roles = authProvider.roles;
+    final isAuthenticated = authProvider.isAuthenticated;
+    final canList = roles.contains('seller') || roles.contains('agent');
+    final canBuy = roles.contains('buyer') || roles.contains('admin');
+    final canVerify = roles.contains('customer_service') || roles.contains('admin');
+
+    final navItems = <Widget>[
+      _buildNavItem(
+        context,
+        icon: Icons.home,
+        label: 'Home',
+        item: BottomNavItem.home,
+      ),
+      _buildNavItem(
+        context,
+        icon: Icons.search,
+        label: 'Search',
+        item: BottomNavItem.search,
+      ),
+      if (canList)
+        _buildCountNavItem(
+          context,
+          icon: Icons.add_business,
+          label: 'List',
+          item: BottomNavItem.list,
+          countListenable: _listCountNotifier,
+          showBadgeListenable: _listBadgeNotifier,
+        ),
+      if (isAuthenticated)
+        _buildSavedNavItem(
+          context,
+          icon: Icons.favorite_border,
+          label: 'Saved',
+          item: BottomNavItem.saved,
+        ),
+      if (canBuy)
+        _buildCountNavItem(
+          context,
+          icon: Icons.assignment_outlined,
+          label: 'Reqs',
+          item: BottomNavItem.profile,
+          countListenable: _reqsCountNotifier,
+          showBadgeListenable: _reqsBadgeNotifier,
+        ),
+      if (canVerify)
+        _buildNavItem(
+          context,
+          icon: Icons.support_agent,
+          label: 'CS',
+          item: BottomNavItem.cs,
+        ),
+    ];
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -37,38 +132,7 @@ class BottomNavigation extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                context,
-                icon: Icons.home,
-                label: 'Home',
-                item: BottomNavItem.home,
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.search,
-                label: 'Search',
-                item: BottomNavItem.search,
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.add_business,
-                label: 'List',
-                item: BottomNavItem.list,
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.favorite_border,
-                label: 'Saved',
-                item: BottomNavItem.saved,
-              ),
-              _buildNavItem(
-                context,
-                icon: Icons.person,
-                label: 'Profile',
-                item: BottomNavItem.profile,
-              ),
-            ],
+            children: navItems,
           ),
         ),
       ),
@@ -81,14 +145,13 @@ class BottomNavigation extends StatelessWidget {
     required String label,
     required BottomNavItem item,
   }) {
-    final isSelected = currentIndex == item;
-    final color = isSelected
-        ? Theme.of(context).colorScheme.primary
-        : Colors.grey[600]!;
+    final isSelected = widget.currentIndex == item;
+    final color =
+        isSelected ? Theme.of(context).colorScheme.primary : Colors.grey[600]!;
 
     return Expanded(
       child: InkWell(
-        onTap: () => onTap(item),
+        onTap: () => widget.onTap(item),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -104,6 +167,146 @@ class BottomNavigation extends StatelessWidget {
                 fontSize: 12,
                 color: color,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required BottomNavItem item,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => widget.onTap(item),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ValueListenableBuilder<bool>(
+              valueListenable: _badgeNotifier,
+              builder: (context, showBadge, _) {
+                return ValueListenableBuilder<int>(
+                  valueListenable: _countNotifier,
+                  builder: (context, count, __) {
+                    final isSelected = widget.currentIndex == item;
+                    final color = isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey[600]!;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          icon,
+                          color: color,
+                          size: 24,
+                        ),
+                        if (showBadge && count > 0)
+                          Positioned(
+                            right: -6,
+                            top: -4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : count.toString(),
+                                style: const TextStyle(color: Colors.white, fontSize: 9),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: widget.currentIndex == item
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey[600]!,
+                fontWeight: widget.currentIndex == item ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCountNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required BottomNavItem item,
+    required ValueListenable<int> countListenable,
+    required ValueListenable<bool> showBadgeListenable,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => widget.onTap(item),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ValueListenableBuilder<bool>(
+              valueListenable: showBadgeListenable,
+              builder: (context, showBadge, _) {
+                return ValueListenableBuilder<int>(
+                  valueListenable: countListenable,
+                  builder: (context, count, __) {
+                    final isSelected = widget.currentIndex == item;
+                    final color = isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey[600]!;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          icon,
+                          color: color,
+                          size: 24,
+                        ),
+                        if (showBadge && count > 0)
+                          Positioned(
+                            right: -6,
+                            top: -4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : count.toString(),
+                                style: const TextStyle(color: Colors.white, fontSize: 9),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: widget.currentIndex == item
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey[600]!,
+                fontWeight: widget.currentIndex == item ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],

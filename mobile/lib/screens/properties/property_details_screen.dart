@@ -7,6 +7,11 @@ import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../../providers/auth_provider.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
+import '../properties/saved_properties_screen.dart';
+import '../../services/saved_properties_service.dart';
+import '../../services/mediation_service.dart';
 
 class PropertyDetailsScreen extends StatefulWidget {
   final String propertyId;
@@ -23,15 +28,21 @@ class PropertyDetailsScreen extends StatefulWidget {
 
 class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   final PropertiesService _service = PropertiesService();
+  final SavedPropertiesService _savedService = SavedPropertiesService();
+  final MediationService _mediationService = MediationService();
   Property? _property;
   bool _loading = true;
   String? _error;
   int _activeImage = 0;
   final PageController _pageController = PageController();
+  bool _isSaved = false;
+  String _userId = 'guest';
 
   @override
   void initState() {
     super.initState();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _userId = authProvider.userData?['id']?.toString() ?? 'guest';
     _load();
   }
 
@@ -48,7 +59,11 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     });
     try {
       final property = await _service.getPropertyById(widget.propertyId);
-      setState(() => _property = property);
+      final isSaved = await _savedService.isSaved(_userId, widget.propertyId);
+      setState(() {
+        _property = property;
+        _isSaved = isSaved;
+      });
     } catch (e) {
       setState(() {
         _error = e.toString().replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '');
@@ -65,14 +80,37 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     }
     if (_error != null || _property == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Property Details')),
+        appBar: AppBar(
+          title: const Text('Property Details'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Colors.white,
+        ),
         body: Center(child: Text(_error ?? 'Property not found')),
       );
     }
 
     final property = _property!;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isBuyer = authProvider.roles.contains('buyer') || authProvider.roles.contains('admin');
     return Scaffold(
-      appBar: AppBar(title: const Text('Property Details')),
+      appBar: AppBar(
+        title: const Text('Property Details'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(_isSaved ? Icons.favorite : Icons.favorite_border),
+            onPressed: () async {
+              final next = await _savedService.toggle(_userId, widget.propertyId);
+              if (mounted) {
+                setState(() {
+                  _isSaved = next;
+                });
+              }
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -101,10 +139,13 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          img.imageUrl,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                        child: GestureDetector(
+                          onTap: () => _openImageViewer(index, property.images!),
+                          child: Image.network(
+                            img.imageUrl,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     );
@@ -153,6 +194,36 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               const SizedBox(height: 6),
               Text(property.description!),
             ],
+            if (isBuyer) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade100),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Express Interest',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Customer service will mediate and connect you after verification.',
+                      style: TextStyle(color: Colors.blueGrey.shade700),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () => _showInterestDialog(property.id),
+                      child: const Text('Submit Interest'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -160,6 +231,151 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         currentIndex: widget.initialTab,
         onTap: _handleNavTap,
       ),
+    );
+  }
+
+  Future<void> _showInterestDialog(String propertyId) async {
+    String message = '';
+    String type = 'viewing';
+    String priority = 'normal';
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Express Interest'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                DropdownButtonFormField<String>(
+                  value: type,
+                  decoration: const InputDecoration(labelText: 'Interest Type'),
+                  items: const [
+                    DropdownMenuItem(value: 'viewing', child: Text('Viewing')),
+                    DropdownMenuItem(value: 'offer', child: Text('Offer')),
+                    DropdownMenuItem(value: 'negotiation', child: Text('Negotiation')),
+                    DropdownMenuItem(value: 'serious_intent', child: Text('Serious Intent')),
+                  ],
+                  onChanged: (value) => type = value ?? 'viewing',
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: priority,
+                  decoration: const InputDecoration(labelText: 'Priority'),
+                  items: const [
+                    DropdownMenuItem(value: 'low', child: Text('Low')),
+                    DropdownMenuItem(value: 'normal', child: Text('Normal')),
+                    DropdownMenuItem(value: 'high', child: Text('High')),
+                    DropdownMenuItem(value: 'urgent', child: Text('Urgent')),
+                  ],
+                  onChanged: (value) => priority = value ?? 'normal',
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Message (optional)'),
+                  maxLines: 3,
+                  onChanged: (value) => message = value,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await _mediationService.expressInterest({
+                    'propertyId': propertyId,
+                    'message': message.trim().isEmpty ? null : message.trim(),
+                    'interestType': type,
+                    'priority': priority,
+                  });
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Interest submitted successfully.')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to submit interest: $e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openImageViewer(int initialIndex, List<PropertyImage> images) {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) {
+        final controller = PageController(initialPage: initialIndex);
+        int activeIndex = initialIndex;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(12),
+              backgroundColor: Colors.transparent,
+              child: Stack(
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.75,
+                    width: double.infinity,
+                    child: PageView.builder(
+                      controller: controller,
+                      itemCount: images.length,
+                      onPageChanged: (index) => setState(() => activeIndex = index),
+                      itemBuilder: (context, index) {
+                        return InteractiveViewer(
+                          maxScale: 5,
+                          child: Image.network(images[index].imageUrl, fit: BoxFit.contain),
+                        );
+                      },
+                    ),
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${activeIndex + 1} / ${images.length}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -207,13 +423,30 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         );
         break;
       case BottomNavItem.saved:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved properties screen coming soon')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
         );
         break;
       case BottomNavItem.profile:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
         );
         break;
     }

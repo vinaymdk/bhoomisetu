@@ -20,6 +20,8 @@ export const SearchPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [dismissedExtracted, setDismissedExtracted] = useState<string[]>([]);
+  const [cityInput, setCityInput] = useState(searchParams.get('city') || '');
+  const [localityInput, setLocalityInput] = useState(searchParams.get('locality') || '');
 
   // Filter state
   const [filters, setFilters] = useState<SearchFilters>({
@@ -74,6 +76,14 @@ export const SearchPage = () => {
     setSearchParams(params, { replace: true });
   }, [filters, setSearchParams]);
 
+  useEffect(() => {
+    setCityInput(filters.city || '');
+  }, [filters.city]);
+
+  useEffect(() => {
+    setLocalityInput(filters.locality || '');
+  }, [filters.locality]);
+
   // Perform search when filters change
   useEffect(() => {
     if (filters.query || filters.city || filters.propertyType || filters.listingType) {
@@ -96,8 +106,18 @@ export const SearchPage = () => {
       clearTimeout(debounceTimer.current);
     }
     debounceTimer.current = setTimeout(() => {
+      if (key === 'city') {
+        const next = typeof value === 'string' ? value.trim() : '';
+        if (!next) {
+          handleFilterChange('city', undefined);
+          return;
+        }
+        if (next.length < 2) {
+          return;
+        }
+      }
       handleFilterChange(key, value);
-    }, 500);
+    }, 700);
   };
 
   const dismissExtracted = (key: string) => {
@@ -113,6 +133,8 @@ export const SearchPage = () => {
 
   const clearFilters = () => {
     setQuery('');
+    setCityInput('');
+    setLocalityInput('');
     setFilters({
       rankBy: 'relevance',
       page: 1,
@@ -220,8 +242,12 @@ export const SearchPage = () => {
                   type="text"
                   className="filter-input"
                   placeholder="Enter city"
-                  value={filters.city || ''}
-                  onChange={(e) => handleFilterChangeDebounced('city', e.target.value || undefined)}
+                  value={cityInput}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setCityInput(next);
+                    handleFilterChangeDebounced('city', next || undefined);
+                  }}
                 />
               </div>
 
@@ -231,8 +257,12 @@ export const SearchPage = () => {
                   type="text"
                   className="filter-input"
                   placeholder="Enter locality"
-                  value={filters.locality || ''}
-                  onChange={(e) => handleFilterChangeDebounced('locality', e.target.value || undefined)}
+                  value={localityInput}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setLocalityInput(next);
+                    handleFilterChangeDebounced('locality', next || undefined);
+                  }}
                 />
               </div>
 

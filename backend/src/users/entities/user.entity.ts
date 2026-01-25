@@ -28,6 +28,12 @@ export class User {
   @Column({ name: 'full_name', type: 'varchar', length: 255, nullable: true })
   fullName?: string | null;
 
+  @Column({ name: 'avatar_url', type: 'text', nullable: true })
+  avatarUrl?: string | null;
+
+  @Column({ name: 'address', type: 'text', nullable: true })
+  address?: string | null;
+
   @Column({ name: 'password_hash', type: 'text', nullable: true })
   passwordHash?: string | null;
 

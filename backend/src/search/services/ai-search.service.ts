@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Between, IsNull } from 'typeorm';
+import { Repository, Between, IsNull } from 'typeorm';
 import { Property, PropertyStatus } from '../../properties/entities/property.entity';
 import { AiSearchRequestDto } from '../dto/ai-search-request.dto';
 import { AiSearchResponseDto, SearchResultProperty } from '../dto/ai-search-response.dto';
@@ -31,68 +31,73 @@ export class AiSearchService {
    * Implements the 5-step algorithm from Module 3 spec
    */
   async search(request: AiSearchRequestDto): Promise<AiSearchResponseDto> {
-    const startTime = Date.now();
+    try {
+      const startTime = Date.now();
 
-    // Step 1: Normalize location using geo-coordinates
-    const normalizedLocation = await this.normalizeLocation(request);
+      // Step 1: Normalize location using geo-coordinates
+      const normalizedLocation = await this.normalizeLocation(request);
 
-    // Step 2: Apply hard filters (price, type)
-    const filteredProperties = await this.applyHardFilters(request, normalizedLocation);
+      // Step 2: Apply hard filters (price, type)
+      const filteredProperties = await this.applyHardFilters(request, normalizedLocation);
 
-    // Step 3: Rank by relevance, urgency, popularity (if AI service available)
-    let rankedProperties: SearchResultProperty[] = this.defaultRanking(filteredProperties, request.rankBy || 'relevance');
-    let extractedFilters = this.extractFiltersFromQuery(request, normalizedLocation);
-    let aiRankingUsed = false;
+      // Step 3: Rank by relevance, urgency, popularity (if AI service available)
+      let rankedProperties: SearchResultProperty[] = this.defaultRanking(filteredProperties, request.rankBy || 'relevance');
+      let extractedFilters = this.extractFiltersFromQuery(request, normalizedLocation);
+      let aiRankingUsed = false;
 
-    if (request.query && filteredProperties.length > 0) {
-      const rankingResult = await this.rankPropertiesWithAi(
-        request.query,
-        filteredProperties,
-        request,
-      );
-      
-      // If AI ranking returned results, use them; otherwise use default ranking
-      if (rankingResult.rankedProperties.length > 0) {
-        rankedProperties = rankingResult.rankedProperties;
-        extractedFilters.aiTags = rankingResult.extractedAiTags;
-        aiRankingUsed = true;
+      if (request.query && filteredProperties.length > 0) {
+        const rankingResult = await this.rankPropertiesWithAi(
+          request.query,
+          filteredProperties,
+          request,
+        );
+        
+        // If AI ranking returned results, use them; otherwise use default ranking
+        if (rankingResult.rankedProperties.length > 0) {
+          rankedProperties = rankingResult.rankedProperties;
+          extractedFilters.aiTags = rankingResult.extractedAiTags;
+          aiRankingUsed = true;
+        }
+        // If AI service unavailable or returned empty, rankedProperties already has defaultRanking result
       }
-      // If AI service unavailable or returned empty, rankedProperties already has defaultRanking result
+
+      // Step 4: Fetch similar properties within ±10% price (if requested)
+      let similarProperties: SearchResultProperty[] = [];
+      if (request.includeSimilar && rankedProperties.length > 0) {
+        similarProperties = await this.findSimilarProperties(
+          rankedProperties,
+          request.similarityThreshold || 0.8,
+        );
+      }
+
+      // Step 5: Return paginated results
+      const page = request.page || 1;
+      const limit = request.limit || 20;
+      const skip = (page - 1) * limit;
+      const paginatedProperties = rankedProperties.slice(skip, skip + limit);
+      const total = rankedProperties.length;
+
+      const processingTime = Date.now() - startTime;
+
+      return {
+        properties: paginatedProperties,
+        total,
+        page,
+        limit,
+        query: request.query || '',
+        extractedFilters,
+        similarProperties: similarProperties.length > 0 ? similarProperties : undefined,
+        searchMetadata: {
+          processingTimeMs: processingTime,
+          aiRankingUsed,
+          locationNormalized: !!normalizedLocation,
+          similarPropertiesCount: similarProperties.length,
+        },
+      };
+    } catch (error: any) {
+      this.logger.error(`Search error: ${error.message}`, error.stack);
+      throw error;
     }
-
-    // Step 4: Fetch similar properties within ±10% price (if requested)
-    let similarProperties: SearchResultProperty[] = [];
-    if (request.includeSimilar && rankedProperties.length > 0) {
-      similarProperties = await this.findSimilarProperties(
-        rankedProperties,
-        request.similarityThreshold || 0.8,
-      );
-    }
-
-    // Step 5: Return paginated results
-    const page = request.page || 1;
-    const limit = request.limit || 20;
-    const skip = (page - 1) * limit;
-    const paginatedProperties = rankedProperties.slice(skip, skip + limit);
-    const total = rankedProperties.length;
-
-    const processingTime = Date.now() - startTime;
-
-    return {
-      properties: paginatedProperties,
-      total,
-      page,
-      limit,
-      query: request.query || '',
-      extractedFilters,
-      similarProperties: similarProperties.length > 0 ? similarProperties : undefined,
-      searchMetadata: {
-        processingTimeMs: processingTime,
-        aiRankingUsed,
-        locationNormalized: !!normalizedLocation,
-        similarPropertiesCount: similarProperties.length,
-      },
-    };
   }
 
   /**
@@ -132,38 +137,42 @@ export class AiSearchService {
    * Step 2: Apply hard filters (price, type)
    */
   private async applyHardFilters(request: AiSearchRequestDto, normalizedLocation: any): Promise<Property[]> {
-    const where: FindOptionsWhere<Property> = {
-      status: PropertyStatus.LIVE,
-      deletedAt: IsNull(),
-    };
-
-    // Listing type
-    if (request.listingType) {
-      where.listingType = request.listingType;
-    }
-
-    // Property type
-    if (request.propertyType) {
-      where.propertyType = request.propertyType;
-    }
-
-    // Location filters
-    if (normalizedLocation?.location?.city) {
-      where.city = normalizedLocation.location.city;
-    } else if (request.city) {
-      where.city = request.city;
-    }
-
-    if (request.locality) {
-      where.locality = request.locality;
-    }
-
-    // Build query
     const queryBuilder = this.propertyRepository
       .createQueryBuilder('property')
       .leftJoinAndSelect('property.images', 'images')
       .leftJoinAndSelect('property.propertyFeatures', 'features')
-      .where(where);
+      .where('property.status = :status', { status: PropertyStatus.LIVE })
+      .andWhere('property.deletedAt IS NULL');
+
+    // Listing type
+    if (request.listingType) {
+      queryBuilder.andWhere('property.listingType = :listingType', { listingType: request.listingType });
+    }
+
+    // Property type
+    if (request.propertyType) {
+      queryBuilder.andWhere('property.propertyType = :propertyType', { propertyType: request.propertyType });
+    }
+
+    // Location filters - prioritize normalized location
+    const cityFilter = normalizedLocation?.location?.city || request.city;
+    if (cityFilter) {
+      queryBuilder.andWhere('LOWER(property.city) LIKE LOWER(:city)', { city: `${cityFilter}%` });
+    }
+
+    const localityFilter = normalizedLocation?.location?.locality || request.locality;
+    if (localityFilter) {
+      queryBuilder.andWhere('LOWER(property.locality) LIKE LOWER(:locality)', {
+        locality: `%${localityFilter}%`,
+      });
+    }
+
+    if (request.area) {
+      queryBuilder.andWhere(
+        '(LOWER(property.locality) LIKE LOWER(:area) OR LOWER(property.landmark) LIKE LOWER(:area) OR LOWER(property.address) LIKE LOWER(:area))',
+        { area: `%${request.area}%` },
+      );
+    }
 
     // Price range
     if (request.minPrice !== undefined || request.maxPrice !== undefined) {

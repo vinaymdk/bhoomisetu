@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 export enum ChatLanguage {
   EN = 'en',
   TE = 'te', // Telugu
+  HI = 'hi', // Hindi
 }
 
 export enum ChatContextType {

@@ -12,6 +12,11 @@ import '../properties/my_listings_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
 import '../auth/login_screen.dart';
 import '../properties/property_details_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../properties/saved_properties_screen.dart';
+import '../profile/profile_screen.dart';
+import '../ai/ai_chat_screen.dart';
+import '../profile/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -116,15 +121,30 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         break;
       case BottomNavItem.saved:
-        // TODO: Navigate to saved properties screen
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved properties screen coming soon')),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SavedPropertiesScreen()),
         );
         break;
       case BottomNavItem.profile:
-        // TODO: Navigate to profile screen
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CsDashboardScreen()),
         );
         break;
     }
@@ -142,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final isAuthenticated = authProvider.isAuthenticated;
     final roles = authProvider.roles;
-    final canVerify = roles.contains('customer_service') || roles.contains('admin');
+    final canBuy = roles.contains('buyer') || roles.contains('admin');
     
     final data = isAuthenticated ? _dashboardData : _homeData;
     final featuredProperties = data?.featuredProperties ?? [];
@@ -151,11 +171,32 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('BhoomiSetu'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Notifications coming soon')),
+              );
+            },
+          ),
           if (isAuthenticated)
             PopupMenuButton<String>(
+              icon: const Icon(Icons.account_circle_outlined),
               onSelected: (value) async {
-                if (value == 'logout') {
+                if (value == 'profile') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  );
+                } else if (value == 'settings') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  );
+                } else if (value == 'logout') {
                   await authProvider.logout();
                   if (!mounted) return;
                   Navigator.of(context).pushAndRemoveUntil(
@@ -165,68 +206,98 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
               itemBuilder: (context) => const [
+                PopupMenuItem(value: 'profile', child: Text('Profile')),
+                PopupMenuItem(value: 'settings', child: Text('Settings')),
                 PopupMenuItem(value: 'logout', child: Text('Logout')),
               ],
             ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications coming soon')),
-              );
-            },
-          ),
-          if (canVerify)
-            IconButton(
-              icon: const Icon(Icons.verified_user_outlined),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CsDashboardScreen()),
-                );
-              },
-            ),
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () {
-              _handleNavTap(BottomNavItem.profile);
-            },
-          ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(
-                        _error!,
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text(
+                            _error!,
+                            style: const TextStyle(color: Colors.red),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadHomeData,
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadHomeData,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadHomeData,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadHomeData,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(bottom: 100),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                         // Premium Banner (only for authenticated users)
                         if (isAuthenticated) const PremiumBanner(),
 
                         // AI Search Bar
                         AISearchBar(onSearch: _handleSearch),
+
+                        if (isAuthenticated && canBuy)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: Colors.blue.shade100),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Post Your Requirement',
+                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Let us match verified listings based on your budget and location.',
+                                          style: TextStyle(color: Colors.blueGrey.shade700),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+                                      );
+                                    },
+                                    child: const Text('View'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
                         // New Properties Section
                         if (newProperties.isNotEmpty) ...[
@@ -252,7 +323,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(
-                            height: 280,
+                            height: 410,
+                            width: double.infinity,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -261,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 return SizedBox(
                                   width: 300,
                                   child: Padding(
-                                    padding: const EdgeInsets.only(right: 16),
+                                    padding: const EdgeInsets.only(right: 12),
                                     child: PropertyCard(
                                       property: newProperties[index],
                                       showFeaturedBadge: false,
@@ -315,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               physics: const NeverScrollableScrollPhysics(),
                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                childAspectRatio: 0.75,
+                                mainAxisExtent: 410,
                                 crossAxisSpacing: 16,
                                 mainAxisSpacing: 16,
                               ),
@@ -362,16 +434,28 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-
-                        // Bottom padding for navigation bar
-                        const SizedBox(height: 80),
                       ],
+                      ),
                     ),
                   ),
-                ),
-      bottomNavigationBar: BottomNavigation(
-        currentIndex: _currentNavItem,
-        onTap: _handleNavTap,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AIChatScreen()),
+          );
+        },
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        foregroundColor: Theme.of(context).colorScheme.onSecondary,
+        child: const Icon(Icons.chat_bubble_outline),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: BottomNavigation(
+          currentIndex: _currentNavItem,
+          onTap: _handleNavTap,
+        ),
       ),
     );
   }
