@@ -123,6 +123,14 @@ export class PaymentsService {
 
     const savedPayment = await this.paymentRepository.save(payment);
 
+    this.notificationsService
+      .notifyActionAlert(userId, 'create', 'payment order', {
+        paymentId: savedPayment.id,
+        amount: savedPayment.amount,
+        currency: savedPayment.currency,
+      })
+      .catch(() => undefined);
+
     // Create order in payment gateway
     let orderId: string;
     let orderData: Record<string, any>;

@@ -8,11 +8,13 @@ import { PropertyFeature } from './entities/property-feature.entity';
 import { PropertyVerificationNote } from './entities/property-verification-note.entity';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { StorageModule } from '../storage/storage.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Property, PropertyImage, PropertyFeature, PropertyVerificationNote]),
     forwardRef(() => SubscriptionsModule),
+    NotificationsModule,
     StorageModule,
   ],
   controllers: [PropertiesController],

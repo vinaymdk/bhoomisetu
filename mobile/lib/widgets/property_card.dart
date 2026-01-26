@@ -67,6 +67,7 @@ class _PropertyCardState extends State<PropertyCard> {
     final location = '${widget.property.location.city}, ${widget.property.location.state}';
 
     return Card(
+      margin: EdgeInsets.zero,
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),

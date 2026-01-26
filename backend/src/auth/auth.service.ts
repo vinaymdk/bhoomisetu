@@ -15,6 +15,7 @@ import { SocialLoginDto } from './dto/social-login.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 import { LoginSession, LoginProvider } from './entities/login-session.entity';
 import { OtpLog, OtpChannel, OtpPurpose } from './entities/otp-log.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export interface AuthTokens {
   accessToken: string;
@@ -36,6 +37,7 @@ export class AuthService {
     private readonly firebaseService: FirebaseService,
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
+    private readonly notificationsService: NotificationsService,
     @InjectRepository(LoginSession)
     private readonly loginSessionRepository: Repository<LoginSession>,
     @InjectRepository(OtpLog)
@@ -334,6 +336,13 @@ export class AuthService {
       riskScore,
     );
 
+    this.notificationsService
+      .notifyActionAlert(user.id, 'login', 'account', {
+        ipAddress,
+        loginProvider: dto.channel === 'sms' ? 'phone_otp' : 'email_otp',
+      })
+      .catch(() => undefined);
+
     return { user, roles, tokens };
   }
 
@@ -425,6 +434,13 @@ export class AuthService {
       userAgent,
       sessionRisk.riskScore,
     );
+
+    this.notificationsService
+      .notifyActionAlert(user.id, 'login', 'account', {
+        ipAddress,
+        loginProvider: provider,
+      })
+      .catch(() => undefined);
 
     return { user, roles, tokens };
   }
@@ -540,6 +556,24 @@ export class AuthService {
       // Other errors
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async logout(refreshToken?: string): Promise<void> {
+    if (!refreshToken) {
+      return;
+    }
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const session = await this.loginSessionRepository.findOne({
+      where: { refreshTokenHash, isRevoked: false },
+    });
+    if (!session) {
+      return;
+    }
+    session.isRevoked = true;
+    await this.loginSessionRepository.save(session);
+    this.notificationsService
+      .notifyActionAlert(session.userId, 'logout', 'account')
+      .catch(() => undefined);
   }
 }
 

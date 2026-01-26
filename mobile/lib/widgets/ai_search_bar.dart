@@ -29,7 +29,7 @@ class _AISearchBarState extends State<AISearchBar> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -58,13 +58,13 @@ class _AISearchBarState extends State<AISearchBar> {
                     decoration: const InputDecoration(
                       hintText: 'Search properties using natural language...',
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                     ),
                     onSubmitted: (_) => _handleSearch(),
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.only(right: 6),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: ElevatedButton(
@@ -85,7 +85,7 @@ class _AISearchBarState extends State<AISearchBar> {
           ),
           const SizedBox(height: 8),
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               '💡 Powered by AI - Describe what you\'re looking for in your own words',
               style: TextStyle(

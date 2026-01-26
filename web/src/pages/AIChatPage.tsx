@@ -8,13 +8,6 @@ type ChatMessage = {
   text: string;
 };
 
-const quickActions = [
-  'Find 2BHK under 50L in Hyderabad',
-  'Show verified plots near metro',
-  'Book a visit this weekend',
-  'Update my requirement budget',
-];
-
 export const AIChatPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -31,6 +24,18 @@ export const AIChatPage = () => {
   const [showScrollDown, setShowScrollDown] = useState(false);
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const topGuide =
+    language === 'hi'
+      ? 'AI Chat Support का उपयोग कैसे करें: अपनी आवश्यकता, बजट और स्थान को स्पष्ट रूप से लिखें.'
+      : language === 'te'
+        ? 'AI Chat Support ను ఎలా ఉపయోగించాలి: మీ అవసరం, బడ్జెట్, లొకేషన్‌ను స్పష్టంగా వ్రాయండి.'
+        : 'How to use AI Chat Support: Share your requirement, budget, and location clearly.';
+  const bottomGuide =
+    language === 'hi'
+      ? 'मानव सहायता चाहिए? बताएं और हम Customer Support से जोड़ देंगे.'
+      : language === 'te'
+        ? 'మనవ సహాయం కావాలా? చెప్పండి, Customer Support కు కలుపుతాం.'
+        : 'Need human help? Tell us and we will connect Customer Support.';
 
   const scrollToBottom = () => {
     if (messagesRef.current) {
@@ -116,6 +121,7 @@ export const AIChatPage = () => {
       </div>
 
       <div className="ai-chat-body">
+        <div className="ai-chat-guide ai-chat-guide-top">{topGuide}</div>
         <div className="ai-chat-messages" ref={messagesRef} onScroll={handleScroll}>
           {messages.map((msg) => (
             <div key={msg.id} className={`ai-chat-message ${msg.role}`}>
@@ -135,13 +141,7 @@ export const AIChatPage = () => {
             ↓
           </button>
         )}
-        <div className="ai-chat-quick">
-          {quickActions.map((action) => (
-            <button key={action} onClick={() => handleSend(action)} disabled={isSending}>
-              {action}
-            </button>
-          ))}
-        </div>
+        <div className="ai-chat-guide ai-chat-guide-bottom">{bottomGuide}</div>
       </div>
 
       <form

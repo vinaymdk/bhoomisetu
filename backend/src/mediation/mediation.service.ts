@@ -145,6 +145,13 @@ export class MediationService {
       `Buyer ${buyerId} expressed interest in property ${expressDto.propertyId}. Status: PENDING CS review.`,
     );
 
+    this.notificationsService
+      .notifyActionAlert(buyerId, 'create', 'interest expression', {
+        interestExpressionId: saved.id,
+        propertyId: expressDto.propertyId,
+      })
+      .catch(() => undefined);
+
     // Notify seller about interest (without revealing buyer contact - CRITICAL)
     this.notificationsService
       .notifyInterestExpression(property.sellerId, buyerId, expressDto.propertyId)

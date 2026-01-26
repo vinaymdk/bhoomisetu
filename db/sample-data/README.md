@@ -8,6 +8,8 @@ This directory contains SQL sample data files for testing different modules of t
 2. **module2_properties_sample_data.sql** - Property listings for home page testing
 3. **module3_search_sample_data.sql** - Additional properties for search functionality testing
 4. **module4_listing_features_sample_data.sql** - Structured property features for listings (Module 4)
+5. **module9_notifications_sample_data.sql** - Notification templates and sample notifications (Module 9)
+6. **module9_support_chat_sample_data.sql** - Support chat sessions/messages (Module 9)
 
 ## Prerequisites
 
@@ -37,6 +39,8 @@ psql -U your_username -d bhoomisetu_db -f db/sample-data/module1_auth_sample_dat
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module2_properties_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module3_search_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module4_listing_features_sample_data.sql
+psql -U your_username -d bhoomisetu_db -f db/sample-data/module9_notifications_sample_data.sql
+psql -U your_username -d bhoomisetu_db -f db/sample-data/module9_support_chat_sample_data.sql
 ```
 
 ### Option 3: Using Database GUI Tool
@@ -72,6 +76,9 @@ node scripts/load-sample-data.js
 4. **module4_listing_features_sample_data.sql** (Optional)
    - Adds structured features for properties (property_features table)
    - Useful for Module 4 listing UX and future filtering
+
+5. **module9_support_chat_sample_data.sql** (Optional)
+   - Adds sample support chat sessions and messages
 
 ## What Gets Created
 

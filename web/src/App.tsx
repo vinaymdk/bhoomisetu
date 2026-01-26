@@ -24,6 +24,8 @@ import { SavedPropertiesPage } from './pages/SavedPropertiesPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AIChatPage } from './pages/AIChatPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { SupportChatAdminPage } from './pages/SupportChatAdminPage';
 
 function App() {
   return (
@@ -35,6 +37,14 @@ function App() {
         <Route path="/properties/:id" element={<PropertyDetailsPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/ai-chat" element={<AIChatPage />} />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
         
         {/* Public routes that should redirect if authenticated */}
         <Route
@@ -168,6 +178,14 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={['customer_service', 'admin']}>
               <CustomerServiceDashboardPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/cs/support-chat"
+          element={
+            <RoleProtectedRoute allowedRoles={['customer_service', 'admin']}>
+              <SupportChatAdminPage />
             </RoleProtectedRoute>
           }
         />

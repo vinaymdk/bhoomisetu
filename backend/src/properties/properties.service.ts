@@ -9,6 +9,7 @@ import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
 import { PropertyResponseDto } from './dto/property-response.dto';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PropertiesService {
@@ -21,6 +22,7 @@ export class PropertiesService {
     private readonly propertyFeatureRepository: Repository<PropertyFeature>,
     @Inject(forwardRef(() => SubscriptionsService))
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(userId: string, createDto: CreatePropertyDto): Promise<PropertyResponseDto> {
@@ -87,10 +89,14 @@ export class PropertiesService {
       await this.propertyFeatureRepository.save(features);
     }
 
-    // Reload with relations
-    return PropertyResponseDto.fromEntity(
-      await this.findOne(savedProperty.id, userId, true),
-    );
+    this.notificationsService
+      .notifyActionAlert(userId, 'create', 'property', {
+        propertyId: savedProperty.id,
+        title: savedProperty.title,
+      })
+      .catch(() => undefined);
+
+    return PropertyResponseDto.fromEntity(await this.findOne(savedProperty.id, userId, true));
   }
 
   async findAll(
@@ -303,6 +309,13 @@ export class PropertiesService {
 
     const updated = await this.propertyRepository.save(property);
 
+    this.notificationsService
+      .notifyActionAlert(userId, 'update', 'property', {
+        propertyId: updated.id,
+        title: updated.title,
+      })
+      .catch(() => undefined);
+
     return PropertyResponseDto.fromEntity(await this.findOne(updated.id, userId, true));
   }
 
@@ -332,6 +345,14 @@ export class PropertiesService {
     property.status = PropertyStatus.PENDING_VERIFICATION;
     const updated = await this.propertyRepository.save(property);
 
+    this.notificationsService
+      .notifyActionAlert(userId, 'submit', 'property', {
+        propertyId: updated.id,
+        title: updated.title,
+        status: updated.status,
+      })
+      .catch(() => undefined);
+
     return PropertyResponseDto.fromEntity(await this.findOne(updated.id, userId, true));
   }
 
@@ -351,6 +372,13 @@ export class PropertiesService {
     // Soft delete
     property.deletedAt = new Date();
     await this.propertyRepository.save(property);
+
+    this.notificationsService
+      .notifyActionAlert(userId, 'remove', 'property', {
+        propertyId: property.id,
+        title: property.title,
+      })
+      .catch(() => undefined);
   }
 
   async findMyProperties(userId: string, status?: PropertyStatus): Promise<PropertyResponseDto[]> {

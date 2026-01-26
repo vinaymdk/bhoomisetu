@@ -38,7 +38,12 @@ export const authService = {
     return response.data;
   },
 
-  logout(): void {
+  async logout(refreshToken?: string): Promise<void> {
+    try {
+      await apiClient.post('/auth/logout', { refreshToken });
+    } catch {
+      // Best-effort logout; clear local session regardless of API response.
+    }
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   },

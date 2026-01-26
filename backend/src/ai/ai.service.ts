@@ -19,10 +19,18 @@ export class AiService {
   private readonly aiServiceRequired: boolean;
   private connectionErrorLogged: boolean = false;
 
+  // constructor(private readonly httpService: HttpService) {
+  //   this.aiServiceBaseUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+  //   this.aiServiceRequired = process.env.AI_SERVICE_REQUIRED === 'true';
+  // }
+
   constructor(private readonly httpService: HttpService) {
-    this.aiServiceBaseUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
+    const url = process.env.AI_SERVICE_URL;
+    this.aiServiceBaseUrl =
+      url && url.startsWith('http') ? url : 'http://localhost:8000';
     this.aiServiceRequired = process.env.AI_SERVICE_REQUIRED === 'true';
   }
+  
 
   /**
    * Score user/request for fraud risk
@@ -313,8 +321,25 @@ export class AiService {
     let requiresEscalation = false;
     let escalationReason: string | undefined;
 
+    const normalized = lowerMessage.replace(/\s+/g, ' ').trim();
+    const greetingKeywords = ['hi', 'hello', 'hey', 'namaste', 'హాయ్', 'హలో'];
+    const usageKeywords = ['how to use', 'how can i use', 'use ai', 'ai support', 'ai chat', 'help me use', 'guide me'];
+    const budgetKeywords = ['budget', 'lakh', 'lak', 'lacs', 'rs', '₹', 'price under', 'below'];
+
     // CRITICAL: Check for serious intent keywords (requires escalation)
-    const seriousIntentKeywords = ['buy', 'purchase', 'deal', 'negotiate', 'seller contact', 'phone number', 'email', 'serious', 'ready', 'appointment', 'viewing'];
+    const seriousIntentKeywords = [
+      'buy',
+      'purchase',
+      'deal',
+      'negotiate',
+      'seller contact',
+      'phone number',
+      'email',
+      'serious',
+      'ready',
+      'appointment',
+      'viewing',
+    ];
     if (seriousIntentKeywords.some((keyword) => lowerMessage.includes(keyword))) {
       requiresEscalation = true;
       escalationReason = 'Serious intent detected - requires human customer service';
@@ -330,12 +355,24 @@ export class AiService {
     }
 
     // Check for property search
-    if (lowerMessage.includes('property') || lowerMessage.includes('house') || lowerMessage.includes('apartment') || lowerMessage.includes('flat')) {
+    if (
+      lowerMessage.includes('property') ||
+      lowerMessage.includes('house') ||
+      lowerMessage.includes('apartment') ||
+      lowerMessage.includes('flat') ||
+      lowerMessage.includes('plot')
+    ) {
       detectedIntent = 'property_search';
     }
 
-    // Check for FAQ
-    if (lowerMessage.includes('how') || lowerMessage.includes('what') || lowerMessage.includes('when') || lowerMessage.includes('where') || lowerMessage.includes('why')) {
+    // Check for FAQ/How-to
+    if (
+      lowerMessage.includes('how') ||
+      lowerMessage.includes('what') ||
+      lowerMessage.includes('when') ||
+      lowerMessage.includes('where') ||
+      lowerMessage.includes('why')
+    ) {
       detectedIntent = 'faq';
     }
 
@@ -343,30 +380,90 @@ export class AiService {
     let response = '';
     if (language === 'te') {
       // Telugu fallback responses
-      if (requiresEscalation) {
-        response = 'మీరు తీవ్ర ఉద్దేశ్యాన్ని చూపిస్తున్నారు. దయచేసి మా కస్టమర్ సర్వీస్ టీమ్‌తో సంప్రదించండి. వారు మీకు తగిన సహాయం చేస్తారు.';
+      if (usageKeywords.some((keyword) => lowerMessage.includes(keyword))) {
+        response =
+          'AI Chat Support ఉపయోగించడానికి:\n' +
+          '1) మీ అవసరం, లొకేషన్, బడ్జెట్ స్పష్టంగా చెప్పండి\n' +
+          '2) ఆస్తి రకం (ఇల్లు/ప్లాట్) చెప్పండి\n' +
+          '3) అవసరమైతే మేము Customer Support‌కు కనెక్ట్ చేస్తాము';
+      } else if (greetingKeywords.includes(normalized)) {
+        response =
+          'హాయ్! మీరు ఏమి కోరుకుంటున్నారు?\n' +
+          'ఉదాహరణ: "Chiralaలో 25 లక్షలలోపు ఇల్లు కావాలి"';
+      } else if (requiresEscalation) {
+        response =
+          'మీరు కొనుగోలు ఉద్దేశ్యం చూపిస్తున్నారు. ' +
+          'మేము Customer Support‌కు కనెక్ట్ చేస్తాము.\n' +
+          'దయచేసి లొకేషన్, బడ్జెట్, ఆస్తి రకం వివరించండి.';
       } else if (detectedIntent === 'property_search') {
-        response = 'మేము మీకు అనుకూలమైన ఆస్తులను కనుగొనడంలో సహాయం చేయగలము. దయచేసి మీ అవసరాలను (స్థలం, బడ్జెట్, ఆస్తి రకం) పంచుకోండి.';
+        response =
+          'మీ అవసరానికి సరిపోయే ఆస్తులు సూచించగలము.\n' +
+          'దయచేసి లొకేషన్, బడ్జెట్, ఆస్తి రకం చెప్పండి.';
+      } else if (budgetKeywords.some((keyword) => lowerMessage.includes(keyword))) {
+        response =
+          'మీ బడ్జెట్ నోట్ అయ్యింది. ' +
+          'లొకేషన్ మరియు ఆస్తి రకం చెప్పండి, నేను సరైన ఎంపికలు సూచిస్తాను.';
       } else {
-        response = 'మేము మీకు సహాయం చేయగలము. దయచేసి మీ ప్రశ్నను వివరంగా అడగండి.';
+        response =
+          'మీ ప్రశ్నను వివరంగా చెప్పండి. ' +
+          'లొకేషన్, బడ్జెట్, ఆస్తి రకం ఇవ్వగలిగితే త్వరగా సహాయం చేస్తాను.';
       }
     } else if (language === 'hi') {
       // Hindi fallback responses
-      if (requiresEscalation) {
-        response = 'आपकी रुचि गंभीर लगती है। कृपया हमारी ग्राहक सेवा टीम से संपर्क करें। वे सत्यापित प्रक्रिया के माध्यम से सहायता करेंगे।';
+      if (usageKeywords.some((keyword) => lowerMessage.includes(keyword))) {
+        response =
+          'AI Chat Support इस्तेमाल करने के लिए:\n' +
+          '1) आवश्यकता, स्थान और बजट साफ़ लिखें\n' +
+          '2) प्रॉपर्टी प्रकार बताएं (घर/प्लॉट)\n' +
+          '3) जरूरत हो तो हम Customer Support से जोड़ देंगे';
+      } else if (greetingKeywords.includes(normalized)) {
+        response =
+          'नमस्ते! आप क्या ढूंढ रहे हैं?\n' +
+          'उदाहरण: "Chirala में 25 लाख के अंदर घर चाहिए"';
+      } else if (requiresEscalation) {
+        response =
+          'आपकी खरीद की इच्छा दिख रही है। ' +
+          'हम आपको Customer Support से जोड़ेंगे।\n' +
+          'कृपया स्थान, बजट और प्रॉपर्टी प्रकार साझा करें।';
       } else if (detectedIntent === 'property_search') {
-        response = 'मैं आपकी आवश्यकताओं के अनुसार प्रॉपर्टी खोजने में मदद कर सकता हूँ। कृपया स्थान, बजट और प्रॉपर्टी प्रकार बताएं।';
+        response =
+          'मैं आपकी आवश्यकता के अनुसार प्रॉपर्टी सुझा सकता हूँ।\n' +
+          'कृपया स्थान, बजट और प्रॉपर्टी प्रकार बताएं।';
+      } else if (budgetKeywords.some((keyword) => lowerMessage.includes(keyword))) {
+        response =
+          'बजट नोट कर लिया है। ' +
+          'कृपया स्थान और प्रॉपर्टी प्रकार बताएं ताकि मैं सही विकल्प सुझा सकूं।';
       } else {
-        response = 'मैं मदद के लिए यहाँ हूँ। कृपया अपनी जरूरत या सवाल बताएं।';
+        response =
+          'कृपया अपनी जरूरत/प्रश्न स्पष्ट करें। ' +
+          'स्थान, बजट और प्रॉपर्टी प्रकार मिलने पर मैं बेहतर मदद करूँगा।';
       }
     } else {
       // English fallback responses
-      if (requiresEscalation) {
-        response = 'I detect serious intent in your message. Please contact our customer service team for assistance with property purchases, negotiations, and contact information. They will help you connect with sellers through our verified mediation process.';
+      if (usageKeywords.some((keyword) => lowerMessage.includes(keyword))) {
+        response =
+          'How to use AI Chat Support:\n' +
+          '1) Share your requirement, location, and budget\n' +
+          '2) Mention property type (house/plot)\n' +
+          '3) If needed, we will connect Customer Support';
+      } else if (greetingKeywords.includes(normalized)) {
+        response =
+          'Hi! What are you looking for today?\n' +
+          'Example: "Need a house in Chirala under 25L".';
+      } else if (requiresEscalation) {
+        response =
+          'I detect serious intent in your message. We will connect Customer Support for purchase/negotiation.\n' +
+          'Meanwhile, share location, budget, and property type for faster help.';
       } else if (detectedIntent === 'property_search') {
-        response = 'I can help you find suitable properties. Please share your requirements like location, budget, and property type. I\'ll suggest matching properties based on your needs.';
+        response =
+          'I can help you find suitable properties.\n' +
+          'Please share location, budget, and property type. I\'ll suggest matches based on your needs.';
+      } else if (budgetKeywords.some((keyword) => lowerMessage.includes(keyword))) {
+        response =
+          'Got your budget. Please share the location and property type so I can suggest the best matches.';
       } else {
-        response = 'I\'m here to help! Please feel free to ask me any questions about properties, requirements, verification process, or general information about the platform.';
+        response =
+          'I\'m here to help. Please share your requirement with location, budget, and property type for the best response.';
       }
     }
 

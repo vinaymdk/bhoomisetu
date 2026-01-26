@@ -15,6 +15,12 @@
   margin-bottom: 16px;
 }
 
+.cs-dashboard-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .cs-dashboard-header h1 {
   margin: 0 0 6px;
 }

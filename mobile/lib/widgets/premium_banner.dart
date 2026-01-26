@@ -47,7 +47,7 @@ class _PremiumBannerState extends State<PremiumBanner> {
     if (_dismissed) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [

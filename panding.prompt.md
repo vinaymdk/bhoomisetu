@@ -5,19 +5,77 @@
 - **CS**: cs1@example.com / +919876543214
 - **Admin**: admin@example.com / +919876543215
 =================================================
+"If you want, I can also add CS‑agent live typing + real‑time updates via WebSockets to avoid polling." Yes please
 
-"If anything still overflows after this broad pass, send a screenshot or the widget tree and I’ll zero in on the remaining layouts." Yes Please
+Notifications:
+   Chat-with-Support:
+      Common: (Web + Mobile)
+         - After delete message show "This message was deleted" text in place of deleted message without removing complete message box
+      Web:
+        - Fix notification section height for maximum visible area 10 notification at a time without scroll if crossed then enable scroll
+        - Use smooth scrolling for chatbox messages-display while crossing fixed height
+      Mobile:
+         - Add bordeer line between "Chat with Customer Service" and "Messages section" to easyly identify sections
 
-AI Chat Support: (Web + Mobile)
-   AI Results:
-   - 
-   - Only limited results(2/3 types of results only giving update AI-Chat-Support)
+Home: (Mobile)
+   - Add little-bit bottom(vertical) card-padding for New properties(Horizantal-scroll) section
 
-Errors: (Mobile -> Landing/Home-Screen)
-   Still pending below errors to fix 
-   - Fix the "Right overflowed by 14 pixels"
-   Suggestion:
-   - If reduce padding between the cards it may solve think on it, other wise follow as your plan
+AI Microservice:
+- Can you create(Latest-verssion) "AI_MICROSERVICE_REPO" and connect/setup with quick guide for this project 
+
+<!-- Module 9 Errors Prompt Start -->
+Next-Step: 
+AI Microservice:
+- Can you create(Latest-verssion) "AI_MICROSERVICE_REPO" and connect/setup with quick guide for this project 
+
+Prompt-Guidelines:
+   - Follow the ai_microservice prompt as per "./docs/Prompts/ai.microservice.repo.md" and start development
+- Suggest me if any better-plan then "./docs/Prompts/ai.microservice.repo.md" just follow that as your plan 
+- Prepare the project structure as per best practices
+- Setup CI/CD for this repo
+
+- If required Prepare **required sample / dummy / reference data**.sql in /db/sample-data/ and related ***.sh in /scripts/ files as well
+
+- Update Documentation 
+   - Update ./docs/Prompts/ai.microservice.repo.md with all the changes you made
+   - Create README.md for this repo with all the necessary details
+
+- Suggest me what can i do from my side
+<!-- Module 9 Errors Prompt end -->
+
+Notifications:
+   Chat-with-Support:
+      Common: (Web + Mobile)
+         - Deliver, read tick(color-based) indicators for sent messages
+         - Add typing bubbles while typing text/message
+         - Use smoot scrolling for chatbox messages-display while crossing fixed height
+         - Edit messages after sending
+         - Delete messages after sending
+         - Message timestamps on hover (Web) and always visible (Mobile)
+         
+
+AI Microservice:
+- Can you create(Latest-verssion) "AI_MICROSERVICE_REPO" and connect/setup with quick guide for this project 
+
+<!-- Module 9 Errors Prompt Start -->
+Next-Step: 
+AI Microservice:
+- Can you create(Latest-verssion) "AI_MICROSERVICE_REPO" and connect/setup with quick guide for this project 
+
+Prompt-Guidelines:
+   - Follow the ai_microservice prompt as per "./docs/Prompts/ai.microservice.repo.md" and start development
+- Suggest me if any better-plan then "./docs/Prompts/ai.microservice.repo.md" just follow that as your plan 
+- Prepare the project structure as per best practices
+- Setup CI/CD for this repo
+
+- If required Prepare **required sample / dummy / reference data**.sql in /db/sample-data/ and related ***.sh in /scripts/ files as well
+
+- Update Documentation 
+   - Update ./docs/Prompts/ai.microservice.repo.md with all the changes you made
+   - Create README.md for this repo with all the necessary details
+
+- Suggest me what can i do from my side
+<!-- Module 9 Errors Prompt end -->
 
 ==============================================================
 Parallelly Start with Module 8 Developmet

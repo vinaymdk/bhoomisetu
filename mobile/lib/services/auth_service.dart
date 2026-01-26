@@ -63,4 +63,14 @@ class AuthService {
     });
     return response.data;
   }
+
+  Future<void> logout(String? refreshToken) async {
+    try {
+      await _apiClient.dio.post('/auth/logout', data: {
+        if (refreshToken != null) 'refreshToken': refreshToken,
+      });
+    } on DioException {
+      // Best-effort logout; ignore API errors.
+    }
+  }
 }

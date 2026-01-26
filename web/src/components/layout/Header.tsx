@@ -7,6 +7,7 @@ import { savedPropertiesService } from '../../services/savedProperties.service';
 import { badgePreferencesService } from '../../services/badgePreferences.service';
 import { propertiesService } from '../../services/properties.service';
 import { buyerRequirementsService } from '../../services/buyerRequirements.service';
+import { notificationsService } from '../../services/notifications.service';
 
 export const Header = () => {
   const { isAuthenticated, user, logout, roles } = useAuth();
@@ -21,6 +22,7 @@ export const Header = () => {
   const [showSavedBadge, setShowSavedBadge] = useState(true);
   const [showListBadge, setShowListBadge] = useState(true);
   const [showReqsBadge, setShowReqsBadge] = useState(true);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -47,6 +49,14 @@ export const Header = () => {
       window.removeEventListener('storage', handler);
     };
   }, [user?.id, canList, canBuy]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    notificationsService
+      .list({ page: 1, limit: 1 })
+      .then((response) => setUnreadNotifications(response.unreadCount))
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     logout();
@@ -108,6 +118,11 @@ export const Header = () => {
                 </Link>
               )}
               {canVerify && (
+                <Link to="/cs/support-chat" className="header-nav-link">
+                  Support Chat
+                </Link>
+              )}
+              {canVerify && (
                 <Link to="/mediation/pending" className="header-nav-link">
                   Mediation
                 </Link>
@@ -130,6 +145,14 @@ export const Header = () => {
                   </Link>
                 </>
               )}
+              <button
+                className="header-notifications"
+                onClick={() => navigate('/notifications')}
+                aria-label="View notifications"
+              >
+                <i className="far fa-bell header-notifications-icon" aria-hidden="true" />
+                {unreadNotifications > 0 && <span className="header-notifications-badge">{unreadNotifications}</span>}
+              </button>
               <div className="header-user" ref={userMenuRef}>
                 <button
                   className="header-user-button"
