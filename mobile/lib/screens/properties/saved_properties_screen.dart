@@ -9,6 +9,8 @@ import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 import 'my_listings_screen.dart';
 import 'property_details_screen.dart';
 
@@ -96,6 +98,18 @@ class _SavedPropertiesScreenState extends State<SavedPropertiesScreen> {
         );
         break;
       case BottomNavItem.saved:
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SubscriptionsScreen()),
+        );
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()),
+        );
         break;
       case BottomNavItem.profile:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);

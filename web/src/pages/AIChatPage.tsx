@@ -6,6 +6,14 @@ type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  propertySuggestions?: Array<{
+    propertyId: string;
+    title: string;
+    price: number;
+    location: string;
+    matchScore: number;
+    matchReasons: string[];
+  }>;
 };
 
 export const AIChatPage = () => {
@@ -22,6 +30,7 @@ export const AIChatPage = () => {
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const [isSending, setIsSending] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const sendingRef = useRef(false);
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const topGuide =
@@ -49,13 +58,14 @@ export const AIChatPage = () => {
 
   const handleSend = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || sendingRef.current) return;
     const userId = `${Date.now()}-user`;
     setMessages((prev) => [...prev, { id: userId, role: 'user', text: trimmed }]);
     setInput('');
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
     }
+    sendingRef.current = true;
     setIsSending(true);
     try {
       const response = await aiChatService.sendMessage(trimmed, language, conversationId);
@@ -66,6 +76,7 @@ export const AIChatPage = () => {
           id: `${Date.now()}-assistant`,
           role: 'assistant',
           text: response.content,
+          propertySuggestions: response.propertySuggestions,
         },
       ]);
     } catch (error) {
@@ -78,6 +89,7 @@ export const AIChatPage = () => {
         },
       ]);
     } finally {
+      sendingRef.current = false;
       setIsSending(false);
     }
   };
@@ -125,9 +137,28 @@ export const AIChatPage = () => {
         <div className="ai-chat-messages" ref={messagesRef} onScroll={handleScroll}>
           {messages.map((msg) => (
             <div key={msg.id} className={`ai-chat-message ${msg.role}`}>
-              <div className="ai-chat-bubble">{msg.text}</div>
+              <div className="ai-chat-bubble">
+                <div>{msg.text}</div>
+                {msg.propertySuggestions && msg.propertySuggestions.length > 0 && (
+                  <div className="ai-chat-suggestions">
+                    {msg.propertySuggestions.map((item) => (
+                      <a key={item.propertyId} href={`/properties/${item.propertyId}`} className="ai-chat-link">
+                        {item.title || 'Property'} • {item.location || 'Location'} • ₹{item.price?.toLocaleString?.() || item.price}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
+          {isSending && (
+            <div className="ai-chat-message assistant">
+              <div className="ai-chat-bubble typing">
+                <span className="typing-dots" />
+                <small>AI is typing...</small>
+              </div>
+            </div>
+          )}
         </div>
         {showScrollDown && (
           <button

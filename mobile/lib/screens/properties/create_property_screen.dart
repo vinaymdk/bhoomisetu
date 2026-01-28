@@ -10,6 +10,8 @@ import '../properties/my_listings_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
 import '../properties/saved_properties_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 import '../../services/app_config_service.dart';
 import '../../services/location_service.dart';
 import '../../services/properties_service.dart';
@@ -582,6 +584,18 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SubscriptionsScreen()),
+        );
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()),
         );
         break;
       case BottomNavItem.profile:

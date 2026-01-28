@@ -132,6 +132,7 @@ dependencies:
   geolocator: ^14.0.2
   share_plus: ^10.0.2
   font_awesome_flutter: ^10.8.0
+  socket_io_client: ^2.0.3
 
 
 dev_dependencies:

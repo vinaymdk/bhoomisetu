@@ -10,5 +10,7 @@ bash "$DIR/04_mediation.sh"
 bash "$DIR/05_ai_chat.sh"
 bash "$DIR/06_notifications.sh"
 bash "$DIR/07_payments_subscriptions.sh"
+bash "$DIR/07_support_chat.sh"
 bash "$DIR/08_reviews_feedback.sh"
+bash "$DIR/09_support_chat_access.sh"
 

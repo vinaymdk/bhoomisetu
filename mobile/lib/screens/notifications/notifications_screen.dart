@@ -2,10 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import '../../config/api_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/notifications_service.dart';
 import '../../services/support_chat_service.dart';
+import '../../state/notifications_badge.dart';
 import '../../widgets/bottom_navigation.dart';
+import '../../widgets/app_drawer.dart';
 import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
@@ -13,6 +17,8 @@ import '../properties/saved_properties_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
 import 'notification_settings_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -36,31 +42,51 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   int _unreadCount = 0;
   BottomNavItem _currentNavItem = BottomNavItem.home;
   String _selectedChatUser = 'customer_service';
+  bool _isSupportUser = false;
   bool _isRemoteTyping = false;
   bool _showChatScrollDown = false;
   bool _loadingEarlier = false;
+  int _chatUnreadTotal = 0;
+  Map<String, int> _unreadByRole = {};
+  int _activeUnseenCount = 0;
+  bool _isChatInputFocused = true;
+  Map<String, bool> _rolesOnline = {};
   TabController? _tabController;
   SupportChatSession? _activeSession;
   final Map<String, List<SupportChatMessage>> _chatMessages = {};
   bool _chatLoading = false;
   Timer? _typingTimer;
-  final List<Map<String, String>> _chatUsers = const [
-    {
-      'id': 'customer_service',
-      'name': 'Customer Service',
-      'role': 'customer_service'
-    },
-    {'id': 'buyer', 'name': 'Buyer Support', 'role': 'buyer'},
-    {'id': 'seller', 'name': 'Seller Support', 'role': 'seller'},
-    {'id': 'agent', 'name': 'Agent Support', 'role': 'agent'},
-  ];
+  io.Socket? _chatSocket;
+  String? _joinedSessionId;
+  List<Map<String, dynamic>> _chatUsers = [];
+  final Map<String, String> _roleLabels = const {
+    'customer_service': 'Customer Service',
+    'buyer': 'Buyer Support',
+    'seller': 'Seller Support',
+    'agent': 'Agent Support',
+  };
 
   @override
   void initState() {
     super.initState();
     _loadNotifications();
+    _refreshUnreadCounts();
+    _loadChatUsers();
     _chatScrollController.addListener(_handleChatScroll);
     _tabController = TabController(length: 2, vsync: this);
+    _tabController?.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _connectChatSocket();
+    _chatFocusNode.addListener(() {
+      if (!mounted) return;
+      setState(() => _isChatInputFocused = _chatFocusNode.hasFocus);
+      if (_chatFocusNode.hasFocus && _activeSession != null) {
+        _activeUnseenCount = 0;
+        _supportChatService.markSessionRead(_activeSession!.id);
+        _refreshUnreadCounts();
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureChatSession();
     });
@@ -72,9 +98,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     _chatScrollController.dispose();
     _chatController.dispose();
     _chatFocusNode.dispose();
-    _chatPollTimer?.cancel();
     _typingTimer?.cancel();
     _tabController?.dispose();
+    _chatSocket?.disconnect();
+    _chatSocket?.dispose();
     super.dispose();
   }
 
@@ -93,6 +120,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         _items = list;
         _unreadCount = response['unreadCount'] as int? ?? 0;
       });
+      setNotificationsBadgeCount(_unreadCount);
     } catch (e) {
       setState(() => _error = 'Unable to load notifications.');
     } finally {
@@ -101,34 +129,56 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   Future<void> _markAllRead() async {
-    await _service.markAllRead();
-    await _loadNotifications();
+    try {
+      await _service.markAllRead();
+      await _loadNotifications();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All notifications marked as read.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to mark all notifications as read.')),
+        );
+      }
+    }
   }
 
   Future<void> _markRead(NotificationItem item) async {
     if (item.readAt != null) return;
-    await _service.markRead(item.id);
-    setState(() {
-      _items = _items
-          .map(
-            (current) => current.id == item.id
-                ? NotificationItem(
-                    id: current.id,
-                    title: current.title,
-                    message: current.message,
-                    messageEnglish: current.messageEnglish,
-                    messageTelugu: current.messageTelugu,
-                    type: current.type,
-                    priority: current.priority,
-                    status: 'read',
-                    createdAt: current.createdAt,
-                    readAt: DateTime.now(),
-                  )
-                : current,
-          )
-          .toList();
-      _unreadCount = _unreadCount > 0 ? _unreadCount - 1 : 0;
-    });
+    try {
+      await _service.markRead(item.id);
+      setState(() {
+        _items = _items
+            .map(
+              (current) => current.id == item.id
+                  ? NotificationItem(
+                      id: current.id,
+                      title: current.title,
+                      message: current.message,
+                      messageEnglish: current.messageEnglish,
+                      messageTelugu: current.messageTelugu,
+                      type: current.type,
+                      priority: current.priority,
+                      status: 'read',
+                      createdAt: current.createdAt,
+                      readAt: DateTime.now(),
+                    )
+                  : current,
+            )
+            .toList();
+        _unreadCount = _unreadCount > 0 ? _unreadCount - 1 : 0;
+      });
+      setNotificationsBadgeCount(_unreadCount);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to mark notification as read.')),
+        );
+      }
+    }
   }
 
   void _handleNavTap(BottomNavItem item) {
@@ -162,6 +212,14 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         Navigator.push(context,
             MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()));
         break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const SubscriptionsScreen()));
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()));
+        break;
       case BottomNavItem.profile:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final roles = authProvider.roles;
@@ -187,10 +245,27 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       _activeSession == null ? [] : (_chatMessages[_activeSession!.id] ?? []);
 
   Future<void> _ensureChatSession() async {
+    if (_selectedChatUser.isEmpty) {
+      setState(() => _chatLoading = false);
+      return;
+    }
     setState(() => _chatLoading = true);
     try {
-      final session =
-          await _supportChatService.getOrCreateSession(_selectedChatUser);
+      SupportChatSession session;
+      if (_isSupportUser) {
+        final selected = _chatUsers.firstWhere(
+          (user) => user['id'] == _selectedChatUser,
+          orElse: () => {},
+        );
+        final sessionId = selected['sessionId']?.toString() ?? _selectedChatUser;
+        session = SupportChatSession(
+          id: sessionId,
+          supportRole: selected['role']?.toString() ?? 'buyer',
+          status: 'open',
+        );
+      } else {
+        session = await _supportChatService.getOrCreateSession(_selectedChatUser);
+      }
       _activeSession = session;
       final messages = await _supportChatService.listMessages(session.id);
       setState(() {
@@ -198,7 +273,20 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         _chatLoading = false;
         _isRemoteTyping = false;
       });
-      _startChatPolling();
+      _joinChatRoom(session.id);
+      _activeUnseenCount = 0;
+      await _supportChatService.markSessionRead(session.id);
+      setState(() {
+        if (_isSupportUser) {
+          final index = _chatUsers.indexWhere((item) => item['id'] == _selectedChatUser);
+          if (index >= 0) {
+            _chatUsers[index]['unreadCount'] = 0;
+          }
+        } else {
+          _unreadByRole[_selectedChatUser] = 0;
+        }
+      });
+      _refreshUnreadCounts();
       _scrollChatToBottom(animated: false);
       _chatFocusNode.requestFocus();
     } catch (_) {
@@ -207,37 +295,273 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     }
   }
 
-  Timer? _chatPollTimer;
+  Future<void> _loadChatUsers() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userRoles = authProvider.roles;
+      _isSupportUser = userRoles.contains('customer_service') || userRoles.contains('admin');
+      List<Map<String, dynamic>> nextUsers = [];
+      if (_isSupportUser) {
+        final sessions = await _supportChatService.listAdminSessions();
+        final grouped = <String, SupportChatAdminSession>{};
+        for (final session in sessions) {
+          final existing = grouped[session.userId];
+          if (existing == null) {
+            grouped[session.userId] = session;
+          } else {
+            grouped[session.userId] = SupportChatAdminSession(
+              id: session.id,
+              userId: session.userId,
+              userName: session.userName,
+              userEmail: session.userEmail,
+              userAvatarUrl: session.userAvatarUrl,
+              supportRole: session.supportRole,
+              status: session.status,
+              unreadCount: existing.unreadCount + session.unreadCount,
+            );
+          }
+        }
+        nextUsers = grouped.values
+            .map((session) => {
+                  'id': session.id,
+                  'sessionId': session.id,
+                  'name': session.userName,
+                  'role': session.supportRole,
+                  'email': session.userEmail,
+                  'avatarUrl': session.userAvatarUrl,
+                  'unreadCount': session.unreadCount,
+                })
+            .toList();
+      } else {
+        final roles = await _supportChatService.getAllowedRoles();
+        nextUsers = roles
+            .map((role) => {
+                  'id': role,
+                  'name': _roleLabels[role] ?? role,
+                  'role': role,
+                  'email': role == 'customer_service' ? 'support@bhoomisetu.com' : null,
+                })
+            .toList();
+        if (roles.isEmpty) {
+          final canChatSupport = userRoles.contains('buyer') ||
+              userRoles.contains('seller') ||
+              userRoles.contains('agent') ||
+              userRoles.contains('admin');
+          if (canChatSupport) {
+            nextUsers = [
+              {
+                'id': 'customer_service',
+                'name': _roleLabels['customer_service'] ?? 'Customer Service',
+                'role': 'customer_service',
+                'email': 'support@bhoomisetu.com'
+              },
+            ];
+          }
+        }
+      }
+      setState(() {
+        _chatUsers = nextUsers;
+        if (nextUsers.isNotEmpty && !_chatUsers.any((u) => u['id'] == _selectedChatUser)) {
+          _selectedChatUser = nextUsers.first['id'] ?? '';
+        }
+        if (nextUsers.isEmpty) {
+          _selectedChatUser = '';
+        }
+      });
+      if (_selectedChatUser.isNotEmpty) {
+        _ensureChatSession();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userRoles = authProvider.roles;
+      final isSupport = userRoles.contains('customer_service') || userRoles.contains('admin');
+      final canChatSupport =
+          userRoles.contains('buyer') || userRoles.contains('seller') || userRoles.contains('agent') || userRoles.contains('admin');
+      final fallbackUsers = isSupport
+          ? [
+              {'id': 'buyer', 'name': _roleLabels['buyer'] ?? 'Buyer Support', 'role': 'buyer'},
+              {'id': 'seller', 'name': _roleLabels['seller'] ?? 'Seller Support', 'role': 'seller'},
+              {'id': 'agent', 'name': _roleLabels['agent'] ?? 'Agent Support', 'role': 'agent'},
+            ]
+          : canChatSupport
+              ? [
+                  {
+                    'id': 'customer_service',
+                    'name': _roleLabels['customer_service'] ?? 'Customer Service',
+                    'role': 'customer_service',
+                    'email': 'support@bhoomisetu.com'
+                  },
+                ]
+              : [];
+      setState(() {
+        _chatUsers = fallbackUsers.cast<Map<String, dynamic>>();
+        _selectedChatUser = fallbackUsers.isNotEmpty ? fallbackUsers.first['id'] ?? '' : '';
+      });
+      if (_selectedChatUser.isNotEmpty) {
+        _ensureChatSession();
+      }
+    }
+  }
 
-  void _startChatPolling() {
-    _chatPollTimer?.cancel();
-    if (_activeSession == null) return;
-    _chatPollTimer = Timer.periodic(const Duration(seconds: 4), (_) async {
+  Future<void> _refreshUnreadCounts() async {
+    try {
+      if (_isSupportUser) {
+        final sessions = await _supportChatService.listAdminSessions();
+        if (!mounted) return;
+        int total = 0;
+        final updatedUsers = _chatUsers.map((user) {
+          final session = sessions.firstWhere(
+            (item) => item.id == user['sessionId'],
+            orElse: () => SupportChatAdminSession(
+              id: user['sessionId']?.toString() ?? '',
+              userId: '',
+              userName: user['name']?.toString() ?? 'User',
+              supportRole: user['role']?.toString() ?? 'buyer',
+              status: 'open',
+              unreadCount: 0,
+            ),
+          );
+          total += session.unreadCount;
+          return {
+            ...user,
+            'unreadCount': session.unreadCount,
+          };
+        }).toList();
+        setState(() {
+          _chatUsers = updatedUsers;
+          _chatUnreadTotal = total;
+        });
+      } else {
+        final response = await _supportChatService.getUnreadCounts();
+        if (!mounted) return;
+        setState(() {
+          _chatUnreadTotal = response['total'] as int? ?? 0;
+          _unreadByRole = Map<String, int>.from(
+              (response['byRole'] as Map?)?.map((key, value) =>
+                      MapEntry(key.toString(), (value as num).toInt())) ??
+                  {});
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _connectChatSocket() {
+    final baseUrl = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
+    final socket = io.io(
+      '$baseUrl/support-chat',
+      io.OptionBuilder().setTransports(['websocket']).build(),
+    );
+    _chatSocket = socket;
+    socket.onConnect((_) {
+      socket.emit('presence:request');
       final sessionId = _activeSession?.id;
-      if (sessionId == null) return;
-      final messages = await _supportChatService.listMessages(sessionId);
-      final typing = await _supportChatService.getTyping(sessionId);
+      if (sessionId != null) {
+        _joinChatRoom(sessionId);
+      }
+    });
+    socket.on('message', (data) {
+      if (data is! Map) return;
+      final message = data['message'];
+      if (message is! Map) return;
+      final parsed = SupportChatMessage.fromJson(
+          Map<String, dynamic>.from(message));
+      if (!mounted) return;
+      setState(() {
+        final list = _chatMessages[parsed.sessionId] ?? [];
+        final index = list.indexWhere((item) => item.id == parsed.id);
+        List<SupportChatMessage> next;
+        if (index >= 0) {
+          next = list
+              .map((item) => item.id == parsed.id ? parsed : item)
+              .toList();
+        } else {
+          final authProvider =
+              Provider.of<AuthProvider>(context, listen: false);
+          final userId = authProvider.userData?['id']?.toString();
+          final sendingIndex = userId == parsed.senderId
+              ? list.indexWhere((item) =>
+                  item.status == 'sending' && item.content == parsed.content)
+              : -1;
+          if (sendingIndex >= 0) {
+            next = list
+                .asMap()
+                .entries
+                .map((entry) =>
+                    entry.key == sendingIndex ? parsed : entry.value)
+                .toList();
+          } else {
+            next = [...list, parsed];
+          }
+        }
+        _chatMessages[parsed.sessionId] =
+            next.length > 200 ? next.sublist(next.length - 200) : next;
+      });
+      _refreshUnreadCounts();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.userData?['id']?.toString();
-      final typingAtRaw = typing['typingAt']?.toString();
+      if (parsed.sessionId == _activeSession?.id && parsed.senderId != userId) {
+        final shouldAutoScroll = _isAtChatBottom() || _isChatInputFocused;
+        if (shouldAutoScroll) {
+          _supportChatService.markSessionRead(parsed.sessionId);
+          if (mounted) {
+            setState(() => _activeUnseenCount = 0);
+          }
+          if (mounted) {
+            setState(() {
+              _unreadByRole[_selectedChatUser] = 0;
+            });
+          }
+          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollChatToBottom());
+        } else {
+          setState(() => _activeUnseenCount += 1);
+        }
+      }
+    });
+    socket.on('typing', (data) {
+      if (data is! Map) return;
+      final sessionId = data['sessionId']?.toString();
+      if (sessionId == null || sessionId != _activeSession?.id) return;
+      final typingAtRaw = data['typingAt']?.toString();
       final typingAt =
           typingAtRaw != null ? DateTime.tryParse(typingAtRaw) : null;
-      final typingBy = typing['typingByUserId']?.toString();
+      final typingBy = data['typingByUserId']?.toString();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.userData?['id']?.toString();
       final isTyping = typingBy != null &&
           typingBy.isNotEmpty &&
           typingBy != userId &&
           typingAt != null &&
           DateTime.now().difference(typingAt).inSeconds < 6;
       if (!mounted) return;
-      setState(() {
-        _chatMessages[sessionId] = messages;
-        _isRemoteTyping = isTyping;
-      });
+      setState(() => _isRemoteTyping = isTyping);
+    });
+    socket.on('presence', (data) {
+      if (data is! Map) return;
+      final rolesOnlineRaw = data['rolesOnline'];
+      if (rolesOnlineRaw is Map) {
+        setState(() {
+          _rolesOnline = Map<String, bool>.from(rolesOnlineRaw.map(
+              (key, value) => MapEntry(key.toString(), value == true)));
+        });
+      }
     });
   }
 
+  void _joinChatRoom(String sessionId) {
+    if (_chatSocket == null) return;
+    if (_joinedSessionId != null && _joinedSessionId != sessionId) {
+      _chatSocket!.emit('leave', {'sessionId': _joinedSessionId});
+    }
+    _chatSocket!.emit('join', {'sessionId': sessionId});
+    _joinedSessionId = sessionId;
+  }
+
   void _scrollChatToBottom({bool animated = true}) {
-    if (!_chatScrollController.hasClients) return;
+    if (!_chatScrollController.hasClients) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollChatToBottom(animated: animated));
+      return;
+    }
     final target = _chatScrollController.position.maxScrollExtent;
     if (animated) {
       _chatScrollController.animateTo(
@@ -250,11 +574,25 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     }
   }
 
+  bool _isAtChatBottom() {
+    if (!_chatScrollController.hasClients) return true;
+    final position = _chatScrollController.position;
+    return position.pixels >= position.maxScrollExtent - 24;
+  }
+
   void _handleChatScroll() {
     if (!_chatScrollController.hasClients) return;
     final position = _chatScrollController.position;
     final atBottom = position.pixels >= position.maxScrollExtent - 24;
     setState(() => _showChatScrollDown = !atBottom);
+    if (atBottom && _activeUnseenCount > 0 && _activeSession != null) {
+      setState(() => _activeUnseenCount = 0);
+      setState(() {
+        _unreadByRole[_selectedChatUser] = 0;
+      });
+      _supportChatService.markSessionRead(_activeSession!.id);
+      _refreshUnreadCounts();
+    }
     if (position.pixels <= 4 && !_loadingEarlier) {
       _loadEarlierMessages();
     }
@@ -301,14 +639,24 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       isDeleted: false,
       isEdited: false,
       createdAt: now,
-      status: 'sent',
+      status: 'sending',
     );
     setState(() {
       _chatMessages[sessionId] = [..._activeChat, optimistic];
       _chatController.clear();
+      if (!_isSupportUser) {
+        _activeUnseenCount = 0;
+        _unreadByRole[_selectedChatUser] = 0;
+        _chatUnreadTotal = _unreadByRole.values.fold(0, (sum, value) => sum + value);
+      }
     });
     _chatFocusNode.requestFocus();
-    _scrollChatToBottom();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollChatToBottom());
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) {
+        _scrollChatToBottom();
+      }
+    });
 
     _supportChatService.sendMessage(sessionId, trimmed).then((saved) {
       if (!mounted) return;
@@ -316,6 +664,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         _chatMessages[sessionId] = _activeChat
             .map((msg) => msg.id == optimistic.id ? saved : msg)
             .toList();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollChatToBottom());
+      Future.delayed(const Duration(milliseconds: 120), () {
+        if (mounted) {
+          _scrollChatToBottom();
+        }
       });
     }).catchError((_) {
       if (!mounted) return;
@@ -332,6 +686,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                     isDeleted: msg.isDeleted,
                     isEdited: msg.isEdited,
                     createdAt: msg.createdAt,
+                    deliveredAt: msg.deliveredAt,
+                    readAt: msg.readAt,
                     status: 'failed',
                   )
                 : msg)
@@ -342,6 +698,26 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   void _retryChatMessage(SupportChatMessage message) {
     if (_activeSession == null) return;
+    setState(() {
+      _chatMessages[_activeSession!.id] = _activeChat
+          .map((msg) => msg.id == message.id
+              ? SupportChatMessage(
+                  id: msg.id,
+                  sessionId: msg.sessionId,
+                  senderId: msg.senderId,
+                  senderRole: msg.senderRole,
+                  senderName: msg.senderName,
+                  content: msg.content,
+                  isDeleted: msg.isDeleted,
+                  isEdited: msg.isEdited,
+                  createdAt: msg.createdAt,
+                  deliveredAt: msg.deliveredAt,
+                  readAt: msg.readAt,
+                  status: 'sending',
+                )
+              : msg)
+          .toList();
+    });
     _supportChatService
         .sendMessage(_activeSession!.id, message.content)
         .then((saved) {
@@ -409,9 +785,15 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   Widget _buildChatBubble(BuildContext context, SupportChatMessage msg) {
     final isUser = msg.senderRole == 'user';
+    final isUnread = !isUser && msg.readAt == null;
     final align = isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start;
-    final color = isUser ? Colors.blue : Colors.grey.shade200;
-    final textColor = isUser ? Colors.white : Colors.black87;
+    final isDeleted = msg.isDeleted;
+    final color = isDeleted
+        ? Colors.grey.shade200
+        : isUser
+            ? Colors.blue
+            : (isUnread ? Colors.orange.shade100 : Colors.grey.shade200);
+    final textColor = isDeleted ? Colors.grey.shade700 : (isUser ? Colors.white : Colors.black87);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -423,8 +805,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             CircleAvatar(
               radius: 14,
               backgroundColor: Colors.blueGrey.shade100,
-              child: Text(msg.senderName.substring(0, 1),
-                  style: const TextStyle(fontSize: 12)),
+              backgroundImage: msg.senderAvatarUrl != null && msg.senderAvatarUrl!.isNotEmpty
+                  ? NetworkImage(msg.senderAvatarUrl!)
+                  : null,
+              child: msg.senderAvatarUrl == null || msg.senderAvatarUrl!.isEmpty
+                  ? Text(msg.senderName.substring(0, 1), style: const TextStyle(fontSize: 12))
+                  : null,
             ),
           if (!isUser) const SizedBox(width: 8),
           Flexible(
@@ -445,8 +831,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        msg.isDeleted ? 'Message deleted' : msg.content,
-                        style: TextStyle(color: textColor, fontSize: 13),
+                        msg.isDeleted ? 'This message was deleted' : msg.content,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 13,
+                          fontStyle: msg.isDeleted ? FontStyle.italic : FontStyle.normal,
+                        ),
                       ),
                     ),
                   ),
@@ -460,9 +850,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       style:
                           const TextStyle(fontSize: 11, color: Colors.black45),
                     ),
-                    if (isUser) ...[
+                    if (isUser && !msg.isDeleted) ...[
                       const SizedBox(width: 6),
-                      _buildStatusIcon(msg.status),
+                      _buildStatusIcon(_resolveMessageStatus(msg)),
                       if (msg.status == 'failed')
                         TextButton(
                           onPressed: () => _retryChatMessage(msg),
@@ -487,7 +877,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             CircleAvatar(
               radius: 14,
               backgroundColor: Colors.blue.shade50,
-              child: const Text('Y', style: TextStyle(fontSize: 12)),
+              backgroundImage: msg.senderAvatarUrl != null && msg.senderAvatarUrl!.isNotEmpty
+                  ? NetworkImage(msg.senderAvatarUrl!)
+                  : null,
+              child: msg.senderAvatarUrl == null || msg.senderAvatarUrl!.isEmpty
+                  ? const Text('Y', style: TextStyle(fontSize: 12))
+                  : null,
             ),
         ],
       ),
@@ -519,10 +914,22 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     );
   }
 
+  String _resolveMessageStatus(SupportChatMessage msg) {
+    if (msg.status == 'failed' || msg.status == 'sending') {
+      return msg.status;
+    }
+    if (msg.readAt != null) return 'read';
+    if (msg.deliveredAt != null) return 'delivered';
+    return 'sent';
+  }
+
   Widget _buildStatusIcon(String status) {
     IconData icon = Icons.done;
     Color color = Colors.black45;
-    if (status == 'delivered') {
+    if (status == 'sending') {
+      icon = Icons.access_time;
+      color = Colors.black38;
+    } else if (status == 'delivered') {
       icon = Icons.done_all;
       color = Colors.black45;
     } else if (status == 'read') {
@@ -614,10 +1021,28 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   void _scheduleTyping() {
     final sessionId = _activeSession?.id;
     if (sessionId == null) return;
-    _supportChatService.setTyping(sessionId, true);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.userData?['id']?.toString();
+    if (_chatSocket != null && userId != null) {
+      _chatSocket!.emit('typing', {
+        'sessionId': sessionId,
+        'userId': userId,
+        'isTyping': true,
+      });
+    } else {
+      _supportChatService.setTyping(sessionId, true);
+    }
     _typingTimer?.cancel();
     _typingTimer = Timer(const Duration(milliseconds: 1500), () {
-      _supportChatService.setTyping(sessionId, false);
+      if (_chatSocket != null && userId != null) {
+        _chatSocket!.emit('typing', {
+          'sessionId': sessionId,
+          'userId': userId,
+          'isTyping': false,
+        });
+      } else {
+        _supportChatService.setTyping(sessionId, false);
+      }
     });
   }
 
@@ -627,17 +1052,58 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: _chatUsers.map((user) {
-            final isSelected = user['id'] == _selectedChatUser;
-            return ListTile(
-              leading:
-                  Icon(isSelected ? Icons.check_circle : Icons.person_outline),
+          children: _chatUsers.isEmpty
+              ? [
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('No approved chat users available.',
+                        style: TextStyle(color: Colors.black54)),
+                  )
+                ]
+              : _chatUsers.map((user) {
+                  final isSelected = user['id'] == _selectedChatUser;
+                  return ListTile(
+              leading: CircleAvatar(
+                radius: 14,
+                backgroundColor: Colors.blueGrey.shade100,
+                child: Text((user['name'] ?? 'S').substring(0, 1),
+                    style: const TextStyle(fontSize: 12)),
+              ),
               title: Text(user['name'] ?? ''),
-              subtitle: Text(user['role'] ?? ''),
+              subtitle: Row(
+                children: [
+                  Text(user['email'] ?? user['role'] ?? ''),
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _rolesOnline[user['id']] == true
+                          ? Colors.green
+                          : Colors.black26,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ),
+              trailing: ((user['unreadCount'] as int?) ?? _unreadByRole[user['role']] ?? 0) > 0
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        ((user['unreadCount'] as int?) ?? _unreadByRole[user['role']] ?? 0).toString(),
+                        style: const TextStyle(color: Colors.white, fontSize: 11),
+                      ),
+                    )
+                  : null,
+              selected: isSelected,
+              selectedColor: Theme.of(context).colorScheme.primary,
               onTap: () {
                 Navigator.pop(context);
-                setState(
-                    () => _selectedChatUser = user['id'] ?? 'customer_service');
+                setState(() => _selectedChatUser = user['id'] ?? 'customer_service');
                 _ensureChatSession();
               },
             );
@@ -648,9 +1114,26 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   Widget _buildChatPanel() {
-    final selectedLabel = _chatUsers
-            .firstWhere((user) => user['id'] == _selectedChatUser)['name'] ??
-        'Support';
+    if (_chatUsers.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Chat is available only for CS-enabled and approved users.',
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+        ),
+      );
+    }
+    final selectedUser = _chatUsers.firstWhere(
+      (user) => user['id'] == _selectedChatUser,
+      orElse: () => _chatUsers.first,
+    );
+    final selectedLabel = selectedUser['name'] ?? 'Support';
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Card(
@@ -661,12 +1144,43 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Row(
                 children: [
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: Colors.blueGrey.shade100,
+                    child: Text(selectedLabel.substring(0, 1),
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Chat with $selectedLabel',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _rolesOnline[_selectedChatUser] == true
+                          ? Colors.green
+                          : Colors.black26,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  if (_activeUnseenCount > 0) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'New $_activeUnseenCount',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    ),
+                  ],
                   IconButton(
                     tooltip: 'Switch support user',
                     icon: const Icon(Icons.menu),
@@ -675,6 +1189,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 ],
               ),
             ),
+            const Divider(height: 1),
             Expanded(
               child: Stack(
                 children: [
@@ -747,6 +1262,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   Widget build(BuildContext context) {
     final localeCode = Localizations.localeOf(context).languageCode;
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Notifications'),
         backgroundColor: Theme.of(context).colorScheme.primary,
@@ -770,9 +1286,29 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 controller: _tabController,
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white70, // optional
-                tabs: const [
-                  Tab(text: 'Notifications'),
-                  Tab(text: 'Chat Support'),
+                tabs: [
+                  const Tab(text: 'Notifications'),
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Chat Support'),
+                        if (_chatUnreadTotal > 0 && _tabController?.index != 1)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              _chatUnreadTotal.toString(),
+                              style: const TextStyle(fontSize: 11, color: Colors.white),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
       ),

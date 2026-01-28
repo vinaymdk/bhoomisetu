@@ -249,11 +249,12 @@ TONE & STYLE:
 
       // Enrich AI context with property suggestions if this is a property search query
       let propertyContext: string | undefined;
+      let suggestedProperties: Property[] = [];
       if (detectedIntentFromMessage === 'property_search' || conversation.contextType === ChatContextType.PROPERTY_SEARCH) {
         // Extract search criteria from message (simplified - AI can enhance this)
         const searchCriteria = this.extractSearchCriteria(chatDto.message);
         if (searchCriteria) {
-          const suggestedProperties = await this.findSuggestedProperties(searchCriteria, userId);
+          suggestedProperties = await this.findSuggestedProperties(searchCriteria, userId);
           if (suggestedProperties.length > 0) {
             propertyContext = suggestedProperties
               .slice(0, 5) // Top 5 properties
@@ -288,6 +289,12 @@ TONE & STYLE:
         },
         systemPrompt: enhancedSystemPrompt,
       });
+
+      const propertySuggestions = this.buildPropertySuggestions(aiResponse.suggestions, suggestedProperties);
+      if (!aiResponse.response || !aiResponse.response.trim()) {
+        aiResponse.response = this.getFallbackChatResponse(chatDto.message, language).response;
+      }
+      aiResponse.response = this.appendPropertyLinks(aiResponse.response, propertySuggestions);
 
       // Detect if this requires escalation
       const requiresEscalation = aiResponse.requiresEscalation || this.detectEscalationTriggers(chatDto.message);
@@ -437,21 +444,8 @@ TONE & STYLE:
       };
 
       // Add property suggestions if available
-      if (aiResponse.suggestions) {
-        const propertySuggestions = aiResponse.suggestions
-          .filter((s) => s.type === 'property_suggestion')
-          .map((s) => ({
-            propertyId: s.data?.propertyId || '',
-            title: s.data?.title || '',
-            price: s.data?.price || 0,
-            location: s.data?.location || '',
-            matchScore: s.data?.matchScore || 0,
-            matchReasons: s.data?.matchReasons || [],
-          }));
-
-        if (propertySuggestions.length > 0) {
-          response.propertySuggestions = propertySuggestions as any;
-        }
+      if (propertySuggestions.length > 0) {
+        response.propertySuggestions = propertySuggestions as any;
       }
 
       // Add action suggestions if available
@@ -762,6 +756,42 @@ TONE & STYLE:
     }
     
     return Object.keys(criteria).length > 0 ? criteria : null;
+  }
+
+  private buildPropertySuggestions(
+    suggestions: Array<{ type: string; data: Record<string, any> }> | undefined,
+    fallbackProperties: Property[],
+  ) {
+    const fromAi =
+      suggestions?.filter((s) => s.type === 'property_suggestion').map((s) => ({
+        propertyId: s.data?.propertyId || '',
+        title: s.data?.title || '',
+        price: s.data?.price || 0,
+        location: s.data?.location || '',
+        matchScore: s.data?.matchScore || 0,
+        matchReasons: s.data?.matchReasons || [],
+      })) || [];
+    if (fromAi.length > 0) return fromAi;
+    return fallbackProperties.slice(0, 5).map((prop) => ({
+      propertyId: prop.id,
+      title: prop.title || 'Property',
+      price: prop.price || 0,
+      location: prop.city || '',
+      matchScore: 0,
+      matchReasons: [],
+    }));
+  }
+
+  private appendPropertyLinks(
+    response: string,
+    suggestions: Array<{ propertyId: string; title: string; location: string; price: number }>,
+  ) {
+    if (!suggestions.length) return response;
+    const linkLines = suggestions.map(
+      (item) =>
+        `- ${item.title || 'Property'} • ${item.location || 'Location'} • ₹${item.price.toLocaleString()} • /properties/${item.propertyId}`,
+    );
+    return `${response}\n\nSuggested properties:\n${linkLines.join('\n')}`;
   }
 
   /**

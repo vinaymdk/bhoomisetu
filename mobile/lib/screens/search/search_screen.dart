@@ -11,6 +11,9 @@ import '../properties/property_details_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
+import '../../widgets/app_drawer.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -265,6 +268,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Property Search'),
         backgroundColor: Theme.of(context).colorScheme.primary,
@@ -1110,6 +1114,18 @@ class _SearchScreenState extends State<SearchScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SubscriptionsScreen()),
+        );
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()),
         );
         break;
       case BottomNavItem.profile:

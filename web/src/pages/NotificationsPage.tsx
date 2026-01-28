@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { notificationsService } from '../services/notifications.service';
 import type { NotificationItem } from '../types/notification';
 import { supportChatService } from '../services/supportChat.service';
+import { createSupportChatSocket } from '../services/supportChatSocket';
 import type { SupportChatMessage, SupportChatRole, SupportChatSession } from '../types/supportChat';
 import './NotificationsPage.css';
 
@@ -23,13 +24,15 @@ const formatTime = (iso: string) => {
 };
 
 export const NotificationsPage = () => {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
+  const currentUserId = user?.id;
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<SupportChatRole>('customer_service');
+  const [allowedRoles, setAllowedRoles] = useState<SupportChatRole[]>([]);
   const [activeSession, setActiveSession] = useState<SupportChatSession | null>(null);
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<Record<string, SupportChatMessage[]>>({});
@@ -38,22 +41,44 @@ export const NotificationsPage = () => {
   const [isRemoteTyping, setIsRemoteTyping] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [isLoadingEarlier, setIsLoadingEarlier] = useState(false);
+  const [unreadByRole, setUnreadByRole] = useState<Record<string, number>>({});
+  const [activeUnseenCount, setActiveUnseenCount] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(true);
+  const [rolesOnline, setRolesOnline] = useState<Record<string, boolean>>({});
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const usersRef = useRef<HTMLDivElement | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const socketRef = useRef<ReturnType<typeof createSupportChatSocket> | null>(null);
 
   const activeCount = useMemo(
     () => notifications.filter((item) => !item.readAt).length,
     [notifications],
   );
 
+  const notifyBadgeUpdate = (count: number) => {
+    window.dispatchEvent(new CustomEvent('notificationsBadgeUpdated', { detail: count }));
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    window.setTimeout(() => {
+      setToast((prev) => (prev?.message === message ? null : prev));
+    }, 2500);
+  };
+
   const loadNotifications = async () => {
+    if (!currentUserId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const response = await notificationsService.list({ unreadOnly });
       setNotifications(response.notifications);
       setUnreadCount(response.unreadCount);
+      notifyBadgeUpdate(response.unreadCount);
       setError(null);
     } catch (err: any) {
       setError(err?.message || 'Failed to load notifications.');
@@ -64,30 +89,103 @@ export const NotificationsPage = () => {
 
   useEffect(() => {
     loadNotifications();
-  }, [unreadOnly]);
+  }, [unreadOnly, currentUserId]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    refreshUnreadCounts();
+  }, [currentUserId]);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+    supportChatService
+      .listAllowedRoles()
+      .then((rolesList) => {
+        setAllowedRoles(rolesList);
+        if (rolesList.length > 0 && !rolesList.includes(selectedUserId)) {
+          setSelectedUserId(rolesList[0]);
+        }
+        if (rolesList.length === 0) {
+          setActiveSession(null);
+        }
+      })
+      .catch(() => {
+        const canChatSupport =
+          roles.includes('buyer') || roles.includes('seller') || roles.includes('agent') || roles.includes('admin');
+        const isSupport = roles.includes('customer_service') || roles.includes('admin');
+        if (isSupport) {
+          setAllowedRoles(['buyer', 'seller', 'agent']);
+        } else if (canChatSupport) {
+          setAllowedRoles(['customer_service']);
+        } else {
+          setAllowedRoles([]);
+        }
+      });
+  }, [currentUserId, roles, selectedUserId]);
 
   const handleMarkAllRead = async () => {
-    await notificationsService.markAllRead();
-    loadNotifications();
+    if (!currentUserId) return;
+    try {
+      await notificationsService.markAllRead();
+      await loadNotifications();
+      showToast('All notifications marked as read.');
+    } catch {
+      showToast('Failed to mark all notifications as read.', 'error');
+    }
   };
 
   const handleMarkRead = async (item: NotificationItem) => {
     if (item.readAt) return;
-    await notificationsService.markRead(item.id);
-    setNotifications((prev) =>
-      prev.map((current) =>
-        current.id === item.id ? { ...current, readAt: new Date().toISOString(), status: 'read' } : current,
-      ),
-    );
-    setUnreadCount((prev) => Math.max(0, prev - 1));
+    if (!currentUserId) return;
+    try {
+      await notificationsService.markRead(item.id);
+      setNotifications((prev) =>
+        prev.map((current) =>
+          current.id === item.id ? { ...current, readAt: new Date().toISOString(), status: 'read' } : current,
+        ),
+      );
+      setUnreadCount((prev) => {
+        const next = Math.max(0, prev - 1);
+        notifyBadgeUpdate(next);
+        return next;
+      });
+    } catch {
+      showToast('Failed to mark notification as read.', 'error');
+    }
   };
 
-  const enabledUsers = [
-    { id: 'customer_service' as SupportChatRole, name: 'Customer Service', role: 'customer_service', enabled: true },
-    { id: 'buyer' as SupportChatRole, name: 'Buyer Support', role: 'buyer', enabled: true },
-    { id: 'seller' as SupportChatRole, name: 'Seller Support', role: 'seller', enabled: true },
-    { id: 'agent' as SupportChatRole, name: 'Agent Support', role: 'agent', enabled: true },
-  ];
+  const roleLabels: Record<SupportChatRole, string> = {
+    customer_service: 'Customer Service',
+    buyer: 'Buyer Support',
+    seller: 'Seller Support',
+    agent: 'Agent Support',
+  };
+  const roleEmails: Partial<Record<SupportChatRole, string>> = {
+    customer_service: 'support@bhoomisetu.com',
+  };
+
+  const enabledUsers = useMemo(
+    () =>
+      allowedRoles.map((role) => ({
+        id: role,
+        name: roleLabels[role],
+        role,
+        email: roleEmails[role],
+        enabled: true,
+      })),
+    [allowedRoles],
+  );
+
+  const refreshUnreadCounts = async () => {
+    if (!currentUserId || !localStorage.getItem('accessToken')) return;
+    try {
+      const data = await supportChatService.getUnreadCounts();
+      setUnreadByRole(data.byRole || {});
+      window.dispatchEvent(new CustomEvent('chatBadgeUpdated', { detail: data.total || 0 }));
+    } catch {
+      // ignore
+    }
+  };
 
   const activeChat = activeSession ? chatMessages[activeSession.id] || [] : [];
 
@@ -99,7 +197,14 @@ export const NotificationsPage = () => {
     });
   };
 
+  const isAtBottom = () => {
+    if (!messagesRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = messagesRef.current;
+    return scrollTop + clientHeight >= scrollHeight - 24;
+  };
+
   const loadSession = async (role: SupportChatRole) => {
+    if (!currentUserId || !localStorage.getItem('accessToken')) return;
     const session = await supportChatService.getOrCreateSession(role);
     setActiveSession(session);
     if (!chatMessages[session.id]) {
@@ -107,12 +212,17 @@ export const NotificationsPage = () => {
       setChatMessages((prev) => ({ ...prev, [session.id]: messages }));
     }
     setIsRemoteTyping(false);
+    setActiveUnseenCount(0);
+    setUnreadByRole((prev) => ({ ...prev, [role]: 0 }));
+    await supportChatService.markSessionRead(session.id);
+    refreshUnreadCounts();
     setTimeout(() => scrollToBottom('auto'), 0);
   };
 
   useEffect(() => {
+    if (!allowedRoles.includes(selectedUserId)) return;
     loadSession(selectedUserId).catch(() => undefined);
-  }, [selectedUserId]);
+  }, [selectedUserId, allowedRoles]);
 
   useEffect(() => {
     if (!activeSession) return;
@@ -136,7 +246,7 @@ export const NotificationsPage = () => {
       isDeleted: false,
       isEdited: false,
       createdAt: new Date().toISOString(),
-      status: 'sent',
+      status: 'sending',
     };
     setChatMessages((prev) => ({
       ...prev,
@@ -172,7 +282,7 @@ export const NotificationsPage = () => {
     setChatMessages((prev) => ({
       ...prev,
       [activeSession.id]: (prev[activeSession.id] || []).map((msg) =>
-        msg.id === messageId ? { ...msg, status: 'sent' } : msg,
+        msg.id === messageId ? { ...msg, status: 'sending' } : msg,
       ),
     }));
     try {
@@ -198,6 +308,13 @@ export const NotificationsPage = () => {
     const { scrollTop, scrollHeight, clientHeight } = messagesRef.current;
     const atBottom = scrollTop + clientHeight >= scrollHeight - 24;
     setShowScrollDown(!atBottom);
+    if (atBottom && activeUnseenCount > 0) {
+      setActiveUnseenCount(0);
+      if (currentUserId && localStorage.getItem('accessToken')) {
+        supportChatService.markSessionRead(activeSession.id).catch(() => undefined);
+      }
+      refreshUnreadCounts();
+    }
     if (scrollTop <= 4 && !isLoadingEarlier && activeChat.length > 0) {
       setIsLoadingEarlier(true);
       supportChatService
@@ -221,22 +338,80 @@ export const NotificationsPage = () => {
   }, [activeSession?.id, isLoadingEarlier, activeChat.length]);
 
   useEffect(() => {
-    if (!activeSession) return;
-    const interval = window.setInterval(async () => {
-      const [messages, typing] = await Promise.all([
-        supportChatService.listMessages(activeSession.id, 50),
-        supportChatService.getTyping(activeSession.id),
-      ]);
-      setChatMessages((prev) => ({ ...prev, [activeSession.id]: messages }));
-      const typingAt = typing.typingAt ? new Date(typing.typingAt).getTime() : 0;
-      const typingActive =
-        !!typing.typingByUserId &&
-        typing.typingByUserId !== user?.id &&
-        Date.now() - typingAt < 6000;
-      setIsRemoteTyping(typingActive);
-    }, 4000);
-    return () => window.clearInterval(interval);
-  }, [activeSession?.id, user?.id]);
+    const socket = createSupportChatSocket();
+    socketRef.current = socket;
+    socket.on('connect', () => {
+      socket.emit('presence:request');
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !activeSession) return;
+    socket.emit('join', { sessionId: activeSession.id });
+    return () => {
+      socket.emit('leave', { sessionId: activeSession.id });
+    };
+  }, [activeSession?.id]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+    const handleMessage = (payload: { action: string; message: SupportChatMessage }) => {
+      const { message } = payload;
+      setChatMessages((prev) => {
+        const list = prev[message.sessionId] || [];
+        const exists = list.some((item) => item.id === message.id);
+        let next: SupportChatMessage[];
+        if (exists) {
+          next = list.map((item) => (item.id === message.id ? message : item));
+        } else {
+          const sendingIndex =
+            message.senderId === currentUserId
+              ? list.findIndex((item) => item.status === 'sending' && item.content === message.content)
+              : -1;
+          if (sendingIndex >= 0) {
+            next = list.map((item, idx) => (idx === sendingIndex ? message : item));
+          } else {
+            next = [...list, message];
+          }
+        }
+        return { ...prev, [message.sessionId]: next.slice(-200) };
+      });
+      refreshUnreadCounts();
+      if (activeSession?.id === message.sessionId && message.senderId !== currentUserId) {
+        const shouldAutoScroll = isAtBottom() || isInputFocused;
+        if (shouldAutoScroll && currentUserId && localStorage.getItem('accessToken')) {
+          supportChatService.markSessionRead(message.sessionId).catch(() => undefined);
+          setUnreadByRole((prev) => ({ ...prev, [selectedUserId]: 0 }));
+          setActiveUnseenCount(0);
+          setTimeout(() => scrollToBottom('smooth'), 0);
+        } else {
+          setActiveUnseenCount((prev) => prev + 1);
+        }
+      }
+    };
+    const handleTyping = (payload: { sessionId: string; typingByUserId?: string | null; typingAt?: string | null }) => {
+      if (!activeSession || payload.sessionId !== activeSession.id) return;
+      const typingAt = payload.typingAt ? new Date(payload.typingAt).getTime() : 0;
+      const isRemote = !!payload.typingByUserId && payload.typingByUserId !== currentUserId;
+      setIsRemoteTyping(isRemote && Date.now() - typingAt < 6000);
+    };
+    const handlePresence = (payload: { rolesOnline?: Record<string, boolean> }) => {
+      setRolesOnline(payload.rolesOnline || {});
+    };
+    socket.on('message', handleMessage);
+    socket.on('typing', handleTyping);
+    socket.on('presence', handlePresence);
+    return () => {
+      socket.off('message', handleMessage);
+      socket.off('typing', handleTyping);
+      socket.off('presence', handlePresence);
+    };
+  }, [activeSession?.id, currentUserId]);
 
   useEffect(() => {
     if (!messagesRef.current) return;
@@ -250,11 +425,20 @@ export const NotificationsPage = () => {
   }, [activeChat.length, isRemoteTyping]);
 
   const scheduleTyping = () => {
-    if (!activeSession) return;
-    supportChatService.setTyping(activeSession.id, true).catch(() => undefined);
+    if (!activeSession || !currentUserId) return;
+    const socket = socketRef.current;
+    if (socket) {
+      socket.emit('typing', { sessionId: activeSession.id, userId: currentUserId, isTyping: true });
+    } else {
+      supportChatService.setTyping(activeSession.id, true).catch(() => undefined);
+    }
     if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
     typingTimerRef.current = window.setTimeout(() => {
-      supportChatService.setTyping(activeSession.id, false).catch(() => undefined);
+      if (socket) {
+        socket.emit('typing', { sessionId: activeSession.id, userId: currentUserId, isTyping: false });
+      } else {
+        supportChatService.setTyping(activeSession.id, false).catch(() => undefined);
+      }
     }, 1500);
   };
 
@@ -288,6 +472,9 @@ export const NotificationsPage = () => {
   };
 
   const renderStatusIcon = (status: SupportChatMessage['status']) => {
+    if (status === 'sending') {
+      return <i className="fa fa-clock status-sending" aria-hidden="true" />;
+    }
     if (status === 'read') {
       return <i className="fa fa-check-double status-read" aria-hidden="true" />;
     }
@@ -298,6 +485,15 @@ export const NotificationsPage = () => {
       return <i className="fa fa-exclamation-circle status-failed" aria-hidden="true" />;
     }
     return <i className="fa fa-check status-sent" aria-hidden="true" />;
+  };
+
+  const getMessageStatus = (message: SupportChatMessage) => {
+    if (message.status === 'failed' || message.status === 'sending') {
+      return message.status;
+    }
+    if (message.readAt) return 'read';
+    if (message.deliveredAt) return 'delivered';
+    return 'sent';
   };
 
   const renderMessages = () => {
@@ -328,12 +524,22 @@ export const NotificationsPage = () => {
       const isUser = msg.senderRole === 'user';
       const showActions = isUser && !msg.isDeleted;
       const isEditing = editingMessageId === msg.id;
+      const isUnread = !isUser && !msg.readAt;
+      const isDeleted = msg.isDeleted;
       nodes.push(
         <div key={msg.id} className={`notifications-chat-row ${isUser ? 'user' : 'support'}`}>
           <div className="notifications-chat-avatar">
-            {(msg.senderName || (isUser ? 'You' : 'Support')).slice(0, 1)}
+            {msg.senderAvatarUrl ? (
+              <img src={msg.senderAvatarUrl} alt={msg.senderName || 'User'} />
+            ) : (
+              (msg.senderName || (isUser ? 'You' : 'Support')).slice(0, 1)
+            )}
           </div>
-          <div className={`notifications-chat-bubble ${isUser ? 'user' : 'support'}`}>
+          <div
+            className={`notifications-chat-bubble ${isUser ? 'user' : 'support'} ${isUnread ? 'unread' : ''} ${
+              isDeleted ? 'deleted' : ''
+            }`}
+          >
             {isEditing ? (
               <div className="notifications-chat-edit">
                 <textarea
@@ -350,13 +556,15 @@ export const NotificationsPage = () => {
                 </div>
               </div>
             ) : (
-              <span>{msg.isDeleted ? 'Message deleted' : msg.content}</span>
+              <span className={isDeleted ? 'notifications-chat-deleted-text' : undefined}>
+                {isDeleted ? 'This message was deleted' : msg.content}
+              </span>
             )}
             <div className="notifications-chat-meta">
               <small className="chat-time">{formatTime(msg.createdAt)}</small>
-              {isUser && (
+              {isUser && !isDeleted && (
                 <span className="notifications-chat-status">
-                  {renderStatusIcon(msg.status)}
+                  {renderStatusIcon(getMessageStatus(msg))}
                 </span>
               )}
               {isUser && msg.status === 'failed' && (
@@ -409,6 +617,8 @@ export const NotificationsPage = () => {
         </div>
       </div>
 
+      {toast && <div className={`notifications-toast ${toast.type}`}>{toast.message}</div>}
+
       {error && <div className="notifications-error">{error}</div>}
 
       <div className="notifications-content">
@@ -453,19 +663,48 @@ export const NotificationsPage = () => {
           </div>
           <div className="notifications-chat-body">
             <div className="notifications-chat-users" ref={usersRef}>
+              {enabledUsers.length === 0 && (
+                <div className="notifications-chat-empty">
+                  Chat is available only for CS-enabled and approved users.
+                </div>
+              )}
               {enabledUsers.map((user) => (
                 <button
                   key={user.id}
                   className={`notifications-chat-user ${selectedUserId === user.id ? 'active' : ''}`}
                   onClick={() => setSelectedUserId(user.id)}
                 >
-                  <span className="notifications-chat-user-title">{user.name}</span>
-                  <span className="notifications-chat-user-role">{user.role.replace('_', ' ')}</span>
-                  {user.enabled && <span className="notifications-chat-user-status">Enabled</span>}
+                  <div className="notifications-chat-user-header">
+                    <span className="notifications-chat-avatar">{user.name.slice(0, 1)}</span>
+                    <span className="notifications-chat-user-title">{user.name}</span>
+                    <span
+                      className={`notifications-chat-online ${rolesOnline[user.role] ? 'online' : 'offline'}`}
+                    />
+                  </div>
+                  <span className="notifications-chat-user-role">
+                    {user.email || user.role.replace('_', ' ')}
+                  </span>
+                  {unreadByRole[user.role] > 0 && (
+                    <span className="notifications-chat-user-badge">{unreadByRole[user.role]}</span>
+                  )}
                 </button>
               ))}
             </div>
             <div className="notifications-chat-panel">
+              <div className="notifications-chat-panel-header">
+                <div className="notifications-chat-panel-title">
+                  <span className="notifications-chat-avatar">
+                    {enabledUsers.find((item) => item.id === selectedUserId)?.name.slice(0, 1) || 'S'}
+                  </span>
+                  <div>
+                    <strong>{enabledUsers.find((item) => item.id === selectedUserId)?.name || 'Support'}</strong>
+                    <span className={`notifications-chat-online ${rolesOnline[selectedUserId] ? 'online' : 'offline'}`} />
+                  </div>
+                </div>
+                {activeUnseenCount > 0 && (
+                  <span className="notifications-chat-unseen">New: {activeUnseenCount}</span>
+                )}
+              </div>
               <div className="notifications-chat-messages" ref={messagesRef}>
                 {renderMessages()}
                 {isRemoteTyping && (
@@ -497,6 +736,15 @@ export const NotificationsPage = () => {
                     event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
                     scheduleTyping();
                   }}
+                  onFocus={() => {
+                    setIsInputFocused(true);
+                    setActiveUnseenCount(0);
+                    if (activeSession && currentUserId && localStorage.getItem('accessToken')) {
+                      supportChatService.markSessionRead(activeSession.id).catch(() => undefined);
+                      refreshUnreadCounts();
+                    }
+                  }}
+                  onBlur={() => setIsInputFocused(false)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' && !event.shiftKey) {
                       event.preventDefault();

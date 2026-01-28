@@ -1,0 +1,91 @@
+.subscription-management-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.subscription-management-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.subscription-management-links {
+  display: flex;
+  gap: 12px;
+}
+
+.subscription-management-links a {
+  text-decoration: none;
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.subscription-management-loading,
+.subscription-management-error,
+.subscription-management-empty {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #92400e;
+}
+
+.subscription-management-list {
+  display: grid;
+  gap: 16px;
+}
+
+.subscription-management-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.subscription-management-meta {
+  color: #475569;
+  font-size: 13px;
+}
+
+.subscription-management-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.subscription-management-actions button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: none;
+  background: #1d4ed8;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.subscription-management-actions button.danger {
+  background: #dc2626;
+}
+
+@media (max-width: 720px) {
+  .subscription-management-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .subscription-management-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .subscription-management-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+}

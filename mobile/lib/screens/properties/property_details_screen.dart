@@ -10,6 +10,8 @@ import '../../providers/auth_provider.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
 import '../properties/saved_properties_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 import '../../services/saved_properties_service.dart';
 import '../../services/mediation_service.dart';
 
@@ -426,6 +428,18 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SubscriptionsScreen()),
+        );
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()),
         );
         break;
       case BottomNavItem.profile:

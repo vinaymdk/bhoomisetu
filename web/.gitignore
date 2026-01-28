@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+./ai-microservice/
+/ai-microservice/
+/ai-microservice/.env.*
+/ai-microservice/.env.example
+/ai-microservice/.env.example.local
+/ai-microservice/.env.example.*.local
+/ai-microservice/.env.example.*
+/ai-microservice/.env.example.*.local
+/ai-microservice/.env.example.*.local
+/ai-microservice/env.example

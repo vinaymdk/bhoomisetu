@@ -19,12 +19,14 @@ export interface SupportChatAdminSession {
   userId: string;
   userName: string;
   userEmail?: string | null;
+  userAvatarUrl?: string | null;
   supportRole: SupportChatRole;
   status: 'open' | 'closed';
   assignedAgentId?: string | null;
   assignedAgentName?: string | null;
   lastMessageAt?: string | null;
   messageCount: number;
+  unreadCount?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +37,7 @@ export interface SupportChatMessage {
   senderId: string;
   senderRole: 'user' | 'support';
   senderName: string;
+  senderAvatarUrl?: string | null;
   messageType: 'text';
   content: string;
   isDeleted: boolean;
@@ -43,5 +46,27 @@ export interface SupportChatMessage {
   deliveredAt?: string | null;
   readAt?: string | null;
   createdAt: string;
-  status: 'sent' | 'delivered' | 'read' | 'failed';
+  status: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+}
+
+export interface SupportChatAccessUser {
+  id: string;
+  name: string;
+  email?: string | null;
+  role: SupportChatRole;
+  avatarUrl?: string | null;
+}
+
+export interface SupportChatAccessMapping {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string | null;
+  userAvatarUrl?: string | null;
+  supportRole: SupportChatRole;
+  isEnabled: boolean;
+  createdById?: string | null;
+  createdByName?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }

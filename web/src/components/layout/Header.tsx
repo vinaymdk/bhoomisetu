@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import logo from '../../assets/logo-and-fav/bhoomisetu-logo.png';
@@ -8,10 +8,13 @@ import { badgePreferencesService } from '../../services/badgePreferences.service
 import { propertiesService } from '../../services/properties.service';
 import { buyerRequirementsService } from '../../services/buyerRequirements.service';
 import { notificationsService } from '../../services/notifications.service';
+import { supportChatService } from '../../services/supportChat.service';
+import { createSupportChatSocket } from '../../services/supportChatSocket';
 
 export const Header = () => {
   const { isAuthenticated, user, logout, roles } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const canList = roles.includes('seller') || roles.includes('agent');
   const canVerify = roles.includes('customer_service') || roles.includes('admin');
   const canBuy = roles.includes('buyer') || roles.includes('admin');
@@ -23,6 +26,7 @@ export const Header = () => {
   const [showListBadge, setShowListBadge] = useState(true);
   const [showReqsBadge, setShowReqsBadge] = useState(true);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [unreadChats, setUnreadChats] = useState(0);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -58,6 +62,41 @@ export const Header = () => {
       .catch(() => {});
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<number>).detail;
+      if (typeof detail === 'number') {
+        setUnreadNotifications(detail);
+      }
+    };
+    window.addEventListener('notificationsBadgeUpdated', handler);
+    return () => window.removeEventListener('notificationsBadgeUpdated', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const refresh = () => {
+      supportChatService.getUnreadCount().then(setUnreadChats).catch(() => {});
+    };
+    refresh();
+    const socket = createSupportChatSocket();
+    socket.on('message', refresh);
+    return () => {
+      socket.disconnect();
+    };
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<number>).detail;
+      if (typeof detail === 'number') {
+        setUnreadChats(detail);
+      }
+    };
+    window.addEventListener('chatBadgeUpdated', handler);
+    return () => window.removeEventListener('chatBadgeUpdated', handler);
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -74,6 +113,8 @@ export const Header = () => {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
+
+  const isChatPage = location.pathname.startsWith('/notifications');
 
   return (
     <header className="header">
@@ -153,6 +194,16 @@ export const Header = () => {
                 <i className="far fa-bell header-notifications-icon" aria-hidden="true" />
                 {unreadNotifications > 0 && <span className="header-notifications-badge">{unreadNotifications}</span>}
               </button>
+              {!isChatPage && (
+                <button
+                  className="header-notifications"
+                  onClick={() => navigate('/notifications')}
+                  aria-label="Open support chat"
+                >
+                  <i className="far fa-comments header-notifications-icon" aria-hidden="true" />
+                  {unreadChats > 0 && <span className="header-notifications-badge">{unreadChats}</span>}
+                </button>
+              )}
               <div className="header-user" ref={userMenuRef}>
                 <button
                   className="header-user-button"

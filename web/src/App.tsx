@@ -26,6 +26,10 @@ import { SettingsPage } from './pages/SettingsPage';
 import { AIChatPage } from './pages/AIChatPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { SupportChatAdminPage } from './pages/SupportChatAdminPage';
+import { SubscriptionsPage } from './pages/SubscriptionsPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
+import { PaymentsHistoryPage } from './pages/PaymentsHistoryPage';
 
 function App() {
   return (
@@ -42,6 +46,38 @@ function App() {
           element={
             <ProtectedRoute>
               <NotificationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/subscriptions"
+          element={
+            <ProtectedRoute>
+              <SubscriptionsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payments/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payments/history"
+          element={
+            <ProtectedRoute>
+              <PaymentsHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/subscriptions/manage"
+          element={
+            <ProtectedRoute>
+              <SubscriptionManagementPage />
             </ProtectedRoute>
           }
         />

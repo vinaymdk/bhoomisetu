@@ -7,6 +7,8 @@ import '../properties/my_listings_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 
@@ -69,6 +71,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         break;
       case BottomNavItem.saved:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()));
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionsScreen()));
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()));
         break;
       case BottomNavItem.profile:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);

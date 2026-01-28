@@ -20,6 +20,12 @@ uvicorn app.main:app --reload --port 8000
 - `POST /generate/async` → enqueue async job
 - `GET /generate/status/{job_id}` → job status and result
 - `GET /metrics` → basic in-memory metrics
+- `POST /fraud/score-user`
+- `POST /auth/detect-duplicate`
+- `POST /auth/risk-session`
+- `POST /reviews/sentiment-analysis`
+- `POST /reviews/detect-fake`
+- `POST /chat/completion`
 
 ### Example
 
@@ -50,3 +56,4 @@ pytest
 docker build -t bhoomisetu-ai .
 docker run -p 8000:8000 --env-file .env bhoomisetu-ai
 ```
+

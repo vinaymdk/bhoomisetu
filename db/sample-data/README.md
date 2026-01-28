@@ -10,6 +10,7 @@ This directory contains SQL sample data files for testing different modules of t
 4. **module4_listing_features_sample_data.sql** - Structured property features for listings (Module 4)
 5. **module9_notifications_sample_data.sql** - Notification templates and sample notifications (Module 9)
 6. **module9_support_chat_sample_data.sql** - Support chat sessions/messages (Module 9)
+7. **module10_payments_sample_data.sql** - Payments & subscriptions sample data (Module 10)
 
 ## Prerequisites
 
@@ -41,6 +42,7 @@ psql -U your_username -d bhoomisetu_db -f db/sample-data/module3_search_sample_d
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module4_listing_features_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module9_notifications_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module9_support_chat_sample_data.sql
+psql -U your_username -d bhoomisetu_db -f db/sample-data/module10_payments_sample_data.sql
 ```
 
 ### Option 3: Using Database GUI Tool
@@ -79,6 +81,9 @@ node scripts/load-sample-data.js
 
 5. **module9_support_chat_sample_data.sql** (Optional)
    - Adds sample support chat sessions and messages
+
+6. **module10_payments_sample_data.sql** (Optional)
+   - Adds sample subscription plan, payment method, payment, and subscription transaction
 
 ## What Gets Created
 

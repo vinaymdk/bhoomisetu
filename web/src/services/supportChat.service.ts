@@ -6,6 +6,18 @@ export const supportChatService = {
     const response = await apiClient.get('/support-chat/sessions');
     return response.data;
   },
+  async listAllowedRoles(): Promise<SupportChatRole[]> {
+    const response = await apiClient.get('/support-chat/roles');
+    return response.data;
+  },
+  async getUnreadCount(): Promise<number> {
+    const response = await apiClient.get('/support-chat/unread-count');
+    return response.data?.total || 0;
+  },
+  async getUnreadCounts(): Promise<{ total: number; byRole: Record<string, number> }> {
+    const response = await apiClient.get('/support-chat/unread-counts');
+    return response.data;
+  },
   async getOrCreateSession(supportRole: SupportChatRole): Promise<SupportChatSession> {
     const response = await apiClient.post('/support-chat/sessions', { supportRole });
     return response.data;
@@ -15,6 +27,9 @@ export const supportChatService = {
       params: { limit, before },
     });
     return response.data;
+  },
+  async markSessionRead(sessionId: string): Promise<void> {
+    await apiClient.post(`/support-chat/sessions/${sessionId}/read`);
   },
   async sendMessage(sessionId: string, content: string): Promise<SupportChatMessage> {
     const response = await apiClient.post(`/support-chat/sessions/${sessionId}/messages`, {

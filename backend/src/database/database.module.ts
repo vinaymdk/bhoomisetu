@@ -26,6 +26,7 @@ import { NotificationDeliveryLog } from '../notifications/entities/notification-
 import { NotificationTemplate } from '../notifications/entities/notification-template.entity';
 import { SupportChatSession } from '../support-chat/entities/support-chat-session.entity';
 import { SupportChatMessage } from '../support-chat/entities/support-chat-message.entity';
+import { SupportChatAccess } from '../support-chat/entities/support-chat-access.entity';
 import { Payment } from '../payments/entities/payment.entity';
 import { PaymentMethod } from '../payments/entities/payment-method.entity';
 import { SubscriptionPlan } from '../payments/entities/subscription-plan.entity';
@@ -73,6 +74,7 @@ import { ReviewReply } from '../reviews/entities/review-reply.entity';
         NotificationTemplate,
         SupportChatSession,
         SupportChatMessage,
+        SupportChatAccess,
         Payment,
         PaymentMethod,
         SubscriptionPlan,
@@ -116,6 +118,7 @@ import { ReviewReply } from '../reviews/entities/review-reply.entity';
       NotificationTemplate,
       SupportChatSession,
       SupportChatMessage,
+      SupportChatAccess,
       Payment,
       PaymentMethod,
       SubscriptionPlan,

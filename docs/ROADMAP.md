@@ -446,6 +446,14 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 - Multi-channel delivery
 - Notification preferences
 
+**2026-01-27 Updates (Support Chat & AI Chat):**
+- ✅ Support chat access approvals (`support_chat_access`) with CS admin UI
+- ✅ Real-time support chat unread counts and read updates
+- ✅ Avatar fallback with profile image support (web + mobile)
+- ✅ AI chat property links + duplicate-send fixes (web + mobile)
+- ✅ CS chat access bulk approvals + avatar search dropdown
+- ✅ Mobile CS chat session listing + unread count sync
+
 ---
 
 ### ✅ Module 10: Payments & Subscriptions
@@ -492,12 +500,25 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 - ✅ `PUT /api/subscriptions/:id/cancel` - Cancel subscription
 - ✅ `PUT /api/subscriptions/:id/auto-renewal` - Update auto-renewal
 
+**Frontend Implementation (Web + Mobile):**
+- ✅ Web: subscription plans, checkout, payment history, subscription management pages
+- ✅ Mobile: subscription plans, checkout, payment history, subscription management screens
+- ✅ Navigation from Premium banner + drawer to subscription flow
+
 **Database:**
 - ✅ `subscription_plans` - 9 plans seeded
 - ✅ `payment_methods` - User saved cards
 - ✅ `payments` - All payment transactions
 - ✅ `subscription_transactions` - Links payments to subscriptions
 - ✅ `payment_webhooks` - Webhook event storage
+
+**2026-01-27 Updates:**
+- ✅ Added Module 10 sample data + load script
+
+**2026-01-28 Updates:**
+- ✅ Webhook signature verification explicitly stubbed with verification metadata logging
+- ✅ Added basic webhook processing tests
+- ✅ UI coverage verified for web + mobile subscription flows
 
 ---
 
@@ -738,6 +759,6 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 
 ---
 
-**Last Updated**: 2026-01-24
+**Last Updated**: 2026-01-28
 **Current Phase**: Phase 2 - Core Features
 **Next Milestone**: Module 2 Completion

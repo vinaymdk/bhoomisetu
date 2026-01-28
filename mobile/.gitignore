@@ -41,3 +41,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+/ai-microservice/
+/ai-microservice/.env.*
+/ai-microservice/.env.example
+/ai-microservice/.env.example.local
+/ai-microservice/.env.example.*.local
+/ai-microservice/.env.example.*
+/ai-microservice/.env.example.*.local
+/ai-microservice/.env.example.*.local
+/ai-microservice/env.example

@@ -64,6 +64,13 @@ export const ProfilePage = () => {
               onChange={(e) => e.target.files && handleAvatarUpload(e.target.files[0])}
             />
           </div>
+          <div className="profile-action-grid">
+            <Link to="/settings" className="profile-action-button">Settings</Link>
+            <Link to="/saved" className="profile-action-button">Saved</Link>
+            <Link to="/buyer-requirements" className="profile-action-button">Requirements</Link>
+            <Link to="/subscriptions" className="profile-action-button">Subscriptions</Link>
+            <Link to="/payments/history" className="profile-action-button">Payment History</Link>
+          </div>
         </div>
 
         <div className="profile-card">
@@ -126,11 +133,6 @@ export const ProfilePage = () => {
             </a>
           </div>
         </div>
-      </div>
-      <div className="profile-bottom-nav">
-        <Link to="/settings">Settings</Link>
-        <Link to="/saved">Saved</Link>
-        <Link to="/buyer-requirements">Requirements</Link>
       </div>
     </div>
   );

@@ -18,7 +18,10 @@ import '../profile/profile_screen.dart';
 import '../ai/ai_chat_screen.dart';
 import '../profile/settings_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 import '../../widgets/notifications_icon_button.dart';
+import '../../widgets/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -140,6 +143,18 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context) => const SavedPropertiesScreen()),
         );
         break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SubscriptionsScreen()),
+        );
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const PaymentsHistoryScreen()),
+        );
+        break;
       case BottomNavItem.profile:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final roles = authProvider.roles;
@@ -184,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final newProperties = data?.newProperties ?? [];
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('BhoomiSetu'),
         backgroundColor: Theme.of(context).colorScheme.primary,
@@ -266,7 +282,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Premium Banner (only for authenticated users)
-                          if (isAuthenticated) const PremiumBanner(),
+                          if (isAuthenticated)
+                            PremiumBanner(
+                              onUpgrade: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const SubscriptionsScreen()),
+                                );
+                              },
+                            ),
 
                           // AI Search Bar
                           AISearchBar(onSearch: _handleSearch),

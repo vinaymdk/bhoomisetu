@@ -43,6 +43,34 @@ export const Footer = () => {
               <li><a href="mailto:support@bhoomisetu.com">support@bhoomisetu.com</a></li>
             </ul>
           </div>
+
+          <div className="footer-section">
+            <h4 className="footer-section-title">Get the App</h4>
+            <div className="footer-store-links">
+              <a
+                href="https://play.google.com/store"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Download on Google Play"
+              >
+                <img
+                  src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+                  alt="Get it on Google Play"
+                />
+              </a>
+              <a
+                href="https://www.apple.com/app-store/"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Download on the App Store"
+              >
+                <img
+                  src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
+                  alt="Download on the App Store"
+                />
+              </a>
+            </div>
+          </div>
         </div>
 
         <div className="footer-bottom">

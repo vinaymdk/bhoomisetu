@@ -5,6 +5,7 @@ import { SendSupportMessageDto } from './dto/send-support-message.dto';
 import { EditSupportMessageDto } from './dto/edit-support-message.dto';
 import { CreateSupportSessionDto } from './dto/create-support-session.dto';
 import { TypingDto } from './dto/typing.dto';
+import { SupportChatAccessDto } from './dto/support-chat-access.dto';
 import { SupportChatRole, SupportChatStatus } from './entities/support-chat-session.entity';
 
 @Controller('support-chat')
@@ -14,6 +15,43 @@ export class SupportChatController {
   @Get('sessions')
   listSessions(@CurrentUser() currentUser: CurrentUserData) {
     return this.supportChatService.listSessions(currentUser.userId);
+  }
+
+  @Get('roles')
+  listAllowedRoles(@CurrentUser() currentUser: CurrentUserData) {
+    return this.supportChatService.getAllowedRoles(currentUser.userId);
+  }
+
+  @Get('eligible-users')
+  listEligibleUsers(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Query('search') search?: string,
+    @Query('supportRole') supportRole?: SupportChatRole,
+  ) {
+    return this.supportChatService.listEligibleUsers(currentUser.userId, search, supportRole);
+  }
+
+  @Get('access')
+  listAccessMappings(@CurrentUser() currentUser: CurrentUserData) {
+    return this.supportChatService.listAccessMappings(currentUser.userId);
+  }
+
+  @Post('access')
+  setAccessMapping(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Body() body: SupportChatAccessDto,
+  ) {
+    return this.supportChatService.setAccessMapping(currentUser.userId, body);
+  }
+
+  @Get('unread-count')
+  getUnreadCount(@CurrentUser() currentUser: CurrentUserData) {
+    return this.supportChatService.getUnreadCount(currentUser.userId);
+  }
+
+  @Get('unread-counts')
+  getUnreadCounts(@CurrentUser() currentUser: CurrentUserData) {
+    return this.supportChatService.getUnreadCounts(currentUser.userId);
   }
 
   @Get('admin/sessions')
@@ -51,6 +89,11 @@ export class SupportChatController {
       limit ? parseInt(limit, 10) : 50,
       before,
     );
+  }
+
+  @Post('sessions/:id/read')
+  markSessionRead(@CurrentUser() currentUser: CurrentUserData, @Param('id') sessionId: string) {
+    return this.supportChatService.markSessionRead(sessionId, currentUser.userId);
   }
 
   @Post('sessions/:id/messages')

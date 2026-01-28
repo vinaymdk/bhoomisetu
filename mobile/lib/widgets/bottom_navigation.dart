@@ -10,6 +10,8 @@ enum BottomNavItem {
   search,
   list,
   saved,
+  subscriptions,
+  payments,
   profile,
   cs,
 }
@@ -96,6 +98,20 @@ class _BottomNavigationState extends State<BottomNavigation> {
           icon: Icons.favorite_border,
           label: 'Saved',
           item: BottomNavItem.saved,
+        ),
+      if (isAuthenticated)
+        _buildNavItem(
+          context,
+          icon: Icons.workspace_premium_outlined,
+          label: 'Subs',
+          item: BottomNavItem.subscriptions,
+        ),
+      if (isAuthenticated)
+        _buildNavItem(
+          context,
+          icon: Icons.receipt_long_outlined,
+          label: 'Pay',
+          item: BottomNavItem.payments,
         ),
       if (canBuy)
         _buildCountNavItem(
