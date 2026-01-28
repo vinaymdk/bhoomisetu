@@ -8,6 +8,8 @@ import '../properties/my_listings_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 
 class SellerInterestsScreen extends StatefulWidget {
   const SellerInterestsScreen({super.key});
@@ -65,6 +67,12 @@ class _SellerInterestsScreenState extends State<SellerInterestsScreen> {
         break;
       case BottomNavItem.saved:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()));
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionsScreen()));
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()));
         break;
       case BottomNavItem.profile:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()));

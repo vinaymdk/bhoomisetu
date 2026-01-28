@@ -46,6 +46,7 @@ import { SmsService } from './services/sms.service';
 import { UsersModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 import { FirebaseModule } from '../firebase/firebase.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LoginSession } from './entities/login-session.entity';
 import { OtpLog } from './entities/otp-log.entity';
@@ -55,6 +56,7 @@ import { OtpLog } from './entities/otp-log.entity';
     UsersModule,
     AiModule,
     FirebaseModule,
+    NotificationsModule,
     PassportModule,
     TypeOrmModule.forFeature([LoginSession, OtpLog]),
 

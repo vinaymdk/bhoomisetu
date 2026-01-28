@@ -92,9 +92,14 @@ export const CustomerServiceDashboardPage = () => {
             <h1>Customer Service Dashboard</h1>
             <p>Review and verify property listings submitted by sellers.</p>
           </div>
-          <button className="cs-refresh-btn" onClick={load} disabled={loading}>
-            Refresh
-          </button>
+          <div className="cs-dashboard-actions">
+            <Link className="cs-refresh-btn" to="/cs/support-chat">
+              Support Chat
+            </Link>
+            <button className="cs-refresh-btn" onClick={load} disabled={loading}>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {stats && (

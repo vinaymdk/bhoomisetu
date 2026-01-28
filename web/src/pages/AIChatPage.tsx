@@ -6,14 +6,15 @@ type ChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   text: string;
+  propertySuggestions?: Array<{
+    propertyId: string;
+    title: string;
+    price: number;
+    location: string;
+    matchScore: number;
+    matchReasons: string[];
+  }>;
 };
-
-const quickActions = [
-  'Find 2BHK under 50L in Hyderabad',
-  'Show verified plots near metro',
-  'Book a visit this weekend',
-  'Update my requirement budget',
-];
 
 export const AIChatPage = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -29,8 +30,21 @@ export const AIChatPage = () => {
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
   const [isSending, setIsSending] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
+  const sendingRef = useRef(false);
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const topGuide =
+    language === 'hi'
+      ? 'AI Chat Support का उपयोग कैसे करें: अपनी आवश्यकता, बजट और स्थान को स्पष्ट रूप से लिखें.'
+      : language === 'te'
+        ? 'AI Chat Support ను ఎలా ఉపయోగించాలి: మీ అవసరం, బడ్జెట్, లొకేషన్‌ను స్పష్టంగా వ్రాయండి.'
+        : 'How to use AI Chat Support: Share your requirement, budget, and location clearly.';
+  const bottomGuide =
+    language === 'hi'
+      ? 'मानव सहायता चाहिए? बताएं और हम Customer Support से जोड़ देंगे.'
+      : language === 'te'
+        ? 'మనవ సహాయం కావాలా? చెప్పండి, Customer Support కు కలుపుతాం.'
+        : 'Need human help? Tell us and we will connect Customer Support.';
 
   const scrollToBottom = () => {
     if (messagesRef.current) {
@@ -44,13 +58,14 @@ export const AIChatPage = () => {
 
   const handleSend = async (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || sendingRef.current) return;
     const userId = `${Date.now()}-user`;
     setMessages((prev) => [...prev, { id: userId, role: 'user', text: trimmed }]);
     setInput('');
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
     }
+    sendingRef.current = true;
     setIsSending(true);
     try {
       const response = await aiChatService.sendMessage(trimmed, language, conversationId);
@@ -61,6 +76,7 @@ export const AIChatPage = () => {
           id: `${Date.now()}-assistant`,
           role: 'assistant',
           text: response.content,
+          propertySuggestions: response.propertySuggestions,
         },
       ]);
     } catch (error) {
@@ -73,6 +89,7 @@ export const AIChatPage = () => {
         },
       ]);
     } finally {
+      sendingRef.current = false;
       setIsSending(false);
     }
   };
@@ -116,12 +133,32 @@ export const AIChatPage = () => {
       </div>
 
       <div className="ai-chat-body">
+        <div className="ai-chat-guide ai-chat-guide-top">{topGuide}</div>
         <div className="ai-chat-messages" ref={messagesRef} onScroll={handleScroll}>
           {messages.map((msg) => (
             <div key={msg.id} className={`ai-chat-message ${msg.role}`}>
-              <div className="ai-chat-bubble">{msg.text}</div>
+              <div className="ai-chat-bubble">
+                <div>{msg.text}</div>
+                {msg.propertySuggestions && msg.propertySuggestions.length > 0 && (
+                  <div className="ai-chat-suggestions">
+                    {msg.propertySuggestions.map((item) => (
+                      <a key={item.propertyId} href={`/properties/${item.propertyId}`} className="ai-chat-link">
+                        {item.title || 'Property'} • {item.location || 'Location'} • ₹{item.price?.toLocaleString?.() || item.price}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
+          {isSending && (
+            <div className="ai-chat-message assistant">
+              <div className="ai-chat-bubble typing">
+                <span className="typing-dots" />
+                <small>AI is typing...</small>
+              </div>
+            </div>
+          )}
         </div>
         {showScrollDown && (
           <button
@@ -135,13 +172,7 @@ export const AIChatPage = () => {
             ↓
           </button>
         )}
-        <div className="ai-chat-quick">
-          {quickActions.map((action) => (
-            <button key={action} onClick={() => handleSend(action)} disabled={isSending}>
-              {action}
-            </button>
-          ))}
-        </div>
+        <div className="ai-chat-guide ai-chat-guide-bottom">{bottomGuide}</div>
       </div>
 
       <form

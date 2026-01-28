@@ -7,6 +7,14 @@ export interface ChatMessageResponse {
   messageId: string;
   content: string;
   requiresEscalation: boolean;
+  propertySuggestions?: Array<{
+    propertyId: string;
+    title: string;
+    price: number;
+    location: string;
+    matchScore: number;
+    matchReasons: string[];
+  }>;
 }
 
 export const aiChatService = {

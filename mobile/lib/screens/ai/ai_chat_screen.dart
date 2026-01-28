@@ -4,12 +4,18 @@ import '../home/home_screen.dart';
 import '../search/search_screen.dart';
 import '../properties/my_listings_screen.dart';
 import '../properties/saved_properties_screen.dart';
+import '../properties/property_details_screen.dart';
 import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../customer_service/cs_dashboard_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:dio/dio.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/ai_chat_service.dart';
+import '../../widgets/notifications_icon_button.dart';
+import '../notifications/notifications_screen.dart';
+import '../../widgets/app_drawer.dart';
 
 class AIChatScreen extends StatefulWidget {
   const AIChatScreen({super.key});
@@ -22,7 +28,7 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final AiChatService _aiChatService = AiChatService();
-  final List<Map<String, String>> _messages = [
+  final List<Map<String, dynamic>> _messages = [
     {
       'role': 'assistant',
       'text':
@@ -56,15 +62,14 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
 
   Future<void> _sendMessage(String text) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty || _isSending) return;
+    setState(() => _isSending = true);
     setState(() {
       _messages.add({'role': 'user', 'text': trimmed});
       _inputController.clear();
-      _messages.add({'role': 'assistant', 'text': 'typing', 'isTyping': 'true'});
+      _messages.add({'role': 'assistant', 'text': 'typing', 'isTyping': true});
     });
     _scrollToBottom();
-    if (_isSending) return;
-    setState(() => _isSending = true);
     try {
       final response = await _aiChatService.sendMessage(
         message: trimmed,
@@ -75,9 +80,14 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
           response['conversationId']?.toString() ?? _conversationId;
       final content =
           response['content']?.toString() ?? 'Thanks, I am here to help.';
+      final suggestions = response['propertySuggestions'] as List<dynamic>?;
       setState(() {
-        _messages.removeLast(); // Remove typing bubble
-        _messages.add({'role': 'assistant', 'text': content});
+        _removeTypingBubble();
+        _messages.add({
+          'role': 'assistant',
+          'text': content,
+          if (suggestions != null) 'propertySuggestions': suggestions,
+        });
       });
     } catch (e) {
       final message = e is DioException
@@ -86,7 +96,7 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
               : null)
           : null;
       setState(() {
-        _messages.removeLast(); // Remove typing bubble
+        _removeTypingBubble();
         _messages.add({
           'role': 'assistant',
           'text': message ??
@@ -97,6 +107,10 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
       setState(() => _isSending = false);
       _scrollToBottom();
     }
+  }
+
+  void _removeTypingBubble() {
+    _messages.removeWhere((msg) => msg['isTyping'] == true);
   }
 
   void _scrollToBottom() {
@@ -126,6 +140,28 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
         ),
       ),
     );
+  }
+
+  String _topGuideText() {
+    switch (_language) {
+      case 'hi':
+        return 'AI Chat Support का उपयोग कैसे करें: अपनी आवश्यकता, बजट और स्थान को स्पष्ट रूप से लिखें.';
+      case 'te':
+        return 'AI Chat Support ను ఎలా ఉపయోగించాలి: మీ అవసరం, బడ్జెట్, లొకేషన్‌ను స్పష్టంగా వ్రాయండి.';
+      default:
+        return 'How to use AI Chat Support: Share your requirement, budget, and location clearly.';
+    }
+  }
+
+  String _bottomGuideText() {
+    switch (_language) {
+      case 'hi':
+        return 'मानव सहायता चाहिए? बताएं और हम Customer Support से जोड़ देंगे.';
+      case 'te':
+        return 'మనవ సహాయం కావాలా? చెప్పండి, Customer Support కు కలుపుతాం.';
+      default:
+        return 'Need human help? Tell us and we will connect Customer Support.';
+    }
   }
 
   void _handleNavTap(BottomNavItem item) {
@@ -159,6 +195,14 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
         Navigator.push(context,
             MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()));
         break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const SubscriptionsScreen()));
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()));
+        break;
       case BottomNavItem.profile:
         Navigator.push(context,
             MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()));
@@ -173,11 +217,20 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('AI Chat Support'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
+          NotificationsIconButton(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Center(
@@ -220,6 +273,22 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.blueGrey.shade100),
+              ),
+              child: Text(
+                _topGuideText(),
+                style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 12),
+              ),
+            ),
+          ),
           Expanded(
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
@@ -236,7 +305,8 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
                   final isUser = msg['role'] == 'user';
-                  final isTyping = msg['isTyping'] == 'true';
+                  final isTyping = msg['isTyping'] == true;
+                  final suggestions = msg['propertySuggestions'] as List<dynamic>?;
                   
                   if (isTyping) {
                     return Align(
@@ -275,10 +345,51 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
                         color: isUser ? Colors.blue : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        msg['text'] ?? '',
-                        style: TextStyle(
-                            color: isUser ? Colors.white : Colors.black87),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            msg['text'] ?? '',
+                            style: TextStyle(
+                                color: isUser ? Colors.white : Colors.black87),
+                          ),
+                          if (suggestions != null && suggestions.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            ...suggestions.map((item) {
+                              final map = item as Map;
+                              final id = map['propertyId']?.toString() ?? '';
+                              final title = map['title']?.toString() ?? 'Property';
+                              final location = map['location']?.toString() ?? 'Location';
+                              final price = map['price']?.toString() ?? '';
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: InkWell(
+                                  onTap: id.isEmpty
+                                      ? null
+                                      : () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => PropertyDetailsScreen(
+                                                propertyId: id,
+                                                initialTab: _currentNavItem,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                  child: Text(
+                                    '$title • $location • ₹$price',
+                                    style: TextStyle(
+                                      color: isUser ? Colors.white70 : Colors.blue.shade700,
+                                      fontSize: 12,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        ],
                       ),
                     ),
                   );
@@ -294,6 +405,22 @@ class _AIChatScreenState extends State<AIChatScreen> with TickerProviderStateMix
                 child: const Icon(Icons.keyboard_arrow_down),
               ),
             ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.shade50,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.blueGrey.shade100),
+              ),
+              child: Text(
+                _bottomGuideText(),
+                style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 12),
+              ),
+            ),
+          ),
           SafeArea(
             top: false,
             child: Padding(

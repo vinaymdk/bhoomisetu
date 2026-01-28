@@ -31,9 +31,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const clearSession = () => {
-    authService.logout();
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    const refreshToken = normalizeToken(localStorage.getItem('refreshToken')) || undefined;
+    void authService.logout(refreshToken);
     setUser(null);
     setRoles([]);
     setIsAuthenticated(false);

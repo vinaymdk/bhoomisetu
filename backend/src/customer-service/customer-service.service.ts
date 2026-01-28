@@ -43,6 +43,7 @@ export class CustomerServiceService {
     private readonly usersService: UsersService,
     @Inject(forwardRef(() => BuyerRequirementsService))
     private readonly buyerRequirementsService: BuyerRequirementsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -246,6 +247,13 @@ export class CustomerServiceService {
     this.logger.log(
       `Property ${property.id} ${verifyDto.action === 'approve' ? 'approved' : 'rejected'} by CS agent ${csAgentId}`,
     );
+
+    this.notificationsService
+      .notifyActionAlert(property.sellerId, verifyDto.action, 'property verification', {
+        propertyId: property.id,
+        status: property.status,
+      })
+      .catch(() => undefined);
 
     // Trigger AI matching when property goes LIVE (Module 6)
     if (verifyDto.action === 'approve' && updatedProperty.status === PropertyStatus.LIVE) {

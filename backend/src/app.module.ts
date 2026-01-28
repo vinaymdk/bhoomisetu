@@ -74,6 +74,7 @@ import { BuyerRequirementsModule } from './buyer-requirements/buyer-requirements
 import { MediationModule } from './mediation/mediation.module';
 import { AiChatModule } from './ai-chat/ai-chat.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SupportChatModule } from './support-chat/support-chat.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
@@ -104,6 +105,7 @@ import { LocationsModule } from './locations/locations.module';
     MediationModule,
     AiChatModule,
     NotificationsModule,
+    SupportChatModule,
     ReviewsModule,
     AdminModule,
     LocationsModule,

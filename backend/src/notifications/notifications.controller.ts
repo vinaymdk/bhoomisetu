@@ -8,7 +8,6 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
-  Type,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -51,6 +50,15 @@ export class NotificationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.notificationsService.markAsRead(id, currentUser.userId);
+  }
+
+  /**
+   * Mark all notifications as read
+   * PUT /api/notifications/read-all
+   */
+  @Put('read-all')
+  markAllAsRead(@CurrentUser() currentUser: CurrentUserData) {
+    return this.notificationsService.markAllAsRead(currentUser.userId);
   }
 
   /**

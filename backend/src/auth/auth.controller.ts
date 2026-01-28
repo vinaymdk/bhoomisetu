@@ -41,5 +41,11 @@ export class AuthController {
   refreshTokens(@Body() body: { refreshToken: string }) {
     return this.authService.refreshTokens(body.refreshToken);
   }
+
+  @Public()
+  @Post('logout')
+  logout(@Body() body: { refreshToken?: string }) {
+    return this.authService.logout(body.refreshToken);
+  }
 }
 

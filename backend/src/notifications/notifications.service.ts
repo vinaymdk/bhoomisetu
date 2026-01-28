@@ -75,6 +75,7 @@ export class NotificationsService {
     // Get user for channel info
     const user = await this.userRepository.findOne({
       where: { id: userId },
+      relations: ['userRoles', 'userRoles.role'],
     });
 
     if (!user) {
@@ -83,8 +84,24 @@ export class NotificationsService {
 
     // Determine language
     const language = options.language || 'en';
-    const messageEnglish = options.messageEnglish || (language === 'en' ? message : null);
-    const messageTelugu = options.messageTelugu || (language === 'te' ? message : null);
+    let messageEnglish = options.messageEnglish || (language === 'en' ? message : null);
+    let messageTelugu = options.messageTelugu || (language === 'te' ? message : null);
+
+    // Enforce role-based contact visibility for non-privileged roles
+    if (!this.canViewContactDetails(user)) {
+      const sanitized = this.sanitizeNotificationContent({
+        title,
+        message,
+        messageEnglish,
+        messageTelugu,
+        data: options.data || null,
+      });
+      title = sanitized.title;
+      message = sanitized.message;
+      messageEnglish = sanitized.messageEnglish;
+      messageTelugu = sanitized.messageTelugu;
+      options.data = sanitized.data;
+    }
 
     // Determine channels to use
     const channelsToUse = options.channels || this.determineChannels(preferences);
@@ -522,9 +539,9 @@ export class NotificationsService {
   }> {
     const skip = (page - 1) * limit;
 
-    const where: FindOptionsWhere<Notification> = { userId };
-
-    // Note: TypeORM handles null checks through query builder for better type safety
+    const where: FindOptionsWhere<Notification> = unreadOnly
+      ? { userId, readAt: IsNull() }
+      : { userId };
 
     const [notifications, total] = await this.notificationRepository.findAndCount({
       where,
@@ -535,7 +552,7 @@ export class NotificationsService {
 
     // Get unread count
     const unreadCount = await this.notificationRepository.count({
-      where: { userId, readAt: null as any },
+      where: { userId, readAt: IsNull() },
     });
 
     return {
@@ -611,6 +628,69 @@ export class NotificationsService {
     }
 
     await this.preferenceRepository.save(preferences);
+  }
+
+  /**
+   * Mark all notifications as read
+   */
+  async markAllAsRead(userId: string): Promise<number> {
+    const result = await this.notificationRepository.update(
+      { userId, readAt: IsNull() },
+      { readAt: new Date(), status: NotificationStatus.READ },
+    );
+    return result.affected || 0;
+  }
+
+  private canViewContactDetails(user: User): boolean {
+    const roleCodes =
+      user.userRoles?.map((userRole) => userRole.role?.code).filter(Boolean) || [];
+    return roleCodes.includes('customer_service') || roleCodes.includes('admin');
+  }
+
+  private sanitizeNotificationContent(payload: {
+    title: string;
+    message: string;
+    messageEnglish?: string | null;
+    messageTelugu?: string | null;
+    data?: Record<string, any> | null;
+  }): {
+    title: string;
+    message: string;
+    messageEnglish?: string | null;
+    messageTelugu?: string | null;
+    data?: Record<string, any> | null;
+  } {
+    const redactText = (value: string) => {
+      const emailRedacted = value.replace(
+        /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+        '[redacted]',
+      );
+      return emailRedacted.replace(/(\+?\d[\d\s-]{7,}\d)/g, '[redacted]');
+    };
+
+    const scrubbedData = payload.data
+      ? Object.entries(payload.data).reduce<Record<string, any>>((acc, [key, value]) => {
+          const lowered = key.toLowerCase();
+          if (
+            lowered.includes('phone') ||
+            lowered.includes('email') ||
+            lowered.includes('address') ||
+            lowered.includes('contact')
+          ) {
+            return acc;
+          }
+          acc[key] = value;
+          return acc;
+        }, {})
+      : payload.data;
+
+    return {
+      title: redactText(payload.title),
+      message: redactText(payload.message),
+      messageEnglish: payload.messageEnglish ? redactText(payload.messageEnglish) : payload.messageEnglish,
+      messageTelugu: payload.messageTelugu ? redactText(payload.messageTelugu) : payload.messageTelugu,
+      data: scrubbedData,
+    };
   }
 
   /**
@@ -758,5 +838,58 @@ export class NotificationsService {
         expiresAt: scheduledTime, // Expires after viewing time
       },
     );
+  }
+
+  /**
+   * Trigger: Action-based alert (login/logout/create/update/save/etc.)
+   */
+  async notifyActionAlert(
+    userId: string,
+    action: string,
+    entityLabel?: string,
+    data?: Record<string, any>,
+  ): Promise<void> {
+    const { title, message } = this.buildActionAlertMessage(action, entityLabel);
+    await this.sendNotification(
+      userId,
+      NotificationType.ACTION_ALERT,
+      title,
+      message,
+      {
+        priority: NotificationPriority.NORMAL,
+        data: {
+          action,
+          entityLabel: entityLabel || null,
+          ...(data || {}),
+        },
+      },
+    );
+  }
+
+  private buildActionAlertMessage(action: string, entityLabel?: string): { title: string; message: string } {
+    const label = entityLabel ? ` ${entityLabel}` : '';
+    const normalized = action.toLowerCase();
+    if (normalized.includes('login')) {
+      return { title: 'Login Activity', message: 'You have logged in to your BhoomiSetu account.' };
+    }
+    if (normalized.includes('logout')) {
+      return { title: 'Logout Activity', message: 'You have logged out of your BhoomiSetu account.' };
+    }
+    if (normalized.includes('create') || normalized.includes('new')) {
+      return { title: 'Record Created', message: `A new${label} record was created successfully.` };
+    }
+    if (normalized.includes('update') || normalized.includes('edit')) {
+      return { title: 'Record Updated', message: `Your${label} record was updated successfully.` };
+    }
+    if (normalized.includes('save')) {
+      return { title: 'Saved', message: `Your${label} item was saved successfully.` };
+    }
+    if (normalized.includes('delete') || normalized.includes('remove')) {
+      return { title: 'Record Removed', message: `Your${label} record was removed successfully.` };
+    }
+    if (normalized.includes('verify') || normalized.includes('approve')) {
+      return { title: 'Verification Update', message: `Your${label} verification status has been updated.` };
+    }
+    return { title: 'Account Activity', message: `Action completed${label ? ` for${label}` : ''}.` };
   }
 }

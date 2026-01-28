@@ -17,6 +17,11 @@ import '../properties/saved_properties_screen.dart';
 import '../profile/profile_screen.dart';
 import '../ai/ai_chat_screen.dart';
 import '../profile/settings_screen.dart';
+import '../notifications/notifications_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
+import '../../widgets/notifications_icon_button.dart';
+import '../../widgets/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -47,24 +52,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       if (authProvider.isAuthenticated) {
         // Get dashboard data for authenticated users
         // Token refresh is handled automatically by the API client interceptor
         try {
-          _dashboardData = await _homeService.getDashboardData().timeout(const Duration(seconds: 15));
+          _dashboardData = await _homeService
+              .getDashboardData()
+              .timeout(const Duration(seconds: 15));
         } catch (e) {
           // If we get a 401 after refresh attempt, logout and fetch public data
-          if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+          if (e.toString().contains('401') ||
+              e.toString().contains('Unauthorized')) {
             await authProvider.logout();
-            _homeData = await _homeService.getHomeData().timeout(const Duration(seconds: 15));
+            _homeData = await _homeService
+                .getHomeData()
+                .timeout(const Duration(seconds: 15));
           } else {
             rethrow;
           }
         }
       } else {
         // Get public home data for non-authenticated users
-        _homeData = await _homeService.getHomeData().timeout(const Duration(seconds: 15));
+        _homeData = await _homeService
+            .getHomeData()
+            .timeout(const Duration(seconds: 15));
       }
     } catch (e) {
       final errorMessage = e.toString();
@@ -83,17 +95,20 @@ class _HomeScreenState extends State<HomeScreen> {
     if (message.contains('TimeoutException')) {
       return 'Unable to load properties. Please try again later.';
     }
-    if (message.contains('SocketException') || message.contains('Connection refused')) {
+    if (message.contains('SocketException') ||
+        message.contains('Connection refused')) {
       return 'Connection error. Please check your internet connection.';
     }
-    return message.replaceAll('Exception: ', '').replaceAll('DioException [bad response]: ', '');
+    return message
+        .replaceAll('Exception: ', '')
+        .replaceAll('DioException [bad response]: ', '');
   }
 
   void _handleNavTap(BottomNavItem item) {
     setState(() {
       _currentNavItem = item;
     });
-    
+
     // Handle navigation to different screens
     switch (item) {
       case BottomNavItem.home:
@@ -111,7 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final canAccess = roles.contains('seller') || roles.contains('agent');
         if (!canAccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Seller/Agent role required to list properties')),
+            const SnackBar(
+                content: Text('Seller/Agent role required to list properties')),
           );
           return;
         }
@@ -123,7 +139,20 @@ class _HomeScreenState extends State<HomeScreen> {
       case BottomNavItem.saved:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const SavedPropertiesScreen()),
+          MaterialPageRoute(
+              builder: (context) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SubscriptionsScreen()),
+        );
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const PaymentsHistoryScreen()),
         );
         break;
       case BottomNavItem.profile:
@@ -133,7 +162,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (canBuy) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const BuyerRequirementsScreen()),
+            MaterialPageRoute(
+                builder: (context) => const BuyerRequirementsScreen()),
           );
           return;
         }
@@ -163,22 +193,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final isAuthenticated = authProvider.isAuthenticated;
     final roles = authProvider.roles;
     final canBuy = roles.contains('buyer') || roles.contains('admin');
-    
+
     final data = isAuthenticated ? _dashboardData : _homeData;
     final featuredProperties = data?.featuredProperties ?? [];
     final newProperties = data?.newProperties ?? [];
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('BhoomiSetu'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications coming soon')),
+          NotificationsIconButton(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
               );
             },
           ),
@@ -189,18 +220,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (value == 'profile') {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const ProfileScreen()),
                   );
                 } else if (value == 'settings') {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const SettingsScreen()),
                   );
                 } else if (value == 'logout') {
                   await authProvider.logout();
                   if (!mounted) return;
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
                     (route) => false,
                   );
                 }
@@ -223,7 +257,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                          const Icon(Icons.error_outline,
+                              size: 64, color: Colors.red),
                           const SizedBox(height: 16),
                           Text(
                             _error!,
@@ -246,195 +281,229 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                        // Premium Banner (only for authenticated users)
-                        if (isAuthenticated) const PremiumBanner(),
+                          // Premium Banner (only for authenticated users)
+                          if (isAuthenticated)
+                            PremiumBanner(
+                              onUpgrade: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const SubscriptionsScreen()),
+                                );
+                              },
+                            ),
 
-                        // AI Search Bar
-                        AISearchBar(onSearch: _handleSearch),
+                          // AI Search Bar
+                          AISearchBar(onSearch: _handleSearch),
 
-                        if (isAuthenticated && canBuy)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: Colors.blue.shade100),
+                          if (isAuthenticated && canBuy)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border:
+                                      Border.all(color: Colors.blue.shade100),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Post Your Requirement',
+                                            style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'Let us match verified listings based on your budget and location.',
+                                            style: TextStyle(
+                                                color:
+                                                    Colors.blueGrey.shade700),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const BuyerRequirementsScreen()),
+                                        );
+                                      },
+                                      child: const Text('View'),
+                                    ),
+                                  ],
+                                ),
                               ),
+                            ),
+
+                          // New Properties Section
+                          if (newProperties.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                               child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Post Your Requirement',
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Let us match verified listings based on your budget and location.',
-                                          style: TextStyle(color: Colors.blueGrey.shade700),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
+                                  const Text(
+                                    'New Properties',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  ElevatedButton(
+                                  TextButton(
                                     onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
-                                      );
+                                      // TODO: Navigate to all new properties
                                     },
-                                    child: const Text('View'),
+                                    child: const Text('See All'),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-
-                        // New Properties Section
-                        if (newProperties.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'New Properties',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    // TODO: Navigate to all new properties
-                                  },
-                                  child: const Text('See All'),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 410,
-                            width: double.infinity,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              itemCount: newProperties.length,
-                              itemBuilder: (context, index) {
-                                return SizedBox(
-                                  width: 300,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 12),
-                                    child: PropertyCard(
-                                      property: newProperties[index],
-                                      showFeaturedBadge: false,
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => PropertyDetailsScreen(
-                                              propertyId: newProperties[index].id,
-                                              initialTab: BottomNavItem.home,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Featured Properties Section
-                        if (featuredProperties.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Featured Properties',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    // TODO: Navigate to all featured properties
-                                  },
-                                  child: const Text('See All'),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisExtent: 410,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                              ),
-                              itemCount: featuredProperties.length,
-                              itemBuilder: (context, index) {
-                                return PropertyCard(
-                                  property: featuredProperties[index],
-                                  showFeaturedBadge: true,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => PropertyDetailsScreen(
-                                          propertyId: featuredProperties[index].id,
-                                          initialTab: BottomNavItem.home,
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: SizedBox(
+                                height: 410,
+                                width: double.infinity,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  itemCount: newProperties.length,
+                                  itemBuilder: (context, index) {
+                                    return SizedBox(
+                                      width: 300,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 8),
+                                        child: PropertyCard(
+                                          property: newProperties[index],
+                                          showFeaturedBadge: false,
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    PropertyDetailsScreen(
+                                                  propertyId:
+                                                      newProperties[index].id,
+                                                  initialTab:
+                                                      BottomNavItem.home,
+                                                ),
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ),
                                     );
                                   },
-                                );
-                              },
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                            const SizedBox(height: 16),
+                          ],
 
-                        // Empty State
-                        if (newProperties.isEmpty && featuredProperties.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.all(32),
-                            child: Center(
-                              child: Column(
+                          // Featured Properties Section
+                          if (featuredProperties.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Icon(Icons.home_outlined, size: 64, color: Colors.grey),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'No properties available',
+                                  const Text(
+                                    'Featured Properties',
                                     style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
                                     ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      // TODO: Navigate to all featured properties
+                                    },
+                                    child: const Text('See All'),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                      ],
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisExtent: 410,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                ),
+                                itemCount: featuredProperties.length,
+                                itemBuilder: (context, index) {
+                                  return PropertyCard(
+                                    property: featuredProperties[index],
+                                    showFeaturedBadge: true,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PropertyDetailsScreen(
+                                            propertyId:
+                                                featuredProperties[index].id,
+                                            initialTab: BottomNavItem.home,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+
+                          // Empty State
+                          if (newProperties.isEmpty &&
+                              featuredProperties.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.all(32),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.home_outlined,
+                                        size: 64, color: Colors.grey),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      'No properties available',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),

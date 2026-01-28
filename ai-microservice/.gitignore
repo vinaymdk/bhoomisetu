@@ -1,0 +1,62 @@
+# --------------------
+# Python
+# --------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# --------------------
+# Virtual environments
+# --------------------
+.venv/
+venv/
+ENV/
+
+# --------------------
+# Environment files
+# --------------------
+.env
+.env.local
+.env.*.local
+.env.example
+env.example
+
+# NOTE:
+# env.example / .env.example should be committed
+# so DO NOT ignore them
+
+# --------------------
+# Build / distribution
+# --------------------
+build/
+dist/
+*.egg-info/
+
+# --------------------
+# OS / Editor
+# --------------------
+.DS_Store
+.vscode/
+.idea/
+
+# --------------------
+# Coverage / test artifacts
+# --------------------
+.coverage
+htmlcov/
+
+# --------------------
+# Logs
+# --------------------
+*.log
+
+# --------------------
+# Node / frontend (safe even if unused)
+# --------------------
+node_modules/
+
+# --------------------
+# Docker
+# --------------------
+docker-compose.override.yml

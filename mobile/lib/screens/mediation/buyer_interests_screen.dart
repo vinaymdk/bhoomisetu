@@ -10,6 +10,8 @@ import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../customer_service/cs_dashboard_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 
 class BuyerInterestsScreen extends StatefulWidget {
   const BuyerInterestsScreen({super.key});
@@ -76,6 +78,12 @@ class _BuyerInterestsScreenState extends State<BuyerInterestsScreen> {
         break;
       case BottomNavItem.saved:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()));
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const SubscriptionsScreen()));
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()));
         break;
       case BottomNavItem.profile:
         Navigator.push(context, MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()));

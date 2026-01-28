@@ -12,6 +12,8 @@ import '../buyer_requirements/buyer_requirements_screen.dart';
 import '../properties/saved_properties_screen.dart';
 import '../mediation/cs_mediation_screen.dart';
 import 'cs_property_screen.dart';
+import '../subscriptions/subscriptions_screen.dart';
+import '../subscriptions/payments_history_screen.dart';
 
 class CsDashboardScreen extends StatefulWidget {
   const CsDashboardScreen({super.key});
@@ -393,6 +395,18 @@ class _CsDashboardScreenState extends State<CsDashboardScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.subscriptions:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SubscriptionsScreen()),
+        );
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()),
         );
         break;
       case BottomNavItem.profile:

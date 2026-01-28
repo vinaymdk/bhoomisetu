@@ -251,6 +251,13 @@ export class ReviewsService {
 
     const savedReview = await this.reviewRepository.save(review);
 
+    this.notificationsService
+      .notifyActionAlert(reviewerId, 'create', 'review', {
+        reviewId: savedReview.id,
+        propertyId: savedReview.propertyId,
+      })
+      .catch(() => undefined);
+
     // Load relations for response
     const fullReview = await this.reviewRepository.findOne({
       where: { id: savedReview.id },
@@ -391,6 +398,14 @@ export class ReviewsService {
     }
 
     const updatedReview = await this.reviewRepository.save(review);
+
+    this.notificationsService
+      .notifyActionAlert(reviewerId, 'update', 'review', {
+        reviewId: updatedReview.id,
+        propertyId: updatedReview.propertyId,
+      })
+      .catch(() => undefined);
+
     return this.mapToResponseDto(updatedReview, reviewerId);
   }
 

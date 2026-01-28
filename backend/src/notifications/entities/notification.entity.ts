@@ -21,6 +21,7 @@ export enum NotificationType {
   INTEREST_EXPRESSION = 'interest_expression',
   MEDIATION_UPDATE = 'mediation_update',
   AI_CHAT_ESCALATION = 'ai_chat_escalation',
+  ACTION_ALERT = 'action_alert',
   GENERAL = 'general',
 }
 

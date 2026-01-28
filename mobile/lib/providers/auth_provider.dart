@@ -92,6 +92,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
+    final refreshToken = await _storage.read(key: 'refreshToken');
+    await _authService.logout(refreshToken);
     await _storage.delete(key: 'accessToken');
     await _storage.delete(key: 'refreshToken');
     try {

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UserRole } from '../auth/entities/user-role.entity';
 import { Role } from '../auth/entities/role.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
@@ -14,6 +15,7 @@ export class UsersService {
     private readonly userRoleRepository: Repository<UserRole>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async findById(id: string): Promise<User | null> {
@@ -94,6 +96,11 @@ export class UsersService {
     if (update.avatarUrl !== undefined) user.avatarUrl = this.normalizeOptionalString(update.avatarUrl);
 
     await this.userRepository.save(user);
+    this.notificationsService
+      .notifyActionAlert(userId, 'update', 'profile', {
+        userId,
+      })
+      .catch(() => undefined);
     return this.findById(userId) as Promise<User>;
   }
 

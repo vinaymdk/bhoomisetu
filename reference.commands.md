@@ -22,6 +22,8 @@ psql
 
 psql -h 127.0.0.1 -U postgres -d bhoomisetu_db
 
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
 CREATE DATABASE bhoomisetu_db;
 
 Restart ADB

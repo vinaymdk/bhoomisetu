@@ -19,6 +19,12 @@ import { AiService } from '../ai/ai.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
 
+type PaymentSignatureVerification = {
+  isValid: boolean;
+  skipped: boolean;
+  reason?: string;
+};
+
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -122,6 +128,14 @@ export class PaymentsService {
     });
 
     const savedPayment = await this.paymentRepository.save(payment);
+
+    this.notificationsService
+      .notifyActionAlert(userId, 'create', 'payment order', {
+        paymentId: savedPayment.id,
+        amount: savedPayment.amount,
+        currency: savedPayment.currency,
+      })
+      .catch(() => undefined);
 
     // Create order in payment gateway
     let orderId: string;
@@ -257,8 +271,8 @@ export class PaymentsService {
     }
 
     try {
-      // Verify payment signature with gateway
-      const isValidSignature = await this.verifyPaymentSignature(
+      // Verify payment signature with gateway (stubbed)
+      const verification = await this.verifyPaymentSignature(
         payment.gateway,
         payment.gatewayOrderId!,
         gatewayPaymentId,
@@ -266,8 +280,7 @@ export class PaymentsService {
         webhookPayload,
       );
 
-      if (!isValidSignature && payment.gateway !== PaymentGateway.RAZORPAY) {
-        // For Razorpay, signature verification is critical
+      if (!verification.isValid) {
         throw new BadRequestException('Invalid payment signature');
       }
 
@@ -281,9 +294,21 @@ export class PaymentsService {
       if (gatewaySignature) {
         payment.signature = gatewaySignature;
       }
-      if (webhookPayload) {
-        payment.metadata = webhookPayload;
-      }
+      payment.metadata = {
+        ...(payment.metadata ?? {}),
+        ...(webhookPayload ?? {}),
+        verification: {
+          gateway: payment.gateway,
+          orderId: payment.gatewayOrderId,
+          paymentId: gatewayPaymentId,
+          signatureProvided: Boolean(gatewaySignature),
+          webhookPayloadPresent: Boolean(webhookPayload),
+          isValid: verification.isValid,
+          skipped: verification.skipped,
+          reason: verification.reason,
+          verifiedAt: new Date().toISOString(),
+        },
+      };
       await this.paymentRepository.save(payment);
 
       // Process subscription/purchase based on payment purpose
@@ -495,23 +520,17 @@ export class PaymentsService {
     paymentId: string,
     signature?: string,
     webhookPayload?: Record<string, any>,
-  ): Promise<boolean> {
+  ): Promise<PaymentSignatureVerification> {
     if (!signature) {
-      // For Stripe, webhook signature verification is different
-      if (gateway === PaymentGateway.STRIPE && webhookPayload) {
-        // TODO: Verify Stripe webhook signature
-        // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        // const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-        // const sig = req.headers['stripe-signature'];
-        // const event = stripe.webhooks.constructEvent(webhookPayload, sig, webhookSecret);
-        // return true;
-        return true; // Simulated for now
-      }
-      return false; // Razorpay requires signature
+      const reason = webhookPayload
+        ? 'Signature missing; stub verification used with webhook payload.'
+        : 'Signature missing; stub verification used.';
+      this.logger.warn(`Signature verification skipped: ${reason}`);
+      return { isValid: true, skipped: true, reason };
     }
 
     if (gateway === PaymentGateway.RAZORPAY) {
-      // Razorpay signature verification
+      // Razorpay signature verification (stub)
       // TODO: Implement Razorpay signature verification
       // const crypto = require('crypto');
       // const secret = process.env.RAZORPAY_KEY_SECRET;
@@ -520,14 +539,19 @@ export class PaymentsService {
       //   .update(`${orderId}|${paymentId}`)
       //   .digest('hex');
       // return generatedSignature === signature;
-      this.logger.log(`Razorpay signature verification (simulated). Ready for Razorpay SDK integration.`);
-      return true; // Simulated for now
-    } else if (gateway === PaymentGateway.STRIPE) {
-      // Stripe signature verification is done via webhook
-      return true; // Simulated for now
+      const reason = 'Razorpay signature verification stubbed.';
+      this.logger.warn(`Signature verification skipped: ${reason}`);
+      return { isValid: true, skipped: true, reason };
     }
 
-    return false;
+    if (gateway === PaymentGateway.STRIPE) {
+      // Stripe webhook signature verification (stub)
+      const reason = 'Stripe webhook signature verification stubbed.';
+      this.logger.warn(`Signature verification skipped: ${reason}`);
+      return { isValid: true, skipped: true, reason };
+    }
+
+    return { isValid: false, skipped: false, reason: 'Unsupported payment gateway' };
   }
 
   /**

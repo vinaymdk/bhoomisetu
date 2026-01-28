@@ -22,7 +22,15 @@ build/
 /backend/.env.example.*
 /backend/.env.example.*.local
 /backend/.env.example.*.local
-# IDE
+./ai-microservice/
+/ai-microservice/.env.*
+/ai-microservice/.env.example
+/ai-microservice/.env.example.local
+/ai-microservice/.env.example.*.local
+/ai-microservice/.env.example.*
+/ai-microservice/.env.example.*.local
+/ai-microservice/.env.example.*.local
+/ai-microservice/env.example
 .idea/
 .vscode/
 *.swp

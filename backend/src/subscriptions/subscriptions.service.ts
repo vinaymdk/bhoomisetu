@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, LessThanOrEqual, IsNull } from 'typeorm';
 import { Subscription, SubscriptionType, SubscriptionStatus } from './entities/subscription.entity';
 import { SubscriptionPlan, PlanType } from '../payments/entities/subscription-plan.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SubscriptionsService {
@@ -13,6 +14,7 @@ export class SubscriptionsService {
     private readonly subscriptionRepository: Repository<Subscription>,
     @InjectRepository(SubscriptionPlan)
     private readonly subscriptionPlanRepository: Repository<SubscriptionPlan>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async getUserSubscriptionStatus(userId: string): Promise<{
@@ -104,7 +106,16 @@ export class SubscriptionsService {
     subscription.autoRenewalEnabled = false;
     subscription.nextBillingDate = null;
 
-    return await this.subscriptionRepository.save(subscription);
+    const saved = await this.subscriptionRepository.save(subscription);
+
+    this.notificationsService
+      .notifyActionAlert(userId, 'cancel', 'subscription', {
+        subscriptionId: saved.id,
+        status: saved.status,
+      })
+      .catch(() => undefined);
+
+    return saved;
   }
 
   /**
@@ -139,7 +150,16 @@ export class SubscriptionsService {
         subscription.nextBillingDate = null;
       }
 
-      return await this.subscriptionRepository.save(subscription);
+      const saved = await this.subscriptionRepository.save(subscription);
+
+      this.notificationsService
+        .notifyActionAlert(userId, enabled ? 'enable auto-renewal' : 'disable auto-renewal', 'subscription', {
+          subscriptionId: saved.id,
+          autoRenewalEnabled: saved.autoRenewalEnabled,
+        })
+        .catch(() => undefined);
+
+      return saved;
   }
 
   /**

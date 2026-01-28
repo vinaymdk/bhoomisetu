@@ -96,6 +96,13 @@ export class BuyerRequirementsService {
 
     const savedRequirement = await this.requirementRepository.save(requirement);
 
+    this.notificationsService
+      .notifyActionAlert(buyerId, 'create', 'buyer requirement', {
+        requirementId: savedRequirement.id,
+        title: savedRequirement.title,
+      })
+      .catch(() => undefined);
+
     // Trigger AI matching against existing properties
     this.matchWithProperties(savedRequirement.id).catch((error) => {
       this.logger.error(`Error matching requirement ${savedRequirement.id}: ${error.message}`);
@@ -234,6 +241,13 @@ export class BuyerRequirementsService {
 
     const updated = await this.requirementRepository.save(requirement);
 
+    this.notificationsService
+      .notifyActionAlert(buyerId, 'update', 'buyer requirement', {
+        requirementId: updated.id,
+        title: updated.title,
+      })
+      .catch(() => undefined);
+
     // Re-match with properties if location or budget changed
     if (updateDto.location || updateDto.minBudget !== undefined || updateDto.maxBudget !== undefined) {
       this.matchWithProperties(id).catch((error) => {
@@ -259,6 +273,13 @@ export class BuyerRequirementsService {
     requirement.deletedAt = new Date();
     requirement.status = RequirementStatus.CANCELLED;
     await this.requirementRepository.save(requirement);
+
+    this.notificationsService
+      .notifyActionAlert(buyerId, 'remove', 'buyer requirement', {
+        requirementId: requirement.id,
+        title: requirement.title,
+      })
+      .catch(() => undefined);
   }
 
   /**
