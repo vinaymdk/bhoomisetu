@@ -6,13 +6,14 @@ import { Property } from './entities/property.entity';
 import { PropertyImage } from './entities/property-image.entity';
 import { PropertyFeature } from './entities/property-feature.entity';
 import { PropertyVerificationNote } from './entities/property-verification-note.entity';
+import { PropertyLike } from './entities/property-like.entity';
 import { SubscriptionsModule } from '../subscriptions/subscriptions.module';
 import { StorageModule } from '../storage/storage.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Property, PropertyImage, PropertyFeature, PropertyVerificationNote]),
+    TypeOrmModule.forFeature([Property, PropertyImage, PropertyFeature, PropertyVerificationNote, PropertyLike]),
     forwardRef(() => SubscriptionsModule),
     NotificationsModule,
     StorageModule,

@@ -3,9 +3,14 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../config/firebase_config.dart';
 
 class SocialAuthService {
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  bool _isInitialized = false;
+
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+    await _googleSignIn.initialize();
+    _isInitialized = true;
+  }
 
   /// Sign in with Google
   /// Returns Firebase ID token for backend authentication
@@ -16,20 +21,18 @@ class SocialAuthService {
         throw Exception('Firebase is not initialized. Please ensure Firebase.initializeApp() is called first.');
       }
 
-      // Trigger Google Sign-In flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
-      if (googleUser == null) {
-        // User cancelled the sign-in
-        throw Exception('Google sign-in was cancelled');
-      }
+      await _ensureInitialized();
 
+      // Trigger Google Sign-In flow
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate(
+        scopeHint: const ['email', 'profile'],
+      );
+      
       // Obtain auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       // Create a new credential
       final credential = firebase_auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -47,8 +50,10 @@ class SocialAuthService {
       return idToken;
     } catch (e) {
       // Re-throw with more context
-      if (e.toString().contains('cancelled')) {
-        throw Exception('Sign-in cancelled');
+      if (e is GoogleSignInException) {
+        if (e.code == GoogleSignInExceptionCode.canceled) {
+          throw Exception('Sign-in cancelled');
+        }
       }
       throw Exception('Google sign-in failed: ${e.toString()}');
     }

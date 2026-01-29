@@ -30,6 +30,8 @@ import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
 import { PaymentsHistoryPage } from './pages/PaymentsHistoryPage';
+import { ReviewsPage } from './pages/ReviewsPage';
+import { CreateReviewPage } from './pages/CreateReviewPage';
 
 function App() {
   return (
@@ -41,6 +43,15 @@ function App() {
         <Route path="/properties/:id" element={<PropertyDetailsPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/ai-chat" element={<AIChatPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
+        <Route
+          path="/reviews/new"
+          element={
+            <ProtectedRoute>
+              <CreateReviewPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/notifications"
           element={

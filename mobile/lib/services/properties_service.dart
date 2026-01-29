@@ -131,6 +131,18 @@ class PropertiesService {
     return Property.fromJson(Map<String, dynamic>.from(response.data));
   }
 
+  Future<List<Property>> getFeatured({int limit = 50}) async {
+    final response = await _apiClient.dio.get('/properties/featured', queryParameters: {'limit': limit});
+    final list = (response.data as List<dynamic>? ?? []);
+    return list.map((item) => Property.fromJson(Map<String, dynamic>.from(item))).toList();
+  }
+
+  Future<List<Property>> getNew({int limit = 50}) async {
+    final response = await _apiClient.dio.get('/properties/new', queryParameters: {'limit': limit});
+    final list = (response.data as List<dynamic>? ?? []);
+    return list.map((item) => Property.fromJson(Map<String, dynamic>.from(item))).toList();
+  }
+
   Future<List<Property>> getMyProperties({String? status}) async {
     final response = await _apiClient.dio.get('/properties/my', queryParameters: status != null ? {'status': status} : null);
     return (response.data as List).map((p) => Property.fromJson(Map<String, dynamic>.from(p))).toList();
@@ -139,6 +151,11 @@ class PropertiesService {
   Future<Property> submitForVerification(String id) async {
     final response = await _apiClient.dio.post('/properties/$id/submit');
     return Property.fromJson(Map<String, dynamic>.from(response.data));
+  }
+
+  Future<Map<String, dynamic>> toggleLike(String id) async {
+    final response = await _apiClient.dio.post('/properties/$id/like');
+    return Map<String, dynamic>.from(response.data);
   }
 
   Future<GeocodedLocation?> geocodeLocation(String query) async {

@@ -135,6 +135,12 @@
   padding-top: var(--spacing-sm, 8px);
 }
 
+.property-card-metrics {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
 .property-card-type {
   font-size: var(--font-size-xs, 12px);
   text-transform: capitalize;
@@ -147,6 +153,12 @@
 .property-card-views {
   font-size: var(--font-size-xs, 12px);
   color: var(--color-text-secondary, #666);
+}
+
+.property-card-likes {
+  font-size: var(--font-size-xs, 12px);
+  color: #ef4444;
+  font-weight: 600;
 }
 
 /* Responsive */

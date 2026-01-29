@@ -11,6 +11,7 @@ This directory contains SQL sample data files for testing different modules of t
 5. **module9_notifications_sample_data.sql** - Notification templates and sample notifications (Module 9)
 6. **module9_support_chat_sample_data.sql** - Support chat sessions/messages (Module 9)
 7. **module10_payments_sample_data.sql** - Payments & subscriptions sample data (Module 10)
+8. **module11_reviews_sample_data.sql** - Reviews & feedback sample data (Module 11)
 
 ## Prerequisites
 
@@ -43,6 +44,7 @@ psql -U your_username -d bhoomisetu_db -f db/sample-data/module4_listing_feature
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module9_notifications_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module9_support_chat_sample_data.sql
 psql -U your_username -d bhoomisetu_db -f db/sample-data/module10_payments_sample_data.sql
+psql -U your_username -d bhoomisetu_db -f db/sample-data/module11_reviews_sample_data.sql
 ```
 
 ### Option 3: Using Database GUI Tool
@@ -84,6 +86,8 @@ node scripts/load-sample-data.js
 
 6. **module10_payments_sample_data.sql** (Optional)
    - Adds sample subscription plan, payment method, payment, and subscription transaction
+7. **module11_reviews_sample_data.sql** (Optional)
+   - Adds sample reviews, helpful votes, reports, and replies
 
 ## What Gets Created
 

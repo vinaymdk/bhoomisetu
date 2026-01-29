@@ -8,6 +8,7 @@ import 'config/firebase_config.dart';
 import 'config/api_config.dart';
 import 'config/api_client.dart';
 import 'utils/connectivity_service.dart';
+import 'utils/dev_mode_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,14 +28,60 @@ void main() async {
   runApp(const BhoomiSetuApp());
 }
 
-class BhoomiSetuApp extends StatelessWidget {
+class BhoomiSetuApp extends StatefulWidget {
   const BhoomiSetuApp({super.key});
+
+  @override
+  State<BhoomiSetuApp> createState() => _BhoomiSetuAppState();
+}
+
+class _BhoomiSetuAppState extends State<BhoomiSetuApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  bool _checkedDevMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkDeveloperMode();
+  }
+
+  Future<void> _checkDeveloperMode() async {
+    // Only run once per app launch to avoid repeated alerts.
+    if (_checkedDevMode) return;
+    _checkedDevMode = true;
+
+    final enabled = await DevModeService.isDeveloperModeEnabled();
+    if (!enabled) return;
+
+    // Wait until a frame is available, then show a blocking alert dialog.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _navigatorKey.currentState?.overlay?.context;
+      if (context == null) return;
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Security Alert'),
+          content: const Text(
+            'Developer Mode is enabled on your device. For better security, please disable it.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
       child: MaterialApp(
+        navigatorKey: _navigatorKey,
         title: 'BhoomiSetu',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -52,11 +99,11 @@ class BhoomiSetuApp extends StatelessWidget {
                 body: Center(child: CircularProgressIndicator()),
               );
             }
-            
+
             if (authProvider.isAuthenticated) {
               return const HomeScreen();
             }
-            
+
             return const LoginScreen();
           },
         ),

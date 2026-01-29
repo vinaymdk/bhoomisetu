@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dio/dio.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/social_auth_service.dart';
@@ -30,6 +31,20 @@ class _LoginScreenState extends State<LoginScreen> {
   String _countryCode = '+91';
   String _phoneNumber = ''; // Store phone number for UnifiedPhoneInput
   String? _devOtp;
+
+  String _formatAuthError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map && data['message'] != null) {
+        return data['message'].toString();
+      }
+      if (data is String) {
+        return data;
+      }
+      return error.message ?? 'Login failed. Please try again.';
+    }
+    return error.toString().replaceAll('Exception: ', '');
+  }
 
   bool _isPhoneValid() {
     if (_channel != 'sms') return false;
@@ -98,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
+        _error = _formatAuthError(e);
         _isLoading = false;
       });
     }
@@ -155,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() {
-        _error = e.toString().replaceAll('Exception: ', '');
+        _error = _formatAuthError(e);
         _isLoading = false;
       });
     }
@@ -223,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       setState(() {
-        final errorMessage = e.toString().replaceAll('Exception: ', '');
+        final errorMessage = _formatAuthError(e);
         // Handle user cancellation gracefully
         if (errorMessage.contains('cancelled')) {
           _error = null; // Don't show error for user cancellation

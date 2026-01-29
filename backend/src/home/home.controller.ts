@@ -3,7 +3,7 @@ import { PropertiesService } from '../properties/properties.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
-import { Public } from '../auth/decorators/public.decorator';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 @Controller('home')
 export class HomeController {
@@ -12,12 +12,22 @@ export class HomeController {
     private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
-  @Public()
   @Get()
-  async getHomeData(@Query('featuredLimit') featuredLimit?: number, @Query('newLimit') newLimit?: number) {
+  @UseGuards(OptionalJwtAuthGuard)
+  async getHomeData(
+    @Query('featuredLimit') featuredLimit?: number,
+    @Query('newLimit') newLimit?: number,
+    @CurrentUser() currentUser?: CurrentUserData,
+  ) {
     const [featuredProperties, newProperties] = await Promise.all([
-      this.propertiesService.findFeatured(featuredLimit ? parseInt(featuredLimit.toString(), 10) : 10),
-      this.propertiesService.findNew(newLimit ? parseInt(newLimit.toString(), 10) : 10),
+      this.propertiesService.findFeatured(
+        featuredLimit ? parseInt(featuredLimit.toString(), 10) : 10,
+        currentUser?.userId,
+      ),
+      this.propertiesService.findNew(
+        newLimit ? parseInt(newLimit.toString(), 10) : 10,
+        currentUser?.userId,
+      ),
     ]);
 
     return {
@@ -31,8 +41,8 @@ export class HomeController {
   @UseGuards(JwtAuthGuard)
   async getDashboard(@CurrentUser() currentUser: CurrentUserData) {
     const [featuredProperties, newProperties, subscriptionStatus] = await Promise.all([
-      this.propertiesService.findFeatured(10),
-      this.propertiesService.findNew(10),
+      this.propertiesService.findFeatured(10, currentUser.userId),
+      this.propertiesService.findNew(10, currentUser.userId),
       this.subscriptionsService.getUserSubscriptionStatus(currentUser.userId),
     ]);
 

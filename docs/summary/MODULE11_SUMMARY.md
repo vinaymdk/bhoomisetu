@@ -1,6 +1,6 @@
 # Module 11: Reviews & Feedback - Implementation Summary
 
-## Status: ✅ COMPLETE (Backend Implementation)
+## Status: ✅ COMPLETE (Backend Implementation) + 🔄 FRONTEND IN PROGRESS
 
 This document outlines the implementation of Module 11: Reviews & Feedback, focusing on backend functionality, AI sentiment analysis, fake review detection, and integration with existing modules.
 
@@ -9,6 +9,11 @@ This document outlines the implementation of Module 11: Reviews & Feedback, focu
 ## 1. Overview
 
 Module 11 implements a comprehensive review and feedback system for the real estate mediation platform, allowing buyers to rate and review properties, sellers, and their overall experience after verified viewings or deals. The system includes AI-powered sentiment analysis and fake review detection to maintain quality and authenticity.
+
+**Frontend Progress:**
+- Web: Reviews list + create flows, property details review section
+- Mobile: Reviews list + create screens, property details CTA
+- Basic helpful vote/report/reply entry points
 
 **Key Features:**
 - ✅ Rating after viewing/deal (verified purchases only)
@@ -447,7 +452,16 @@ Module 11 implements a comprehensive review and feedback system for the real est
 
 ---
 
-## 13. Conclusion
+## 13. Sample Data & Runbook
+
+- Sample data: `db/sample-data/module11_reviews_sample_data.sql`
+- Loader script: `./scripts/load_module11_sample_data.sh`
+- Web smoke check: `/properties/:id` → Reviews section → create review as buyer
+- Mobile smoke check: Property Details → Reviews → Create Review
+
+---
+
+## 14. Conclusion
 
 Module 11: Reviews & Feedback has been successfully implemented with comprehensive features including AI-powered sentiment analysis and fake review detection. The system enforces critical rules (verified purchase only, self-review prevention, duplicate prevention) and integrates seamlessly with existing modules (Properties, Mediation, Users, Notifications, AI).
 
@@ -464,8 +478,8 @@ Module 11: Reviews & Feedback has been successfully implemented with comprehensi
 
 **Next Steps:**
 1. ✅ **Backend**: Complete (Module 11 ready for production)
-2. ⏳ **Frontend**: Ready for Flutter/React integration
-3. ⏳ **UI Testing**: Ready for frontend UI testing
+2. 🔄 **Frontend**: Web + Mobile review UI flows added (verification in progress)
+3. 🔄 **UI Testing**: Run web/mobile smoke checks and verify review moderation cases
 4. ⏳ **CS Notification**: Implement CS agent notification for flagged reviews (future enhancement)
 5. ⏳ **Review Moderation Dashboard**: Admin/CS dashboard for reviewing flagged reviews (future enhancement)
 

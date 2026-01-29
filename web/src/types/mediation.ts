@@ -17,6 +17,7 @@ export interface InterestExpression {
   buyerId: string;
   propertyId: string;
   matchId?: string | null;
+  chatSessionId?: string | null;
   message?: string | null;
   interestType: InterestType;
   priority: InterestPriority;

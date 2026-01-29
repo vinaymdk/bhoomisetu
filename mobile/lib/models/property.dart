@@ -116,6 +116,7 @@ class Property {
   final DateTime? featuredUntil;
   final int viewsCount;
   final int interestedCount;
+  final bool isLiked;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -145,6 +146,7 @@ class Property {
     this.featuredUntil,
     required this.viewsCount,
     required this.interestedCount,
+    required this.isLiked,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -211,6 +213,7 @@ class Property {
       featuredUntil: json['featuredUntil'] != null ? DateTime.parse(json['featuredUntil'] as String) : null,
       viewsCount: parseInt(json['viewsCount']) ?? 0,
       interestedCount: parseInt(json['interestedCount']) ?? 0,
+      isLiked: json['isLiked'] == true,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );

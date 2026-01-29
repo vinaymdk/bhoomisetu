@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, Between, LessThanOrEqual, MoreThanOrEqual, IsNull } from 'typeorm';
+import { Repository, FindOptionsWhere, Between, LessThanOrEqual, MoreThanOrEqual, IsNull, In } from 'typeorm';
 import { Property, PropertyStatus } from './entities/property.entity';
 import { PropertyImage } from './entities/property-image.entity';
 import { PropertyFeature } from './entities/property-feature.entity';
+import { PropertyLike } from './entities/property-like.entity';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { PropertyFilterDto } from './dto/property-filter.dto';
@@ -13,6 +14,9 @@ import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PropertiesService {
+  private readonly viewCooldownMs = 1000 * 60 * 60;
+  private readonly viewCooldown = new Map<string, number>();
+
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
@@ -20,6 +24,8 @@ export class PropertiesService {
     private readonly propertyImageRepository: Repository<PropertyImage>,
     @InjectRepository(PropertyFeature)
     private readonly propertyFeatureRepository: Repository<PropertyFeature>,
+    @InjectRepository(PropertyLike)
+    private readonly propertyLikeRepository: Repository<PropertyLike>,
     @Inject(forwardRef(() => SubscriptionsService))
     private readonly subscriptionsService: SubscriptionsService,
     private readonly notificationsService: NotificationsService,
@@ -188,16 +194,30 @@ export class PropertiesService {
     queryBuilder.skip(skip).take(limit);
 
     const [properties, total] = await queryBuilder.getManyAndCount();
+    let likedSet = new Set<string>();
+    if (userId && properties.length > 0) {
+      const likes = await this.propertyLikeRepository.find({
+        where: { userId, propertyId: In(properties.map((p) => p.id)) },
+      });
+      likedSet = new Set(likes.map((like) => like.propertyId));
+    }
 
     return {
-      properties: properties.map((p) => PropertyResponseDto.fromEntity(p)),
+      properties: properties.map((p) =>
+        PropertyResponseDto.fromEntity(p, { isLiked: likedSet.has(p.id) }),
+      ),
       total,
       page,
       limit,
     };
   }
 
-  async findOne(id: string, userId?: string, includeDraft: boolean = false): Promise<Property> {
+  async findOne(
+    id: string,
+    userId?: string,
+    includeDraft: boolean = false,
+    viewerKey?: string,
+  ): Promise<Property> {
     const where: FindOptionsWhere<Property> = { id, deletedAt: IsNull() };
 
     // If not owner, only show live properties
@@ -219,8 +239,9 @@ export class PropertiesService {
       throw new ForbiddenException('You do not have access to this property');
     }
 
-    // Increment view count if not owner viewing
-    if (property.sellerId !== userId) {
+    // Increment view count if not owner viewing and within cooldown
+    const shouldIncrement = viewerKey ? this.shouldIncrementView(viewerKey, property.id) : true;
+    if (property.sellerId !== userId && shouldIncrement) {
       property.viewsCount += 1;
       await this.propertyRepository.save(property);
     }
@@ -228,7 +249,43 @@ export class PropertiesService {
     return property;
   }
 
-  async findFeatured(limit: number = 10): Promise<PropertyResponseDto[]> {
+  async isLiked(userId: string | undefined, propertyId: string): Promise<boolean> {
+    if (!userId) return false;
+    const existing = await this.propertyLikeRepository.findOne({
+      where: { userId, propertyId },
+    });
+    return Boolean(existing);
+  }
+
+  async toggleLike(propertyId: string, userId: string): Promise<{ isLiked: boolean; interestedCount: number }> {
+    const property = await this.propertyRepository.findOne({
+      where: { id: propertyId, deletedAt: IsNull() },
+    });
+    if (!property) {
+      throw new NotFoundException('Property not found');
+    }
+
+    const existing = await this.propertyLikeRepository.findOne({
+      where: { propertyId, userId },
+    });
+
+    let isLiked = false;
+    if (existing) {
+      await this.propertyLikeRepository.remove(existing);
+      property.interestedCount = Math.max(0, property.interestedCount - 1);
+    } else {
+      const like = this.propertyLikeRepository.create({ propertyId, userId });
+      await this.propertyLikeRepository.save(like);
+      property.interestedCount += 1;
+      isLiked = true;
+    }
+
+    await this.propertyRepository.save(property);
+
+    return { isLiked, interestedCount: property.interestedCount };
+  }
+
+  async findFeatured(limit: number = 10, userId?: string): Promise<PropertyResponseDto[]> {
     const properties = await this.propertyRepository.find({
       where: {
         status: PropertyStatus.LIVE,
@@ -240,10 +297,10 @@ export class PropertiesService {
       take: limit,
     });
 
-    return properties.map((p) => PropertyResponseDto.fromEntity(p));
+    return this.mapWithLikes(properties, userId);
   }
 
-  async findNew(limit: number = 10): Promise<PropertyResponseDto[]> {
+  async findNew(limit: number = 10, userId?: string): Promise<PropertyResponseDto[]> {
     const properties = await this.propertyRepository.find({
       where: {
         status: PropertyStatus.LIVE,
@@ -254,7 +311,41 @@ export class PropertiesService {
       take: limit,
     });
 
-    return properties.map((p) => PropertyResponseDto.fromEntity(p));
+    return this.mapWithLikes(properties, userId);
+  }
+
+  private async mapWithLikes(properties: Property[], userId?: string): Promise<PropertyResponseDto[]> {
+    let likedSet = new Set<string>();
+    if (userId && properties.length > 0) {
+      const likes = await this.propertyLikeRepository.find({
+        where: { userId, propertyId: In(properties.map((p) => p.id)) },
+      });
+      likedSet = new Set(likes.map((like) => like.propertyId));
+    }
+
+    return properties.map((property) =>
+      PropertyResponseDto.fromEntity(property, { isLiked: likedSet.has(property.id) }),
+    );
+  }
+
+  private shouldIncrementView(viewerKey: string, propertyId: string): boolean {
+    const now = Date.now();
+    const key = `${viewerKey}:${propertyId}`;
+    const lastViewedAt = this.viewCooldown.get(key);
+    if (lastViewedAt && now - lastViewedAt < this.viewCooldownMs) {
+      return false;
+    }
+    this.viewCooldown.set(key, now);
+
+    if (this.viewCooldown.size > 10000) {
+      for (const [entryKey, timestamp] of this.viewCooldown.entries()) {
+        if (now - timestamp > this.viewCooldownMs) {
+          this.viewCooldown.delete(entryKey);
+        }
+      }
+    }
+
+    return true;
   }
 
   async update(id: string, userId: string, updateDto: UpdatePropertyDto): Promise<PropertyResponseDto> {

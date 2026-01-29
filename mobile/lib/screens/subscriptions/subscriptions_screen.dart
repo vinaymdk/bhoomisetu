@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/subscription.dart';
 import '../../services/payments_service.dart';
 import '../../services/subscriptions_service.dart';
+import '../../widgets/bottom_navigation.dart';
+import '../../providers/auth_provider.dart';
+import '../home/home_screen.dart';
+import '../search/search_screen.dart';
+import '../properties/my_listings_screen.dart';
+import '../properties/saved_properties_screen.dart';
+import '../buyer_requirements/buyer_requirements_screen.dart';
+import '../customer_service/cs_dashboard_screen.dart';
 import 'checkout_screen.dart';
 import 'payments_history_screen.dart';
 import 'subscription_management_screen.dart';
@@ -21,6 +30,7 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
   String _activeTab = 'all';
   bool _loading = true;
   String? _error;
+  BottomNavItem _currentNavItem = BottomNavItem.home;
 
   @override
   void initState() {
@@ -63,6 +73,77 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
         .where((entry) => entry.value == true)
         .map((entry) => entry.key.replaceAll('_', ' '))
         .toList();
+  }
+
+  void _handleNavTap(BottomNavItem item) {
+    setState(() {
+      _currentNavItem = item;
+    });
+    switch (item) {
+      case BottomNavItem.home:
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+        break;
+      case BottomNavItem.search:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SearchScreen()),
+        );
+        break;
+      case BottomNavItem.list:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canAccess = roles.contains('seller') || roles.contains('agent');
+        if (!canAccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Seller/Agent role required to list properties')),
+          );
+          return;
+        }
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyListingsScreen()),
+        );
+        break;
+      case BottomNavItem.saved:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SavedPropertiesScreen()),
+        );
+        break;
+      case BottomNavItem.subscriptions:
+        break;
+      case BottomNavItem.payments:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PaymentsHistoryScreen()),
+        );
+        break;
+      case BottomNavItem.profile:
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final roles = authProvider.roles;
+        final canBuy = roles.contains('buyer') || roles.contains('admin');
+        if (canBuy) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BuyerRequirementsScreen()),
+          );
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile screen coming soon')),
+        );
+        break;
+      case BottomNavItem.cs:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CsDashboardScreen()),
+        );
+        break;
+    }
   }
 
   @override
@@ -208,6 +289,10 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
                     ],
                   ),
                 ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: _currentNavItem,
+        onTap: _handleNavTap,
+      ),
     );
   }
 

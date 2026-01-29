@@ -60,6 +60,23 @@ export class ReviewsController {
   }
 
   /**
+   * Get current user's reviews with filters (authenticated)
+   */
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  async findMine(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Query() filterDto: ReviewFilterDto,
+  ): Promise<{
+    reviews: ReviewResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    return this.reviewsService.findAll({ ...filterDto, reviewerId: currentUser.userId }, currentUser.userId);
+  }
+
+  /**
    * Get a single review by ID (public endpoint, but only approved reviews visible)
    */
   @Get(':id')

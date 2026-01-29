@@ -20,6 +20,16 @@ export const PropertyCard = ({ property, showFeaturedBadge = true }: PropertyCar
     return `₹${price.toLocaleString('en-IN')}`;
   };
 
+  const formatCount = (count: number) => {
+    if (count >= 1_000_000) {
+      return `${(count / 1_000_000).toFixed(1)}M`;
+    }
+    if (count >= 1_000) {
+      return `${(count / 1_000).toFixed(1)}k`;
+    }
+    return `${count}`;
+  };
+
   const location = `${property.location.city}, ${property.location.state}`;
 
   return (
@@ -71,9 +81,12 @@ export const PropertyCard = ({ property, showFeaturedBadge = true }: PropertyCar
         
         <div className="property-card-footer">
           <span className="property-card-type">{property.propertyType}</span>
-          {property.viewsCount > 0 && (
-            <span className="property-card-views">{property.viewsCount} views</span>
-          )}
+          <div className="property-card-metrics">
+            <span className="property-card-likes">♥ {formatCount(property.interestedCount)} likes</span>
+            {property.viewsCount > 0 && (
+              <span className="property-card-views">{formatCount(property.viewsCount)} views</span>
+            )}
+          </div>
         </div>
       </div>
     </Link>

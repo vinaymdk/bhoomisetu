@@ -10,10 +10,12 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { PropertiesService } from './properties.service';
 import { CreatePropertyDto } from './dto/create-property.dto';
@@ -45,23 +47,41 @@ export class PropertiesController {
   }
 
   @Get()
-  async findAll(@Query() filterDto: PropertyFilterDto): Promise<{
+  @UseGuards(OptionalJwtAuthGuard)
+  async findAll(
+    @Query() filterDto: PropertyFilterDto,
+    @CurrentUser() currentUser?: CurrentUserData,
+  ): Promise<{
     properties: PropertyResponseDto[];
     total: number;
     page: number;
     limit: number;
   }> {
-    return this.propertiesService.findAll(filterDto);
+    return this.propertiesService.findAll(filterDto, currentUser?.userId);
   }
 
   @Get('featured')
-  async findFeatured(@Query('limit') limit?: number): Promise<PropertyResponseDto[]> {
-    return this.propertiesService.findFeatured(limit ? parseInt(limit.toString(), 10) : 10);
+  @UseGuards(OptionalJwtAuthGuard)
+  async findFeatured(
+    @Query('limit') limit?: number,
+    @CurrentUser() currentUser?: CurrentUserData,
+  ): Promise<PropertyResponseDto[]> {
+    return this.propertiesService.findFeatured(
+      limit ? parseInt(limit.toString(), 10) : 10,
+      currentUser?.userId,
+    );
   }
 
   @Get('new')
-  async findNew(@Query('limit') limit?: number): Promise<PropertyResponseDto[]> {
-    return this.propertiesService.findNew(limit ? parseInt(limit.toString(), 10) : 10);
+  @UseGuards(OptionalJwtAuthGuard)
+  async findNew(
+    @Query('limit') limit?: number,
+    @CurrentUser() currentUser?: CurrentUserData,
+  ): Promise<PropertyResponseDto[]> {
+    return this.propertiesService.findNew(
+      limit ? parseInt(limit.toString(), 10) : 10,
+      currentUser?.userId,
+    );
   }
 
   @Get('my')
@@ -79,10 +99,26 @@ export class PropertiesController {
   async findOne(
     @Param('id') id: string,
     @CurrentUser() currentUser?: CurrentUserData,
+    @Req() req?: Request,
   ): Promise<PropertyResponseDto> {
     const includeDraft = !!currentUser?.userId;
-    const property = await this.propertiesService.findOne(id, currentUser?.userId, includeDraft);
-    return PropertyResponseDto.fromEntity(property);
+    const viewerKey = currentUser?.userId || req?.ip || req?.socket?.remoteAddress || undefined;
+    const property = await this.propertiesService.findOne(id, currentUser?.userId, includeDraft, viewerKey);
+    const isLiked = await this.propertiesService.isLiked(currentUser?.userId, property.id);
+    return PropertyResponseDto.fromEntity(property, { isLiked });
+  }
+
+  /**
+   * Toggle like for a property
+   * POST /api/properties/:id/like
+   */
+  @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
+  async toggleLike(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: CurrentUserData,
+  ): Promise<{ isLiked: boolean; interestedCount: number }> {
+    return this.propertiesService.toggleLike(id, currentUser.userId);
   }
 
   @Patch(':id')

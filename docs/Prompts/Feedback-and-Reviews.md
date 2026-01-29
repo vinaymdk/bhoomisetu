@@ -1,7 +1,7 @@
 Title: Module 11 – Reviews & Feedback (Backend Completion Summary)
 
 Module: Reviews & Feedback  
-Status: COMPLETE (Backend)
+Status: COMPLETE (Backend) + IN PROGRESS (Frontend)
 
 Overview:
 Module 11 delivers a robust, AI-powered Reviews & Feedback system with verified-only reviews, sentiment analysis, fake review detection, moderation workflows, and deep integration with core platform modules.
@@ -31,6 +31,13 @@ Backend Implementation:
 - Verified purchase validation through mediation and chat data
 - Moderation logic driven by AI confidence scores
 - Privacy enforcement and role-based access control
+
+Frontend Implementation (Web + Mobile):
+- Reviews list and create flows (property + seller scope)
+- Property details review section with deep link to reviews
+- Helpful vote and report support
+- Seller/agent reply entry point
+- Review models + services added on both clients
 
 Database Schema:
 - reviews:
@@ -63,3 +70,9 @@ Module Integrations:
 
 Outcome:
 This module ensures trustworthy, moderated, and AI-validated feedback, improving platform credibility and decision-making for buyers, sellers, and agents.
+
+Runbook:
+- Run migrations (Module 11 schema already present in `db/migrations/20260109_reviews_feedback_schema.sql`)
+- Optional sample data: `./scripts/load_module11_sample_data.sh` (or run SQL in `db/sample-data/module11_reviews_sample_data.sql`)
+- Web smoke check: open `/properties/:id` and `/reviews`, create a review as buyer
+- Mobile smoke check: open Property Details → Reviews → Create Review

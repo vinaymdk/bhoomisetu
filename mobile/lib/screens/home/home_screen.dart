@@ -22,6 +22,7 @@ import '../subscriptions/subscriptions_screen.dart';
 import '../subscriptions/payments_history_screen.dart';
 import '../../widgets/notifications_icon_button.dart';
 import '../../widgets/app_drawer.dart';
+import '../properties/properties_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -369,7 +370,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      // TODO: Navigate to all new properties
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PropertiesListScreen(
+                                            mode: PropertyListMode.newest,
+                                            title: 'New Properties',
+                                            initialTab: BottomNavItem.home,
+                                          ),
+                                        ),
+                                      );
                                     },
                                     child: const Text('See All'),
                                   ),
@@ -437,7 +447,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      // TODO: Navigate to all featured properties
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PropertiesListScreen(
+                                            mode: PropertyListMode.featured,
+                                            title: 'Featured Properties',
+                                            initialTab: BottomNavItem.home,
+                                          ),
+                                        ),
+                                      );
                                     },
                                     child: const Text('See All'),
                                   ),

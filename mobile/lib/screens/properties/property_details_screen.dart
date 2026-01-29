@@ -14,6 +14,10 @@ import '../subscriptions/subscriptions_screen.dart';
 import '../subscriptions/payments_history_screen.dart';
 import '../../services/saved_properties_service.dart';
 import '../../services/mediation_service.dart';
+import '../reviews/reviews_list_screen.dart';
+import '../reviews/create_review_screen.dart';
+import '../../services/reviews_service.dart';
+import '../../models/review.dart';
 
 class PropertyDetailsScreen extends StatefulWidget {
   final String propertyId;
@@ -32,6 +36,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   final PropertiesService _service = PropertiesService();
   final SavedPropertiesService _savedService = SavedPropertiesService();
   final MediationService _mediationService = MediationService();
+  final ReviewsService _reviewsService = ReviewsService();
   Property? _property;
   bool _loading = true;
   String? _error;
@@ -39,6 +44,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   final PageController _pageController = PageController();
   bool _isSaved = false;
   String _userId = 'guest';
+  bool _interestSubmitted = false;
+  Review? _existingReview;
+  bool _isLiked = false;
+  int _likeCount = 0;
 
   @override
   void initState() {
@@ -62,9 +71,27 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     try {
       final property = await _service.getPropertyById(widget.propertyId);
       final isSaved = await _savedService.isSaved(_userId, widget.propertyId);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final isBuyer = authProvider.roles.contains('buyer') || authProvider.roles.contains('admin');
+      if (isBuyer) {
+        try {
+          final response = await _mediationService.getMyInterests(propertyId: widget.propertyId, limit: 1, page: 1);
+          _interestSubmitted = response.interests.isNotEmpty;
+        } catch (_) {
+          _interestSubmitted = false;
+        }
+        try {
+          final reviewResponse = await _reviewsService.listMine(propertyId: widget.propertyId, limit: 1, page: 1);
+          _existingReview = reviewResponse.reviews.isNotEmpty ? reviewResponse.reviews.first : null;
+        } catch (_) {
+          _existingReview = null;
+        }
+      }
       setState(() {
         _property = property;
         _isSaved = isSaved;
+        _isLiked = property.isLiked;
+        _likeCount = property.interestedCount;
       });
     } catch (e) {
       setState(() {
@@ -94,6 +121,8 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     final property = _property!;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isBuyer = authProvider.roles.contains('buyer') || authProvider.roles.contains('admin');
+    final canLike = authProvider.isAuthenticated;
+    final canEditReview = _existingReview == null || ['pending', 'flagged'].contains(_existingReview!.status);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Property Details'),
@@ -101,7 +130,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: Icon(_isSaved ? Icons.favorite : Icons.favorite_border),
+            icon: Icon(_isSaved ? Icons.bookmark : Icons.bookmark_border),
             onPressed: () async {
               final next = await _savedService.toggle(_userId, widget.propertyId);
               if (mounted) {
@@ -118,6 +147,36 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Back to properties'),
+                ),
+                const SizedBox(width: 12),
+                                Text(
+                                  '${_formatCount(_likeCount)} likes',
+                                  style: const TextStyle(color: Colors.black54),
+                                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    _isLiked ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.redAccent,
+                  ),
+                  onPressed: () async {
+                    if (!canLike) return;
+                    final response = await _service.toggleLike(property.id);
+                    if (!mounted) return;
+                    setState(() {
+                      _isLiked = response['isLiked'] == true;
+                      _likeCount = (response['interestedCount'] as num?)?.toInt() ?? _likeCount;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(
               property.title,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -196,7 +255,76 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               const SizedBox(height: 6),
               Text(property.description!),
             ],
-            if (isBuyer) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Reviews & Feedback', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Verified feedback to help evaluate this listing.',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ReviewsListScreen(
+                                propertyId: property.id,
+                                revieweeId: property.sellerId,
+                                title: 'Property Reviews',
+                                initialTab: widget.initialTab,
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text('View Reviews'),
+                      ),
+                      if (isBuyer)
+                        ElevatedButton(
+                          onPressed: (canEditReview)
+                              ? () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => CreateReviewScreen(
+                                  propertyId: property.id,
+                                  revieweeId: property.sellerId,
+                                  reviewId: _existingReview?.id,
+                                ),
+                              ),
+                            );
+                            await _load();
+                          }
+                              : null,
+                          child: Text(
+                            _existingReview != null
+                                ? (canEditReview ? 'Edit Review' : 'Review submitted')
+                                : 'Write Review',
+                          ),
+                        ),
+                      if (isBuyer && _existingReview != null && !canEditReview)
+                        Chip(
+                          label: const Text('Review submitted'),
+                          backgroundColor: Colors.green.shade50,
+                          labelStyle: const TextStyle(color: Colors.green),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (isBuyer && !_interestSubmitted) ...[
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -223,6 +351,21 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       child: const Text('Submit Interest'),
                     ),
                   ],
+                ),
+              ),
+            ],
+            if (isBuyer && _interestSubmitted) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade100),
+                ),
+                child: const Text(
+                  'Your interest request was submitted. Customer Service will contact you shortly.',
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -296,6 +439,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                   });
                   if (context.mounted) {
                     Navigator.pop(context);
+                    setState(() => _interestSubmitted = true);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Interest submitted successfully.')),
                     );
@@ -392,6 +536,16 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         ],
       ),
     );
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    }
+    if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}k';
+    }
+    return count.toString();
   }
 
   void _handleNavTap(BottomNavItem item) {

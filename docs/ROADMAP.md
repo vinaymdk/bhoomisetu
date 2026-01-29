@@ -55,7 +55,7 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 
 ### ✅ Module 2: Landing / Home (COMPLETED)
 
-**Status**: ✅ **COMPLETE** (Backend)
+**Status**: ✅ **COMPLETE** (Backend) + 🔄 **FRONTEND IN PROGRESS**
 
 **Components:**
 - ✅ Premium Subscription Banner (backend support)
@@ -560,6 +560,12 @@ Real Estate Mediation Platform with AI-first architecture. Buyer and Seller neve
 - ✅ `POST /api/reviews/:id/reply` - Create reply (authenticated, Seller/Agent role)
 - ✅ `GET /api/reviews/property/:propertyId` - Get reviews for property (public)
 - ✅ `GET /api/reviews/seller/:revieweeId` - Get reviews for seller/agent (public)
+
+**Frontend Implementation (Web + Mobile):**
+- 🔄 Web: Reviews list, review creation, property details review section
+- 🔄 Mobile: Reviews list, review creation, property details review CTA
+- 🔄 Helpful votes and reports UI (basic)
+- 🔄 Seller/agent reply entry point
 
 **Integration:**
 - ✅ Works with Properties module - Reviews linked to properties, only LIVE properties can be reviewed

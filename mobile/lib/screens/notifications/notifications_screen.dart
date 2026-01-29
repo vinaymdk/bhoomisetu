@@ -140,7 +140,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to mark all notifications as read.')),
+          const SnackBar(
+              content: Text('Failed to mark all notifications as read.')),
         );
       }
     }
@@ -255,16 +256,18 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       if (_isSupportUser) {
         final selected = _chatUsers.firstWhere(
           (user) => user['id'] == _selectedChatUser,
-          orElse: () => {},
+          orElse: () => <String, dynamic>{},
         );
-        final sessionId = selected['sessionId']?.toString() ?? _selectedChatUser;
+        final sessionId =
+            selected['sessionId']?.toString() ?? _selectedChatUser;
         session = SupportChatSession(
           id: sessionId,
           supportRole: selected['role']?.toString() ?? 'buyer',
           status: 'open',
         );
       } else {
-        session = await _supportChatService.getOrCreateSession(_selectedChatUser);
+        session =
+            await _supportChatService.getOrCreateSession(_selectedChatUser);
       }
       _activeSession = session;
       final messages = await _supportChatService.listMessages(session.id);
@@ -278,7 +281,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       await _supportChatService.markSessionRead(session.id);
       setState(() {
         if (_isSupportUser) {
-          final index = _chatUsers.indexWhere((item) => item['id'] == _selectedChatUser);
+          final index =
+              _chatUsers.indexWhere((item) => item['id'] == _selectedChatUser);
           if (index >= 0) {
             _chatUsers[index]['unreadCount'] = 0;
           }
@@ -299,7 +303,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userRoles = authProvider.roles;
-      _isSupportUser = userRoles.contains('customer_service') || userRoles.contains('admin');
+      _isSupportUser =
+          userRoles.contains('customer_service') || userRoles.contains('admin');
       List<Map<String, dynamic>> nextUsers = [];
       if (_isSupportUser) {
         final sessions = await _supportChatService.listAdminSessions();
@@ -339,7 +344,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   'id': role,
                   'name': _roleLabels[role] ?? role,
                   'role': role,
-                  'email': role == 'customer_service' ? 'support@bhoomisetu.com' : null,
+                  'email': role == 'customer_service'
+                      ? 'support@bhoomisetu.com'
+                      : null,
                 })
             .toList();
         if (roles.isEmpty) {
@@ -361,7 +368,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       }
       setState(() {
         _chatUsers = nextUsers;
-        if (nextUsers.isNotEmpty && !_chatUsers.any((u) => u['id'] == _selectedChatUser)) {
+        if (nextUsers.isNotEmpty &&
+            !_chatUsers.any((u) => u['id'] == _selectedChatUser)) {
           _selectedChatUser = nextUsers.first['id'] ?? '';
         }
         if (nextUsers.isEmpty) {
@@ -375,20 +383,36 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userRoles = authProvider.roles;
-      final isSupport = userRoles.contains('customer_service') || userRoles.contains('admin');
-      final canChatSupport =
-          userRoles.contains('buyer') || userRoles.contains('seller') || userRoles.contains('agent') || userRoles.contains('admin');
+      final isSupport =
+          userRoles.contains('customer_service') || userRoles.contains('admin');
+      final canChatSupport = userRoles.contains('buyer') ||
+          userRoles.contains('seller') ||
+          userRoles.contains('agent') ||
+          userRoles.contains('admin');
       final fallbackUsers = isSupport
           ? [
-              {'id': 'buyer', 'name': _roleLabels['buyer'] ?? 'Buyer Support', 'role': 'buyer'},
-              {'id': 'seller', 'name': _roleLabels['seller'] ?? 'Seller Support', 'role': 'seller'},
-              {'id': 'agent', 'name': _roleLabels['agent'] ?? 'Agent Support', 'role': 'agent'},
+              {
+                'id': 'buyer',
+                'name': _roleLabels['buyer'] ?? 'Buyer Support',
+                'role': 'buyer'
+              },
+              {
+                'id': 'seller',
+                'name': _roleLabels['seller'] ?? 'Seller Support',
+                'role': 'seller'
+              },
+              {
+                'id': 'agent',
+                'name': _roleLabels['agent'] ?? 'Agent Support',
+                'role': 'agent'
+              },
             ]
           : canChatSupport
               ? [
                   {
                     'id': 'customer_service',
-                    'name': _roleLabels['customer_service'] ?? 'Customer Service',
+                    'name':
+                        _roleLabels['customer_service'] ?? 'Customer Service',
                     'role': 'customer_service',
                     'email': 'support@bhoomisetu.com'
                   },
@@ -396,7 +420,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               : [];
       setState(() {
         _chatUsers = fallbackUsers.cast<Map<String, dynamic>>();
-        _selectedChatUser = fallbackUsers.isNotEmpty ? fallbackUsers.first['id'] ?? '' : '';
+        _selectedChatUser =
+            fallbackUsers.isNotEmpty ? fallbackUsers.first['id'] ?? '' : '';
       });
       if (_selectedChatUser.isNotEmpty) {
         _ensureChatSession();
@@ -437,10 +462,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         if (!mounted) return;
         setState(() {
           _chatUnreadTotal = response['total'] as int? ?? 0;
-          _unreadByRole = Map<String, int>.from(
-              (response['byRole'] as Map?)?.map((key, value) =>
+          _unreadByRole = Map<String, int>.from((response['byRole'] as Map?)
+                  ?.map((key, value) =>
                       MapEntry(key.toString(), (value as num).toInt())) ??
-                  {});
+              {});
         });
       }
     } catch (_) {}
@@ -464,17 +489,16 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       if (data is! Map) return;
       final message = data['message'];
       if (message is! Map) return;
-      final parsed = SupportChatMessage.fromJson(
-          Map<String, dynamic>.from(message));
+      final parsed =
+          SupportChatMessage.fromJson(Map<String, dynamic>.from(message));
       if (!mounted) return;
       setState(() {
         final list = _chatMessages[parsed.sessionId] ?? [];
         final index = list.indexWhere((item) => item.id == parsed.id);
         List<SupportChatMessage> next;
         if (index >= 0) {
-          next = list
-              .map((item) => item.id == parsed.id ? parsed : item)
-              .toList();
+          next =
+              list.map((item) => item.id == parsed.id ? parsed : item).toList();
         } else {
           final authProvider =
               Provider.of<AuthProvider>(context, listen: false);
@@ -487,8 +511,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             next = list
                 .asMap()
                 .entries
-                .map((entry) =>
-                    entry.key == sendingIndex ? parsed : entry.value)
+                .map(
+                    (entry) => entry.key == sendingIndex ? parsed : entry.value)
                 .toList();
           } else {
             next = [...list, parsed];
@@ -512,7 +536,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               _unreadByRole[_selectedChatUser] = 0;
             });
           }
-          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollChatToBottom());
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _scrollChatToBottom());
         } else {
           setState(() => _activeUnseenCount += 1);
         }
@@ -541,8 +566,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       final rolesOnlineRaw = data['rolesOnline'];
       if (rolesOnlineRaw is Map) {
         setState(() {
-          _rolesOnline = Map<String, bool>.from(rolesOnlineRaw.map(
-              (key, value) => MapEntry(key.toString(), value == true)));
+          _rolesOnline = Map<String, bool>.from(rolesOnlineRaw
+              .map((key, value) => MapEntry(key.toString(), value == true)));
         });
       }
     });
@@ -559,7 +584,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
 
   void _scrollChatToBottom({bool animated = true}) {
     if (!_chatScrollController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollChatToBottom(animated: animated));
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _scrollChatToBottom(animated: animated));
       return;
     }
     final target = _chatScrollController.position.maxScrollExtent;
@@ -647,7 +673,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       if (!_isSupportUser) {
         _activeUnseenCount = 0;
         _unreadByRole[_selectedChatUser] = 0;
-        _chatUnreadTotal = _unreadByRole.values.fold(0, (sum, value) => sum + value);
+        _chatUnreadTotal =
+            _unreadByRole.values.fold(0, (sum, value) => sum + value);
       }
     });
     _chatFocusNode.requestFocus();
@@ -665,7 +692,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             .map((msg) => msg.id == optimistic.id ? saved : msg)
             .toList();
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollChatToBottom());
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _scrollChatToBottom());
       Future.delayed(const Duration(milliseconds: 120), () {
         if (mounted) {
           _scrollChatToBottom();
@@ -793,7 +821,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         : isUser
             ? Colors.blue
             : (isUnread ? Colors.orange.shade100 : Colors.grey.shade200);
-    final textColor = isDeleted ? Colors.grey.shade700 : (isUser ? Colors.white : Colors.black87);
+    final textColor = isDeleted
+        ? Colors.grey.shade700
+        : (isUser ? Colors.white : Colors.black87);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -805,11 +835,13 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             CircleAvatar(
               radius: 14,
               backgroundColor: Colors.blueGrey.shade100,
-              backgroundImage: msg.senderAvatarUrl != null && msg.senderAvatarUrl!.isNotEmpty
-                  ? NetworkImage(msg.senderAvatarUrl!)
-                  : null,
+              backgroundImage:
+                  msg.senderAvatarUrl != null && msg.senderAvatarUrl!.isNotEmpty
+                      ? NetworkImage(msg.senderAvatarUrl!)
+                      : null,
               child: msg.senderAvatarUrl == null || msg.senderAvatarUrl!.isEmpty
-                  ? Text(msg.senderName.substring(0, 1), style: const TextStyle(fontSize: 12))
+                  ? Text(msg.senderName.substring(0, 1),
+                      style: const TextStyle(fontSize: 12))
                   : null,
             ),
           if (!isUser) const SizedBox(width: 8),
@@ -831,11 +863,15 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        msg.isDeleted ? 'This message was deleted' : msg.content,
+                        msg.isDeleted
+                            ? 'This message was deleted'
+                            : msg.content,
                         style: TextStyle(
                           color: textColor,
                           fontSize: 13,
-                          fontStyle: msg.isDeleted ? FontStyle.italic : FontStyle.normal,
+                          fontStyle: msg.isDeleted
+                              ? FontStyle.italic
+                              : FontStyle.normal,
                         ),
                       ),
                     ),
@@ -877,9 +913,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             CircleAvatar(
               radius: 14,
               backgroundColor: Colors.blue.shade50,
-              backgroundImage: msg.senderAvatarUrl != null && msg.senderAvatarUrl!.isNotEmpty
-                  ? NetworkImage(msg.senderAvatarUrl!)
-                  : null,
+              backgroundImage:
+                  msg.senderAvatarUrl != null && msg.senderAvatarUrl!.isNotEmpty
+                      ? NetworkImage(msg.senderAvatarUrl!)
+                      : null,
               child: msg.senderAvatarUrl == null || msg.senderAvatarUrl!.isEmpty
                   ? const Text('Y', style: TextStyle(fontSize: 12))
                   : null,
@@ -1063,62 +1100,73 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               : _chatUsers.map((user) {
                   final isSelected = user['id'] == _selectedChatUser;
                   return ListTile(
-              leading: CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.blueGrey.shade100,
-                child: Text((user['name'] ?? 'S').substring(0, 1),
-                    style: const TextStyle(fontSize: 12)),
-              ),
-              title: Text(user['name'] ?? ''),
-              subtitle: Row(
-                children: [
-                  Text(user['email'] ?? user['role'] ?? ''),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _rolesOnline[user['id']] == true
-                          ? Colors.green
-                          : Colors.black26,
-                      shape: BoxShape.circle,
+                    leading: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.blueGrey.shade100,
+                      child: Text((user['name'] ?? 'S').substring(0, 1),
+                          style: const TextStyle(fontSize: 12)),
                     ),
-                  ),
-                ],
-              ),
-              trailing: ((user['unreadCount'] as int?) ?? _unreadByRole[user['role']] ?? 0) > 0
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        ((user['unreadCount'] as int?) ?? _unreadByRole[user['role']] ?? 0).toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                    )
-                  : null,
-              selected: isSelected,
-              selectedColor: Theme.of(context).colorScheme.primary,
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => _selectedChatUser = user['id'] ?? 'customer_service');
-                _ensureChatSession();
-              },
-            );
-          }).toList(),
+                    title: Text(user['name'] ?? ''),
+                    subtitle: Row(
+                      children: [
+                        Text(user['email'] ?? user['role'] ?? ''),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _rolesOnline[user['id']] == true
+                                ? Colors.green
+                                : Colors.black26,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: ((user['unreadCount'] as int?) ??
+                                _unreadByRole[user['role']] ??
+                                0) >
+                            0
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              ((user['unreadCount'] as int?) ??
+                                      _unreadByRole[user['role']] ??
+                                      0)
+                                  .toString(),
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 11),
+                            ),
+                          )
+                        : null,
+                    selected: isSelected,
+                    selectedColor: Theme.of(context).colorScheme.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() =>
+                          _selectedChatUser = user['id'] ?? 'customer_service');
+                      _ensureChatSession();
+                    },
+                  );
+                }).toList(),
         ),
       ),
     );
   }
 
   Widget _buildChatPanel() {
+    // HARD GUARD: no users at all
     if (_chatUsers.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
@@ -1129,11 +1177,28 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         ),
       );
     }
-    final selectedUser = _chatUsers.firstWhere(
-      (user) => user['id'] == _selectedChatUser,
-      orElse: () => _chatUsers.first,
-    );
-    final selectedLabel = selectedUser['name'] ?? 'Support';
+
+    // SAFE lookup (NO firstWhere crash)
+    Map<String, dynamic>? selectedUser;
+    for (final user in _chatUsers) {
+      if (user['id'] == _selectedChatUser) {
+        selectedUser = user;
+        break;
+      }
+    }
+
+    // FALLBACK if selected user vanished (async/socket case)
+    selectedUser ??= _chatUsers.isNotEmpty ? _chatUsers.first : null;
+
+    if (selectedUser == null) {
+      return const SizedBox.shrink();
+    }
+
+    final selectedLabel =
+        selectedUser['name']?.toString().trim().isNotEmpty == true
+            ? selectedUser['name']
+            : 'Support';
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Card(
@@ -1147,8 +1212,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.blueGrey.shade100,
-                    child: Text(selectedLabel.substring(0, 1),
-                        style: const TextStyle(fontSize: 12)),
+                    child: Text(
+                      selectedLabel.substring(0, 1),
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -1170,7 +1237,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   if (_activeUnseenCount > 0) ...[
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade200,
                         borderRadius: BorderRadius.circular(12),
@@ -1199,7 +1267,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     physics: const BouncingScrollPhysics(),
                     children: _chatLoading
-                        ? [const Center(child: CircularProgressIndicator())]
+                        ? const [Center(child: CircularProgressIndicator())]
                         : _buildChatItems(context),
                   ),
                   if (_showChatScrollDown)
@@ -1219,30 +1287,18 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               child: Stack(
                 alignment: Alignment.centerRight,
                 children: [
-                  RawKeyboardListener(
-                    focusNode: FocusNode(),
-                    onKey: (event) {
-                      if (event is RawKeyDownEvent &&
-                          event.logicalKey == LogicalKeyboardKey.enter &&
-                          !event.isShiftPressed) {
-                        _sendChatMessage();
-                      }
-                    },
-                    child: TextField(
-                      controller: _chatController,
-                      focusNode: _chatFocusNode,
-                      minLines: 1,
-                      maxLines: 4,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      onChanged: (_) => _scheduleTyping(),
-                      decoration: InputDecoration(
-                        hintText: 'Type your message here...',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        contentPadding:
-                            const EdgeInsets.fromLTRB(12, 12, 44, 12),
-                      ),
+                  TextField(
+                    controller: _chatController,
+                    focusNode: _chatFocusNode,
+                    minLines: 1,
+                    maxLines: 4,
+                    keyboardType: TextInputType.multiline,
+                    onChanged: (_) => _scheduleTyping(),
+                    decoration: InputDecoration(
+                      hintText: 'Type your message here...',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.fromLTRB(12, 12, 44, 12),
                     ),
                   ),
                   IconButton(
@@ -1296,14 +1352,16 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                         if (_chatUnreadTotal > 0 && _tabController?.index != 1)
                           Container(
                             margin: const EdgeInsets.only(left: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.redAccent,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               _chatUnreadTotal.toString(),
-                              style: const TextStyle(fontSize: 11, color: Colors.white),
+                              style: const TextStyle(
+                                  fontSize: 11, color: Colors.white),
                             ),
                           ),
                       ],

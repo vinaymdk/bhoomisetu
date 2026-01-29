@@ -56,6 +56,11 @@ export const propertiesService = {
     return response.data;
   },
 
+  async toggleLike(propertyId: string): Promise<{ isLiked: boolean; interestedCount: number }> {
+    const response = await apiClient.post(`/properties/${propertyId}/like`);
+    return response.data;
+  },
+
   // Geocode location
   async geocodeLocation(query: string): Promise<any | null> {
     if (!query || query.trim().length < 2) return null;

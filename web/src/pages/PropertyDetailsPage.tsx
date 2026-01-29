@@ -1,16 +1,19 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { propertiesService } from '../services/properties.service';
 import type { Property } from '../types/property';
 import { useAuth } from '../context/AuthContext';
 import { savedPropertiesService } from '../services/savedProperties.service';
 import { mediationService } from '../services/mediation.service';
+import { ReviewList } from '../components/reviews/ReviewList';
+import { reviewsService } from '../services/reviews.service';
+import type { Review } from '../types/review';
 import './PropertyDetailsPage.css';
 
 export const PropertyDetailsPage = () => {
   const { id } = useParams();
-  const { user } = useAuth();
-  const { roles } = useAuth();
+  const navigate = useNavigate();
+  const { user, roles } = useAuth();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +23,26 @@ export const PropertyDetailsPage = () => {
   const [priority, setPriority] = useState('normal');
   const [interestStatus, setInterestStatus] = useState<string | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+  const [interestSubmitted, setInterestSubmitted] = useState(false);
+  const [existingReview, setExistingReview] = useState<Review | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likeLoading, setLikeLoading] = useState(false);
+
+  const isBuyer = useMemo(() => roles.includes('buyer'), [roles]);
+  const canEditReview = useMemo(
+    () => Boolean(existingReview && ['pending', 'flagged'].includes(existingReview.status)),
+    [existingReview],
+  );
+  const formatCount = (count: number) => {
+    if (count >= 1_000_000) {
+      return `${(count / 1_000_000).toFixed(1)}M`;
+    }
+    if (count >= 1_000) {
+      return `${(count / 1_000).toFixed(1)}k`;
+    }
+    return `${count}`;
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -29,8 +52,28 @@ export const PropertyDetailsPage = () => {
       try {
         const data = await propertiesService.getPropertyById(id);
         setProperty(data);
+        setIsLiked(Boolean(data.isLiked));
+        setLikeCount(data.interestedCount);
         if (user?.id) {
           setIsSaved(savedPropertiesService.isSaved(user.id, data.id));
+        }
+        if (user?.id && isBuyer) {
+          try {
+            const interestResponse = await mediationService.getMyInterests({
+              propertyId: data.id,
+              limit: 1,
+              page: 1,
+            });
+            setInterestSubmitted((interestResponse.interests ?? []).length > 0);
+          } catch {
+            setInterestSubmitted(false);
+          }
+          try {
+            const myReviews = await reviewsService.listMine({ propertyId: data.id, limit: 1, page: 1 });
+            setExistingReview(myReviews.reviews?.[0] ?? null);
+          } catch {
+            setExistingReview(null);
+          }
         }
       } catch (e: any) {
         setError(e.response?.data?.message || 'Failed to load property.');
@@ -39,7 +82,7 @@ export const PropertyDetailsPage = () => {
       }
     };
     void load();
-  }, [id, user?.id]);
+  }, [id, user?.id, isBuyer]);
 
   if (loading) {
     return <div className="property-details-page">Loading property...</div>;
@@ -53,20 +96,48 @@ export const PropertyDetailsPage = () => {
     <div className="property-details-page">
       <div className="property-details-container">
         <div className="property-details-header">
-          <h1>{property.title}</h1>
+          <div className="property-details-title">
+            <h1>{property.title}</h1>
+            <button className="property-back-btn" type="button" onClick={() => navigate('/properties')}>
+              Back to properties
+            </button>
+          </div>
           <span className={`status-badge status-${property.status}`}>{property.status.replaceAll('_', ' ')}</span>
         </div>
-        {user?.id && (
-          <button
-            className={`property-save-btn ${isSaved ? 'saved' : ''}`}
-            onClick={() => {
-              const next = savedPropertiesService.toggle(user.id, property.id);
-              setIsSaved(next);
-            }}
-          >
-            {isSaved ? '★ Saved' : '☆ Save'}
-          </button>
-        )}
+        <div className="property-actions-row">
+          {user?.id && (
+            <button
+              className={`property-save-btn ${isSaved ? 'saved' : ''}`}
+              onClick={() => {
+                const next = savedPropertiesService.toggle(user.id, property.id);
+                setIsSaved(next);
+              }}
+            >
+              {isSaved ? '🔖 Saved' : '🔖 Save'}
+            </button>
+          )}
+          <div className="property-like-group">
+            <button
+              type="button"
+              className={`property-like-btn ${isLiked ? 'active' : ''}`}
+              disabled={!user?.id || likeLoading}
+              onClick={async () => {
+                if (!user?.id || likeLoading) return;
+                setLikeLoading(true);
+                try {
+                  const response = await propertiesService.toggleLike(property.id);
+                  setIsLiked(response.isLiked);
+                  setLikeCount(response.interestedCount);
+                } finally {
+                  setLikeLoading(false);
+                }
+              }}
+            >
+              {isLiked ? '♥' : '♡'} Like
+            </button>
+                                  <span className="property-like-count">♥ {formatCount(likeCount)} likes</span>
+          </div>
+        </div>
         <p className="property-details-address">
           {property.location.address}, {property.location.city}, {property.location.state}
         </p>
@@ -172,7 +243,54 @@ export const PropertyDetailsPage = () => {
           </div>
         )}
 
-        {roles.includes('buyer') && (
+        <div className="property-reviews">
+          <div className="property-reviews-header">
+            <div>
+              <h3>Reviews & Feedback</h3>
+              <p>Verified feedback to help you evaluate this listing.</p>
+            </div>
+            <div className="property-reviews-actions">
+              <button
+                type="button"
+                className="reviews-btn"
+                onClick={() => navigate(`/reviews?propertyId=${property.id}`)}
+              >
+                View all reviews
+              </button>
+              {isBuyer && (
+                <button
+                  type="button"
+                  className="reviews-btn primary"
+                  onClick={() => navigate(`/reviews/new?propertyId=${property.id}&revieweeId=${property.sellerId}`)}
+                  disabled={Boolean(existingReview)}
+                >
+                  {existingReview ? 'Review submitted' : 'Write a review'}
+                </button>
+              )}
+              {isBuyer && existingReview && canEditReview && (
+                <button
+                  type="button"
+                  className="reviews-btn"
+                  onClick={() => navigate(`/reviews/new?propertyId=${property.id}&revieweeId=${property.sellerId}`)}
+                >
+                  Edit review
+                </button>
+              )}
+              {isBuyer && existingReview && !canEditReview && (
+                <span className="property-review-badge">Review submitted</span>
+              )}
+            </div>
+          </div>
+          <ReviewList
+            title="Latest reviews"
+            propertyId={property.id}
+            revieweeId={property.sellerId}
+            limit={3}
+            showCreate={false}
+          />
+        </div>
+
+        {isBuyer && !interestSubmitted && (
           <div className="property-interest-card">
             <h3>Express Interest</h3>
             <p>Customer service will review and connect you after mediation.</p>
@@ -211,7 +329,8 @@ export const PropertyDetailsPage = () => {
                     interestType,
                     priority,
                   });
-                  setInterestStatus('Interest submitted. CS will contact you shortly.');
+                  setInterestStatus('Your interest request was submitted. CS will contact you shortly.');
+                  setInterestSubmitted(true);
                 } catch (err: any) {
                   setInterestStatus(err?.response?.data?.message || 'Failed to submit interest.');
                 }
@@ -220,6 +339,11 @@ export const PropertyDetailsPage = () => {
               Submit Interest
             </button>
             {interestStatus && <div className="property-interest-status">{interestStatus}</div>}
+          </div>
+        )}
+        {isBuyer && interestSubmitted && (
+          <div className="property-interest-confirmation">
+            Your interest request was submitted. Customer Service will contact you shortly.
           </div>
         )}
       </div>

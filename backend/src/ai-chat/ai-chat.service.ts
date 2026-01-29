@@ -189,10 +189,12 @@ TONE & STYLE:
         take: 20, // Last 20 messages for context
       });
 
-      const historyForAI = conversationHistory.map((msg) => ({
-        role: msg.senderType === SenderType.USER ? ('user' as const) : ('assistant' as const),
-        content: msg.content,
-      }));
+      const historyForAI = conversationHistory
+        .filter((msg) => msg.id !== userMessage.id)
+        .map((msg) => ({
+          role: msg.senderType === SenderType.USER ? ('user' as const) : ('assistant' as const),
+          content: msg.content,
+        }));
 
       // Get context (property, requirement) if available
       let contextProperty: Property | null = null;

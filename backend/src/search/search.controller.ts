@@ -2,9 +2,9 @@ import { Controller, Get, Query, UseGuards, HttpException, HttpStatus, Logger } 
 import { AiSearchService } from './services/ai-search.service';
 import { AiSearchRequestDto } from './dto/ai-search-request.dto';
 import { AiSearchResponseDto } from './dto/ai-search-response.dto';
-import { Public } from '../auth/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser, CurrentUserData } from '../auth/decorators/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 @Controller('search')
 export class SearchController {
@@ -12,11 +12,14 @@ export class SearchController {
 
   constructor(private readonly aiSearchService: AiSearchService) {}
 
-  @Public()
   @Get()
-  async search(@Query() query: AiSearchRequestDto): Promise<AiSearchResponseDto> {
+  @UseGuards(OptionalJwtAuthGuard)
+  async search(
+    @Query() query: AiSearchRequestDto,
+    @CurrentUser() currentUser?: CurrentUserData,
+  ): Promise<AiSearchResponseDto> {
     try {
-      return await this.aiSearchService.search(query);
+      return await this.aiSearchService.search(query, currentUser?.userId);
     } catch (error: any) {
       this.logger.error(`Search error: ${error.message}`, error.stack);
       throw new HttpException(
@@ -26,12 +29,15 @@ export class SearchController {
     }
   }
 
-  @Public()
   @Get('properties')
-  async searchProperties(@Query() query: AiSearchRequestDto): Promise<AiSearchResponseDto> {
+  @UseGuards(OptionalJwtAuthGuard)
+  async searchProperties(
+    @Query() query: AiSearchRequestDto,
+    @CurrentUser() currentUser?: CurrentUserData,
+  ): Promise<AiSearchResponseDto> {
     // Alias for /search endpoint for clarity
     try {
-      return await this.aiSearchService.search(query);
+      return await this.aiSearchService.search(query, currentUser?.userId);
     } catch (error: any) {
       this.logger.error(`Search properties error: ${error.message}`, error.stack);
       throw new HttpException(

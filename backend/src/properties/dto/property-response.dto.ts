@@ -38,10 +38,11 @@ export class PropertyResponseDto {
   featuredUntil?: Date;
   viewsCount: number;
   interestedCount: number;
+  isLiked?: boolean;
   createdAt: Date;
   updatedAt: Date;
 
-  static fromEntity(property: Property): PropertyResponseDto {
+  static fromEntity(property: Property, options?: { isLiked?: boolean }): PropertyResponseDto {
     return {
       id: property.id,
       sellerId: property.sellerId,
@@ -78,6 +79,7 @@ export class PropertyResponseDto {
       featuredUntil: property.featuredUntil || undefined,
       viewsCount: property.viewsCount,
       interestedCount: property.interestedCount,
+      isLiked: options?.isLiked,
       createdAt: property.createdAt,
       updatedAt: property.updatedAt,
     };

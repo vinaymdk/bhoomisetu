@@ -120,12 +120,12 @@ dependencies:
   dio: ^5.9.0
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
-  google_sign_in: ^6.2.1
+  google_sign_in: ^7.2.0
   flutter_secure_storage: ^10.0.0
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.3.2
   provider: ^6.1.5+1
   connectivity_plus: ^7.0.0
-  image_picker: ^1.1.2
+  image_picker: ^1.2.1
   flutter_map: ^8.2.2
   latlong2: ^0.9.1        # <-- change this
   flutter_map_dragmarker: ^8.0.3

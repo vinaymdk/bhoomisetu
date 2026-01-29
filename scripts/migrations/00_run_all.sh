@@ -13,4 +13,5 @@ bash "$DIR/07_payments_subscriptions.sh"
 bash "$DIR/07_support_chat.sh"
 bash "$DIR/08_reviews_feedback.sh"
 bash "$DIR/09_support_chat_access.sh"
+bash "$DIR/10_property_likes.sh"
 

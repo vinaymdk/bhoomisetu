@@ -101,6 +101,7 @@ export interface Property {
   featuredUntil?: string;
   viewsCount: number;
   interestedCount: number;
+  isLiked?: boolean;
   createdAt: string;
   updatedAt: string;
 }

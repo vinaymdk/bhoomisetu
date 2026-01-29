@@ -14,6 +14,23 @@
   gap: 12px;
 }
 
+.property-details-title {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.property-back-btn {
+  border: 1px solid #d0d7e2;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #1f2937;
+  align-self: flex-start;
+}
+
 .property-save-btn {
   margin: 12px 0;
   border: 1px solid #d0d7e2;
@@ -29,6 +46,38 @@
   background: #fff7ed;
   border-color: #f5c48b;
   color: #b45309;
+}
+
+.property-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.property-like-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.property-like-btn {
+  border: 1px solid #f0c7c7;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #b91c1c;
+}
+
+.property-like-btn.active {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.property-like-count {
+  font-size: 13px;
+  color: #64748b;
 }
 
 .property-interest-card {
@@ -201,6 +250,51 @@
   background: #f8fafc;
   padding: 16px;
   border-radius: 12px;
+}
+
+.property-reviews {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.property-reviews-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.property-reviews-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.property-review-badge {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #166534;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.property-reviews-header p {
+  margin: 4px 0 0;
+  color: #64748b;
+}
+
+.property-interest-confirmation {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {

@@ -49,6 +49,16 @@ class _PropertyCardState extends State<PropertyCard> {
     return '₹${price.toStringAsFixed(0)}';
   }
 
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    }
+    if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}k';
+    }
+    return count.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     PropertyImage? primaryImage;
@@ -156,9 +166,9 @@ class _PropertyCardState extends State<PropertyCard> {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        _isSaved ? Icons.favorite : Icons.favorite_border,
+                        _isSaved ? Icons.bookmark : Icons.bookmark_border,
                         size: 18,
-                        color: _isSaved ? Colors.redAccent : Colors.white,
+                        color: _isSaved ? Colors.amber.shade700 : Colors.white,
                       ),
                     ),
                   ),
@@ -258,8 +268,8 @@ class _PropertyCardState extends State<PropertyCard> {
                   const SizedBox(height: 12),
                   
                   // Footer
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -275,14 +285,29 @@ class _PropertyCardState extends State<PropertyCard> {
                           ),
                         ),
                       ),
-                      if (widget.property.viewsCount > 0)
-                        Text(
-                          '${widget.property.viewsCount} views',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          Text(
+                            '❤ ${_formatCount(widget.property.interestedCount)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
+                          if (widget.property.viewsCount > 0)
+                            Text(
+                              '${_formatCount(widget.property.viewsCount)} views',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ],

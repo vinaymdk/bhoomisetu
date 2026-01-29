@@ -9,9 +9,10 @@ class MediationService {
     return InterestExpression.fromJson(Map<String, dynamic>.from(response.data));
   }
 
-  Future<MediationListResponse> getMyInterests({String? status, int page = 1, int limit = 20}) async {
+  Future<MediationListResponse> getMyInterests({String? status, String? propertyId, int page = 1, int limit = 20}) async {
     final response = await _apiClient.dio.get('/mediation/my-interests', queryParameters: {
       if (status != null && status.isNotEmpty) 'connectionStatus': status,
+      if (propertyId != null && propertyId.isNotEmpty) 'propertyId': propertyId,
       'page': page,
       'limit': limit,
     });

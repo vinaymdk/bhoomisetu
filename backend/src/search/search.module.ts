@@ -5,6 +5,7 @@ import { SearchController } from './search.controller';
 import { AiSearchService } from './services/ai-search.service';
 import { GeocodingService } from './services/geocoding.service';
 import { Property } from '../properties/entities/property.entity';
+import { PropertyLike } from '../properties/entities/property-like.entity';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { Property } from '../properties/entities/property.entity';
       timeout: 10000,
       maxRedirects: 5,
     }),
-    TypeOrmModule.forFeature([Property]),
+    TypeOrmModule.forFeature([Property, PropertyLike]),
   ],
   controllers: [SearchController],
   providers: [AiSearchService, GeocodingService],

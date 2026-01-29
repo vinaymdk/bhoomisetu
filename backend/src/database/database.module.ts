@@ -36,6 +36,7 @@ import { Review } from '../reviews/entities/review.entity';
 import { ReviewHelpfulVote } from '../reviews/entities/review-helpful-vote.entity';
 import { ReviewReport } from '../reviews/entities/review-report.entity';
 import { ReviewReply } from '../reviews/entities/review-reply.entity';
+import { PropertyLike } from '../properties/entities/property-like.entity';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { ReviewReply } from '../reviews/entities/review-reply.entity';
         ReviewHelpfulVote,
         ReviewReport,
         ReviewReply,
+        PropertyLike,
       ],
       synchronize: process.env.NODE_ENV === 'development' ? false : false, // Never use synchronize in production
       logging: process.env.NODE_ENV === 'development',
@@ -128,6 +130,7 @@ import { ReviewReply } from '../reviews/entities/review-reply.entity';
       ReviewHelpfulVote,
       ReviewReport,
       ReviewReply,
+      PropertyLike,
     ]),
   ],
   exports: [TypeOrmModule],

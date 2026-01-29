@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, IsNull } from 'typeorm';
+import { Repository, Between, IsNull, In } from 'typeorm';
 import { Property, PropertyStatus } from '../../properties/entities/property.entity';
 import { AiSearchRequestDto } from '../dto/ai-search-request.dto';
 import { AiSearchResponseDto, SearchResultProperty } from '../dto/ai-search-response.dto';
@@ -11,6 +11,7 @@ import { AiRankingRequestDto, AiRankingResponseDto, PropertyForRanking } from '.
 import { PropertyResponseDto } from '../../properties/dto/property-response.dto';
 import { PropertyImage } from '../../properties/entities/property-image.entity';
 import { PropertyFeature } from '../../properties/entities/property-feature.entity';
+import { PropertyLike } from '../../properties/entities/property-like.entity';
 
 @Injectable()
 export class AiSearchService {
@@ -20,6 +21,8 @@ export class AiSearchService {
   constructor(
     @InjectRepository(Property)
     private readonly propertyRepository: Repository<Property>,
+    @InjectRepository(PropertyLike)
+    private readonly propertyLikeRepository: Repository<PropertyLike>,
     private readonly geocodingService: GeocodingService,
     private readonly httpService: HttpService,
   ) {
@@ -30,7 +33,7 @@ export class AiSearchService {
    * Main AI-powered search method
    * Implements the 5-step algorithm from Module 3 spec
    */
-  async search(request: AiSearchRequestDto): Promise<AiSearchResponseDto> {
+  async search(request: AiSearchRequestDto, userId?: string): Promise<AiSearchResponseDto> {
     try {
       const startTime = Date.now();
 
@@ -39,9 +42,14 @@ export class AiSearchService {
 
       // Step 2: Apply hard filters (price, type)
       const filteredProperties = await this.applyHardFilters(request, normalizedLocation);
+      const likedSet = await this.buildLikedSet(filteredProperties, userId);
 
       // Step 3: Rank by relevance, urgency, popularity (if AI service available)
-      let rankedProperties: SearchResultProperty[] = this.defaultRanking(filteredProperties, request.rankBy || 'relevance');
+      let rankedProperties: SearchResultProperty[] = this.defaultRanking(
+        filteredProperties,
+        request.rankBy || 'relevance',
+        likedSet,
+      );
       let extractedFilters = this.extractFiltersFromQuery(request, normalizedLocation);
       let aiRankingUsed = false;
 
@@ -50,6 +58,7 @@ export class AiSearchService {
           request.query,
           filteredProperties,
           request,
+          likedSet,
         );
         
         // If AI ranking returned results, use them; otherwise use default ranking
@@ -67,6 +76,7 @@ export class AiSearchService {
         similarProperties = await this.findSimilarProperties(
           rankedProperties,
           request.similarityThreshold || 0.8,
+          userId,
         );
       }
 
@@ -248,6 +258,7 @@ export class AiSearchService {
     query: string,
     properties: Property[],
     request: AiSearchRequestDto,
+    likedSet: Set<string>,
   ): Promise<{ rankedProperties: SearchResultProperty[]; extractedAiTags: string[] }> {
     try {
       const propertiesForRanking: PropertyForRanking[] = properties.map((prop) => ({
@@ -313,7 +324,7 @@ export class AiSearchService {
       const rankedProperties: SearchResultProperty[] = properties
         .map((prop) => {
           const ranking = rankingMap.get(prop.id);
-          const propertyDto = PropertyResponseDto.fromEntity(prop);
+          const propertyDto = PropertyResponseDto.fromEntity(prop, { isLiked: likedSet.has(prop.id) });
           return {
             ...propertyDto,
             relevanceScore: ranking?.relevanceScore,
@@ -355,9 +366,9 @@ export class AiSearchService {
   /**
    * Default ranking when AI is unavailable
    */
-  private defaultRanking(properties: Property[], rankBy: string): SearchResultProperty[] {
+  private defaultRanking(properties: Property[], rankBy: string, likedSet: Set<string>): SearchResultProperty[] {
     return properties
-      .map((prop) => PropertyResponseDto.fromEntity(prop) as SearchResultProperty)
+      .map((prop) => PropertyResponseDto.fromEntity(prop, { isLiked: likedSet.has(prop.id) }) as SearchResultProperty)
       .sort((a, b) => {
         switch (rankBy) {
           case 'price':
@@ -385,6 +396,7 @@ export class AiSearchService {
   private async findSimilarProperties(
     properties: SearchResultProperty[],
     similarityThreshold: number,
+    userId?: string,
   ): Promise<SearchResultProperty[]> {
     if (properties.length === 0) return [];
 
@@ -407,7 +419,21 @@ export class AiSearchService {
       take: 20,
     });
 
-    return similar.map((prop) => PropertyResponseDto.fromEntity(prop) as SearchResultProperty);
+    const likedSet = await this.buildLikedSet(similar, userId);
+    return similar.map((prop) =>
+      PropertyResponseDto.fromEntity(prop, { isLiked: likedSet.has(prop.id) }) as SearchResultProperty,
+    );
+  }
+
+  private async buildLikedSet(properties: Property[], userId?: string): Promise<Set<string>> {
+    if (!userId || properties.length === 0) {
+      return new Set();
+    }
+
+    const likes = await this.propertyLikeRepository.find({
+      where: { userId, propertyId: In(properties.map((property) => property.id)) },
+    });
+    return new Set(likes.map((like) => like.propertyId));
   }
 
   /**

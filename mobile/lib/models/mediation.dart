@@ -5,6 +5,7 @@ class InterestExpression {
   final String interestType;
   final String priority;
   final String connectionStatus;
+  final String? chatSessionId;
   final String? message;
   final Map<String, dynamic>? property;
   final Map<String, dynamic>? buyer;
@@ -17,6 +18,7 @@ class InterestExpression {
     required this.interestType,
     required this.priority,
     required this.connectionStatus,
+    this.chatSessionId,
     this.message,
     this.property,
     this.buyer,
@@ -31,6 +33,7 @@ class InterestExpression {
       interestType: json['interestType'] as String? ?? 'viewing',
       priority: json['priority'] as String? ?? 'normal',
       connectionStatus: json['connectionStatus'] as String? ?? 'pending',
+      chatSessionId: json['chatSessionId'] as String?,
       message: json['message'] as String?,
       property: json['property'] != null ? Map<String, dynamic>.from(json['property']) : null,
       buyer: json['buyer'] != null ? Map<String, dynamic>.from(json['buyer']) : null,
