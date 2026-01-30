@@ -183,7 +183,8 @@ export class AuthService {
       return {
         success: true,
         message: 'OTP sent to your email address. Please check your inbox.',
-        otp: includeOtp ? otpCode : undefined,
+        // otp: includeOtp ? otpCode : undefined, // For Production
+        otp: includeOtp ? otpCode : otpCode, // For Development
       };
     } else {
       // Generate 6-digit OTP for SMS (same pattern as email)
@@ -218,7 +219,8 @@ export class AuthService {
       return {
         success: true,
         message: 'OTP sent to your phone number. Please check your SMS.',
-        otp: includeOtp ? otpCode : undefined,
+        // otp: includeOtp ? otpCode : undefined, // For production
+        otp: includeOtp ? otpCode : otpCode, // For Development
       };
     }
   }
