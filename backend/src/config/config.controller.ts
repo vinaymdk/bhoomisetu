@@ -44,16 +44,38 @@ export class ConfigController {
     };
   }
 
+  // @Public()
+  // @Get('app')
+  // getAppConfig(@Req() req: Request) {
+  //   const host = req.get('host');
+  //   const protocol = req.protocol || 'http';
+  //   const inferredBaseUrl = host ? `${protocol}://${host}/api` : undefined;
+  //   return {
+  //     apiBaseUrl: process.env.API_BASE_URL || inferredBaseUrl || 'http://localhost:3000/api',
+  //     environment: process.env.NODE_ENV || 'development',
+  //     mapboxEnabled: !!process.env.MAPBOX_API_KEY,
+  //     mapboxToken: process.env.MAPBOX_API_KEY || null,
+  //   };
+  // }
   @Public()
   @Get('app')
   getAppConfig(@Req() req: Request) {
-    const host = req.get('host');
-    const protocol = req.protocol || 'http';
-    const inferredBaseUrl = host ? `${protocol}://${host}/api` : undefined;
+    const isProd = process.env.NODE_ENV === 'production';
+
+    /**
+     * ✅ Production:
+     *   → Always return PUBLIC DOMAIN
+     * ❌ Never return LAN / inferred host
+     */
+    const apiBaseUrl = isProd
+      ? 'https://api.helpmatesolutions.in/api'
+      : process.env.API_BASE_URL ||
+        `${req.protocol}://${req.get('host')}/api`;
+
     return {
-      apiBaseUrl: process.env.API_BASE_URL || inferredBaseUrl || 'http://localhost:3000/api',
+      apiBaseUrl,
       environment: process.env.NODE_ENV || 'development',
-      mapboxEnabled: !!process.env.MAPBOX_API_KEY,
+      mapboxEnabled: Boolean(process.env.MAPBOX_API_KEY),
       mapboxToken: process.env.MAPBOX_API_KEY || null,
     };
   }
