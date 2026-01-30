@@ -75,7 +75,81 @@ export class AuthService {
     if (recentOtpLogs >= 3) {
       throw new ForbiddenException('Too many OTP requests. Please wait before requesting again.');
     }
+    // Production level hide dev-otp code
 
+    // if (dto.channel === 'email') {
+    //   // Generate 6-digit OTP for email
+    //   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    //   const otpHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+      
+    //   // Store OTP in database
+    //   const otpLog = this.otpLogRepository.create({
+    //     channel: 'email',
+    //     destination: dto.destination,
+    //     purpose: dto.purpose || 'login',
+    //     otpHash,
+    //     expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+    //     fraudRiskScore: fraudScore.riskScore,
+    //     metadata: {
+    //       ipAddress,
+    //       userAgent,
+    //       fraudReasons: fraudScore.reasons,
+    //       otpCode, // Store plain OTP for verification (in production, use encryption)
+    //     },
+    //   });
+    //   await this.otpLogRepository.save(otpLog);
+
+    //   // Send email via Brevo
+    //   try {
+    //     await this.emailService.sendOtpEmail(dto.destination, otpCode, dto.purpose || 'login');
+    //   } catch (error: any) {
+    //     throw new BadRequestException(`Failed to send email: ${error.message}`);
+    //   }
+
+    //   const includeOtp = process.env.NODE_ENV !== 'production';
+    //   return {
+    //     success: true,
+    //     message: 'OTP sent to your email address. Please check your inbox.',
+    //     otp: includeOtp ? otpCode : undefined,
+    //   };
+    // } else {
+    //   // Generate 6-digit OTP for SMS (same pattern as email)
+    //   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    //   const otpHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+      
+    //   // Store OTP in database
+    //   const otpLog = this.otpLogRepository.create({
+    //     channel: 'sms',
+    //     destination: dto.destination,
+    //     purpose: dto.purpose || 'login',
+    //     otpHash,
+    //     expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+    //     fraudRiskScore: fraudScore.riskScore,
+    //     metadata: {
+    //       ipAddress,
+    //       userAgent,
+    //       fraudReasons: fraudScore.reasons,
+    //       otpCode, // Store plain OTP for verification (in production, use encryption)
+    //     },
+    //   });
+    //   await this.otpLogRepository.save(otpLog);
+
+    //   // Send SMS via SMS service
+    //   try {
+    //     await this.smsService.sendOtpSms(dto.destination, otpCode, dto.purpose || 'login');
+    //   } catch (error: any) {
+    //     throw new BadRequestException(`Failed to send SMS: ${error.message}`);
+    //   }
+
+    //   const includeOtp = process.env.NODE_ENV !== 'production';
+    //   return {
+    //     success: true,
+    //     message: 'OTP sent to your phone number. Please check your SMS.',
+    //     otp: includeOtp ? otpCode : undefined,
+    //   };
+    // }
+
+    // Production level show dev-otp code
     if (dto.channel === 'email') {
       // Generate 6-digit OTP for email
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
