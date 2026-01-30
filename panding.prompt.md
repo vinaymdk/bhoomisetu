@@ -5,15 +5,17 @@
 - **CS**: cs1@example.com / +919876543214
 - **Admin**: admin@example.com / +919876543215
 =================================================
+- Likes and Views counts are should be place at opposite sides of property-card for better visualization
+   ex.
+      - Left-Side: Likes count (Heart-Icon + count)
+      - Right-Side: Views count (Eye-Icon + count)
 
-⚠️ Update Security Alert
-   Developer Mode is enabled on this device and a USB / File Transfer connection is currently active.
-   For your data safety, this application cannot be used while Developer Mode is enabled.
-   Please choose one of the following options:
-      • Close App
-      • Disable Developer Mode
+- Don't add dashboard screen for mobiles just use home/landing screen as dashboard for mobiles
 
-Parellelly start with Module 12: Admin Panel
+
+
+
+===============================================================
 <!-- Module 12 Errors Prompt Start -->
 Next-Step: 
    -Module 12 Development

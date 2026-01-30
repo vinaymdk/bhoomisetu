@@ -21,6 +21,7 @@ export const Layout = ({ children }: LayoutProps) => {
     '/cs/dashboard',
     '/cs/properties',
     '/notifications',
+    '/admin',
   ];
   const shouldHideChat = hiddenChatRoutes.some((route) => location.pathname.startsWith(route));
 

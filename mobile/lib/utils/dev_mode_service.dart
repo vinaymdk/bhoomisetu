@@ -18,4 +18,29 @@ class DevModeService {
       return false;
     }
   }
+
+  static Future<bool> isUsbConnectionActive() async {
+    if (!Platform.isAndroid) {
+      return false;
+    }
+    try {
+      // Ask native layer for USB/File Transfer state.
+      final result = await _channel.invokeMethod<bool>('isUsbConnectionActive');
+      return result == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> openDeveloperOptions() async {
+    if (!Platform.isAndroid) {
+      return;
+    }
+    try {
+      // Best-effort: opens Android's Developer Options screen.
+      await _channel.invokeMethod<void>('openDeveloperOptions');
+    } catch (_) {
+      // Ignore failures; user can navigate manually.
+    }
+  }
 }

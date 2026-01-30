@@ -32,6 +32,13 @@ import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
 import { PaymentsHistoryPage } from './pages/PaymentsHistoryPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { CreateReviewPage } from './pages/CreateReviewPage';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminPropertiesPage } from './pages/admin/AdminPropertiesPage';
+import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
+import { AdminPaymentsPage } from './pages/admin/AdminPaymentsPage';
+import { AdminAiMetricsPage } from './pages/admin/AdminAiMetricsPage';
+import { AdminCsLogsPage } from './pages/admin/AdminCsLogsPage';
 
 function App() {
   return (
@@ -215,6 +222,64 @@ function App() {
           element={
             <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
               <EditListingPage />
+            </RoleProtectedRoute>
+          }
+        />
+
+        {/* Admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboardPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminUsersPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/properties"
+          element={
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminPropertiesPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reviews"
+          element={
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminReviewsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/payments"
+          element={
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminPaymentsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/ai-metrics"
+          element={
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminAiMetricsPage />
+            </RoleProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/cs-logs"
+          element={
+            <RoleProtectedRoute allowedRoles={['admin']}>
+              <AdminCsLogsPage />
             </RoleProtectedRoute>
           }
         />

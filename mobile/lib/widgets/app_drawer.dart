@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/home/home_screen.dart';
-import '../screens/search/search_screen.dart';
+import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/properties/my_listings_screen.dart';
-import '../screens/properties/saved_properties_screen.dart';
 import '../screens/buyer_requirements/buyer_requirements_screen.dart';
 import '../screens/customer_service/cs_dashboard_screen.dart';
 import '../screens/ai/ai_chat_screen.dart';
@@ -14,6 +13,7 @@ import '../screens/profile/settings_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/subscriptions/subscriptions_screen.dart';
 import '../screens/subscriptions/payments_history_screen.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final String title;
@@ -33,6 +33,7 @@ class AppDrawer extends StatelessWidget {
     final canBuy = roles.contains('buyer') || roles.contains('admin');
     final canVerify =
         roles.contains('customer_service') || roles.contains('admin');
+    final isAdmin = roles.contains('admin');
 
     void navigate(Widget screen) {
       Navigator.pop(context);
@@ -114,6 +115,11 @@ class AppDrawer extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.dashboard_outlined),
               title: const Text('Dashboard'),
+              onTap: () => navigate(const DashboardScreen()),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: const Text('Home'),
               onTap: () => navigate(const HomeScreen()),
             ),
             // ListTile(
@@ -144,6 +150,12 @@ class AppDrawer extends StatelessWidget {
                 leading: const Icon(Icons.verified_outlined),
                 title: const Text('CS Dashboard'),
                 onTap: () => navigate(const CsDashboardScreen()),
+              ),
+            if (isAdmin)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings_outlined),
+                title: const Text('Admin Panel'),
+                onTap: () => navigate(const AdminDashboardScreen()),
               ),
             if (isAuthenticated)
               ListTile(

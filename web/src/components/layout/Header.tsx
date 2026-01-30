@@ -19,6 +19,7 @@ export const Header = () => {
   const canVerify = roles.includes('customer_service') || roles.includes('admin');
   const canBuy = roles.includes('buyer') || roles.includes('admin');
   const isSeller = roles.includes('seller') || roles.includes('agent');
+  const isAdmin = roles.includes('admin');
   const [savedCount, setSavedCount] = useState(0);
   const [listCount, setListCount] = useState(0);
   const [reqsCount, setReqsCount] = useState(0);
@@ -156,6 +157,11 @@ export const Header = () => {
               {canVerify && (
                 <Link to="/cs/dashboard" className="header-nav-link">
                   CS Dashboard
+                </Link>
+              )}
+              {isAdmin && (
+                <Link to="/admin" className="header-nav-link">
+                  Admin Panel
                 </Link>
               )}
               {canVerify && (

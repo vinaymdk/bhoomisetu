@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/search/search_screen.dart';
 import 'config/firebase_config.dart';
 import 'config/api_config.dart';
@@ -35,44 +37,100 @@ class BhoomiSetuApp extends StatefulWidget {
   State<BhoomiSetuApp> createState() => _BhoomiSetuAppState();
 }
 
-class _BhoomiSetuAppState extends State<BhoomiSetuApp> {
+class _BhoomiSetuAppState extends State<BhoomiSetuApp> with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   bool _checkedDevMode = false;
+  bool _securityDialogOpen = false;
+  bool _checkingSecurity = false;
 
   @override
   void initState() {
     super.initState();
-    _checkDeveloperMode();
+    WidgetsBinding.instance.addObserver(this);
+    _checkSecurityState();
   }
 
-  Future<void> _checkDeveloperMode() async {
-    // Only run once per app launch to avoid repeated alerts.
-    if (_checkedDevMode) return;
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkSecurityState(force: true);
+    }
+  }
+
+  Future<void> _checkSecurityState({bool force = false}) async {
+    if (_checkingSecurity) return;
+    if (_securityDialogOpen && !force) return;
+    _checkingSecurity = true;
+
+    // Only run once per app launch unless force is true.
+    if (_checkedDevMode && !force) {
+      _checkingSecurity = false;
+      return;
+    }
     _checkedDevMode = true;
 
-    final enabled = await DevModeService.isDeveloperModeEnabled();
-    if (!enabled) return;
+    final devModeEnabled = await DevModeService.isDeveloperModeEnabled();
+    if (!devModeEnabled) {
+      _checkingSecurity = false;
+      return;
+    }
+    final usbActive = await DevModeService.isUsbConnectionActive();
 
-    // Wait until a frame is available, then show a blocking alert dialog.
+    _checkingSecurity = false;
+
+    // Block usage only when BOTH Developer Mode and USB/File Transfer are active.
+    if (!usbActive) {
+      return;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final context = _navigatorKey.currentState?.overlay?.context;
       if (context == null) return;
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Security Alert'),
-          content: const Text(
-            'Developer Mode is enabled on your device. For better security, please disable it.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+      if (_securityDialogOpen) return;
+      _securityDialogOpen = true;
+
+      final message = StringBuffer()
+        ..writeln(
+          'Developer Mode is enabled on this device and a USB / File Transfer connection is currently active.',
+        )
+        ..writeln(
+          'For your data safety, this application cannot be used while Developer Mode is enabled and USB/File Transfer is active.',
+        )
+        ..writeln('')
+        ..writeln('Please choose one of the following options:');
+
+      // showDialog<void>(
+      //   context: context,
+      //   barrierDismissible: false,
+      //   builder: (dialogContext) => AlertDialog(
+      //     title: const Text('Security Alert'),
+      //     content: Text(message.toString()),
+      //     actions: [
+      //       TextButton(
+      //         onPressed: () {
+      //           _securityDialogOpen = false;
+      //           SystemNavigator.pop();
+      //         },
+      //         child: const Text('Close App'),
+      //       ),
+      //       TextButton(
+      //         onPressed: () async {
+      //           _securityDialogOpen = false;
+      //           Navigator.of(dialogContext).pop();
+      //           await DevModeService.openDeveloperOptions();
+      //           _checkSecurityState(force: true);
+      //         },
+      //         child: const Text('Disable Developer Mode'),
+      //       ),
+      //     ],
+      //   ),
+      // );
     });
   }
 
@@ -101,7 +159,7 @@ class _BhoomiSetuAppState extends State<BhoomiSetuApp> {
             }
 
             if (authProvider.isAuthenticated) {
-              return const HomeScreen();
+              return const DashboardScreen();
             }
 
             return const LoginScreen();
@@ -110,6 +168,7 @@ class _BhoomiSetuAppState extends State<BhoomiSetuApp> {
         routes: {
           '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
+          '/dashboard': (context) => const DashboardScreen(),
           '/search': (context) => const SearchScreen(),
         },
       ),
