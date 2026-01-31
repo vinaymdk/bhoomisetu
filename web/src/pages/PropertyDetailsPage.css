@@ -252,6 +252,17 @@
   border-radius: 12px;
 }
 
+.property-details-map {
+  margin-top: 16px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.property-details-map .map-picker {
+  height: 280px;
+}
+
 .property-reviews {
   margin-top: 24px;
   display: flex;

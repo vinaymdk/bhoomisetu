@@ -7,6 +7,11 @@ cd backend && npm run start:dev
 # Run mobile app
 cd mobile && flutter clean && flutter pub get && flutter run
 
+flutter run	
+flutter run --profile	
+flutter run --release
+flutter build apk
+
 <!-- Give permissions to load-******-sample-data.sh file -->
 chmod +x ./load-******-sample-data.sh 
 

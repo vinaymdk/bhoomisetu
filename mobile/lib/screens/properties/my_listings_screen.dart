@@ -89,7 +89,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
   bool _canAccess(AuthProvider auth) {
     final roles = auth.roles;
-    return roles.contains('seller') || roles.contains('agent');
+    return roles.contains('buyer') || roles.contains('seller') || roles.contains('agent') || roles.contains('admin');
   }
 
   @override
@@ -140,7 +140,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'Seller/Agent role required to create and manage listings.',
+                  'Buyer/Seller/Agent role required to create and manage listings.',
                   textAlign: TextAlign.center,
                 ),
               ),

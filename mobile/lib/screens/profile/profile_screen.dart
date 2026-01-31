@@ -34,6 +34,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _saving = false;
   String? _status;
   String? _avatarUrl;
+  bool _allowEmailEdit = false;
+  bool _allowPhoneEdit = false;
   BottomNavItem _currentNavItem = BottomNavItem.profile;
 
 
@@ -46,6 +48,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _phone.text = auth.userData?['primaryPhone']?.toString() ?? '';
     _address.text = auth.userData?['address']?.toString() ?? '';
     _avatarUrl = auth.userData?['avatarUrl']?.toString();
+    _allowEmailEdit = _email.text.trim().isEmpty;
+    _allowPhoneEdit = _phone.text.trim().isEmpty;
+  }
+
+  void _showAvatarPreview() {
+    if (_avatarUrl == null || _avatarUrl!.isEmpty) return;
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.network(_avatarUrl!, fit: BoxFit.cover),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _pickAvatar(ImageSource source) async {
@@ -76,6 +99,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await Provider.of<AuthProvider>(context, listen: false).refreshUser();
       setState(() {
         _status = 'Profile updated.';
+        _allowEmailEdit = _email.text.trim().isEmpty;
+        _allowPhoneEdit = _phone.text.trim().isEmpty;
       });
     } catch (e) {
       setState(() {
@@ -129,10 +154,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Profile Image',
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
-                    child: _avatarUrl == null ? const Icon(Icons.person, size: 40) : null,
+                  GestureDetector(
+                    onTap: _showAvatarPreview,
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundImage: _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+                      child: _avatarUrl == null ? const Icon(Icons.person, size: 40) : null,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Column(
@@ -157,8 +185,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 children: [
                   _textField('Full Name', _fullName),
-                  _textField('Email', _email, readOnly: true),
-                  _textField('Phone', _phone, readOnly: true),
+                  _textField('Email', _email, readOnly: !_allowEmailEdit),
+                  _textField('Phone', _phone, readOnly: !_allowPhoneEdit),
                   _textField('Address', _address, maxLines: 3),
                   const SizedBox(height: 8),
                   ElevatedButton(

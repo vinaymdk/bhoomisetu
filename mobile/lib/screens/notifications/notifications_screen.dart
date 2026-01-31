@@ -40,6 +40,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   String? _error;
   List<NotificationItem> _items = [];
   int _unreadCount = 0;
+  final Set<String> _selectedIds = {};
   BottomNavItem _currentNavItem = BottomNavItem.home;
   String _selectedChatUser = 'customer_service';
   bool _isSupportUser = false;
@@ -119,6 +120,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       setState(() {
         _items = list;
         _unreadCount = response['unreadCount'] as int? ?? 0;
+        _selectedIds.removeWhere((id) => !_items.any((item) => item.id == id));
       });
       setNotificationsBadgeCount(_unreadCount);
     } catch (e) {
@@ -177,6 +179,109 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to mark notification as read.')),
+        );
+      }
+    }
+  }
+
+  bool get _hasSelection => _selectedIds.isNotEmpty;
+  bool get _allSelected =>
+      _items.isNotEmpty && _selectedIds.length == _items.length;
+
+  void _toggleSelection(NotificationItem item) {
+    setState(() {
+      if (_selectedIds.contains(item.id)) {
+        _selectedIds.remove(item.id);
+      } else {
+        _selectedIds.add(item.id);
+      }
+    });
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (_allSelected) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds
+          ..clear()
+          ..addAll(_items.map((item) => item.id));
+      }
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selectedIds.isEmpty) return;
+    try {
+      await _service.deleteMany(_selectedIds.toList());
+      _selectedIds.clear();
+      await _loadNotifications();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Selected notifications deleted.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete selected notifications.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteAll() async {
+    if (_items.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete all notifications?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _service.deleteAll();
+      _selectedIds.clear();
+      await _loadNotifications();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('All notifications deleted.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete notifications.')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteOne(NotificationItem item) async {
+    try {
+      await _service.deleteOne(item.id);
+      _selectedIds.remove(item.id);
+      await _loadNotifications();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Notification deleted.')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete notification.')),
         );
       }
     }
@@ -1411,6 +1516,27 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               ),
             ],
           ),
+          if (_items.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Checkbox(
+                  value: _allSelected,
+                  onChanged: (_) => _toggleSelectAll(),
+                ),
+                const Text('Select all'),
+                const Spacer(),
+                TextButton(
+                  onPressed: _hasSelection ? _deleteSelected : null,
+                  child: const Text('Delete selected'),
+                ),
+                TextButton(
+                  onPressed: _deleteAll,
+                  child: const Text('Delete all'),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           if (_loading)
             const Center(child: CircularProgressIndicator())
@@ -1446,6 +1572,10 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       children: [
                         Row(
                           children: [
+                            Checkbox(
+                              value: _selectedIds.contains(item.id),
+                              onChanged: (_) => _toggleSelection(item),
+                            ),
                             if (item.readAt == null)
                               Container(
                                 width: 8,
@@ -1468,6 +1598,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                               '${item.createdAt.day}/${item.createdAt.month} ${item.createdAt.hour}:${item.createdAt.minute.toString().padLeft(2, '0')}',
                               style: const TextStyle(
                                   color: Colors.black45, fontSize: 12),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              onPressed: () => _deleteOne(item),
+                              tooltip: 'Delete',
                             ),
                           ],
                         ),

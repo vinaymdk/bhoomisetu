@@ -458,6 +458,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'By continuing, you agree to our ',
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pushNamed('/terms'),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 0),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Terms and Conditions',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

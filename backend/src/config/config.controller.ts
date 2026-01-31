@@ -44,6 +44,7 @@ export class ConfigController {
     };
   }
 
+  // Development: http://192.168.0.11:3000/api
   // @Public()
   // @Get('app')
   // getAppConfig(@Req() req: Request) {
@@ -57,6 +58,8 @@ export class ConfigController {
   //     mapboxToken: process.env.MAPBOX_API_KEY || null,
   //   };
   // }
+
+  // Production: https://api.helpmatesolutions.in/api
   @Public()
   @Get('app')
   getAppConfig(@Req() req: Request) {

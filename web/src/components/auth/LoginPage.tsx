@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/auth.service';
 import { initializeFirebase, sendPhoneOtp, verifyPhoneOtp, getIdToken, googleProvider, facebookProvider, clearRecaptchaVerifier, getAuthInstance } from '../../config/firebase';
@@ -435,6 +435,9 @@ export const LoginPage = () => {
             Facebook
           </button>
         </div>
+        <p className="auth-terms">
+          By continuing, you agree to our <Link to="/terms">Terms and Conditions</Link>.
+        </p>
       </div>
     </div>
   );

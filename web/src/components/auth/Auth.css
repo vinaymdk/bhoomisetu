@@ -496,6 +496,22 @@
   height: 20px;
 }
 
+.auth-terms {
+  margin-top: var(--spacing-md);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.auth-terms a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.auth-terms a:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 480px) {
   .auth-card {
     padding: var(--spacing-xl);

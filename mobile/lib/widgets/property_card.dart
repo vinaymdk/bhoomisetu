@@ -59,6 +59,13 @@ class _PropertyCardState extends State<PropertyCard> {
     return count.toString();
   }
 
+  String _formatPostedDate(DateTime date) {
+    final diffDays = DateTime.now().difference(date).inDays;
+    if (diffDays <= 0) return 'Posted today';
+    if (diffDays == 1) return 'Posted 1 day ago';
+    return 'Posted $diffDays days ago';
+  }
+
   @override
   Widget build(BuildContext context) {
     PropertyImage? primaryImage;
@@ -151,6 +158,26 @@ class _PropertyCardState extends State<PropertyCard> {
                       ),
                     ),
                   ),
+                if (widget.property.listingType == 'sale')
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'For Sale',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
                 Positioned(
                   bottom: 8,
                   right: 8,
@@ -229,6 +256,24 @@ class _PropertyCardState extends State<PropertyCard> {
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 6),
+
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        _formatPostedDate(widget.property.createdAt),
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                      if (widget.property.ageOfConstruction != null)
+                        Text(
+                          '${widget.property.ageOfConstruction} years old',
+                          style: const TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                    ],
+                  ),
                   
                   const SizedBox(height: 12),
                   
@@ -286,9 +331,8 @@ class _PropertyCardState extends State<PropertyCard> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
                             '❤ ${_formatCount(widget.property.interestedCount)}',

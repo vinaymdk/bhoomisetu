@@ -55,6 +55,29 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
   Widget build(BuildContext context) {
     final vm = Provider.of<ListingFormViewModel>(context);
 
+    Widget twoColumn(Widget left, Widget right) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 360) {
+            return Column(
+              children: [
+                left,
+                const SizedBox(height: 12),
+                right,
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: left),
+              const SizedBox(width: 12),
+              Expanded(child: right),
+            ],
+          );
+        },
+      );
+    }
+
     const states = [
       'Andhra Pradesh',
       'Arunachal Pradesh',
@@ -118,50 +141,40 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
                   ),
                 const SizedBox(height: 12),
                 _sectionTitle('Basic'),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: vm.listingType,
-                        decoration: const InputDecoration(
-                            labelText: 'Listing Type *',
-                            border: OutlineInputBorder()),
-                        items: const [
-                          DropdownMenuItem(value: 'sale', child: Text('Sale')),
-                          DropdownMenuItem(value: 'rent', child: Text('Rent')),
-                        ],
-                        onChanged: (v) => vm.setListingType(v ?? 'sale'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: vm.propertyType,
-                        decoration: const InputDecoration(
-                            labelText: 'Property Type *',
-                            border: OutlineInputBorder()),
-                        items: const [
-                          DropdownMenuItem(
-                              value: 'apartment', child: Text('Apartment')),
-                          DropdownMenuItem(
-                              value: 'house', child: Text('House')),
-                          DropdownMenuItem(
-                              value: 'villa', child: Text('Villa')),
-                          DropdownMenuItem(value: 'plot', child: Text('Plot')),
-                          DropdownMenuItem(
-                              value: 'commercial', child: Text('Commercial')),
-                          DropdownMenuItem(
-                              value: 'industrial', child: Text('Industrial')),
-                          DropdownMenuItem(
-                              value: 'agricultural',
-                              child: Text('Agricultural')),
-                          DropdownMenuItem(
-                              value: 'other', child: Text('Other')),
-                        ],
-                        onChanged: (v) => vm.setPropertyType(v ?? 'apartment'),
-                      ),
-                    ),
-                  ],
+                twoColumn(
+                  DropdownButtonFormField<String>(
+                    initialValue: vm.listingType,
+                    decoration: const InputDecoration(
+                        labelText: 'Listing Type *',
+                        border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(value: 'sale', child: Text('Sale')),
+                      DropdownMenuItem(value: 'rent', child: Text('Rent')),
+                    ],
+                    onChanged: (v) => vm.setListingType(v ?? 'sale'),
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue: vm.propertyType,
+                    decoration: const InputDecoration(
+                        labelText: 'Property Type *',
+                        border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'apartment', child: Text('Apartment')),
+                      DropdownMenuItem(
+                          value: 'house', child: Text('House')),
+                      DropdownMenuItem(value: 'villa', child: Text('Villa')),
+                      DropdownMenuItem(value: 'plot', child: Text('Plot')),
+                      DropdownMenuItem(
+                          value: 'commercial', child: Text('Commercial')),
+                      DropdownMenuItem(
+                          value: 'industrial', child: Text('Industrial')),
+                      DropdownMenuItem(
+                          value: 'agricultural', child: Text('Agricultural')),
+                      DropdownMenuItem(value: 'other', child: Text('Other')),
+                    ],
+                    onChanged: (v) => vm.setPropertyType(v ?? 'apartment'),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -217,87 +230,66 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
                     ),
                   ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: vm.loading ? null : vm.autodetectLocation,
-                        icon: const Icon(Icons.my_location),
-                        label: const Text('Use my location'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChangeNotifierProvider.value(
-                                value: vm,
-                                child: const MapPickerScreen(),
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.map_outlined),
-                        label: const Text('Pick on map'),
-                      ),
-                    ),
-                  ],
+                twoColumn(
+                  OutlinedButton.icon(
+                    onPressed: vm.loading ? null : vm.autodetectLocation,
+                    icon: const Icon(Icons.my_location),
+                    label: const Text('Use my location'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChangeNotifierProvider.value(
+                            value: vm,
+                            child: const MapPickerScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.map_outlined),
+                    label: const Text('Pick on map'),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: vm.city,
-                        decoration: const InputDecoration(
-                            labelText: 'City *', border: OutlineInputBorder()),
-                        validator: (v) => (v == null || v.trim().length < 2)
-                            ? 'City required'
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        initialValue: vm.state.isEmpty ? null : vm.state,
-                        decoration: const InputDecoration(
-                            labelText: 'State *', border: OutlineInputBorder()),
-                        items: states
-                            .map((s) =>
-                                DropdownMenuItem(value: s, child: Text(s)))
-                            .toList(),
-                        onChanged: (v) => vm.setStateValue(v ?? ''),
-                        validator: (v) => (v == null || v.trim().length < 2)
-                            ? 'State required'
-                            : null,
-                      ),
-                    ),
-                  ],
+                twoColumn(
+                  TextFormField(
+                    controller: vm.city,
+                    decoration: const InputDecoration(
+                        labelText: 'City *', border: OutlineInputBorder()),
+                    validator: (v) => (v == null || v.trim().length < 2)
+                        ? 'City required'
+                        : null,
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue: vm.state.isEmpty ? null : vm.state,
+                    decoration: const InputDecoration(
+                        labelText: 'State *', border: OutlineInputBorder()),
+                    items: states
+                        .map((s) =>
+                            DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) => vm.setStateValue(v ?? ''),
+                    validator: (v) => (v == null || v.trim().length < 2)
+                        ? 'State required'
+                        : null,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: vm.pincode,
-                        decoration: const InputDecoration(
-                            labelText: 'Pincode (optional)',
-                            border: OutlineInputBorder()),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: vm.locality,
-                        decoration: const InputDecoration(
-                            labelText: 'Locality (optional)',
-                            border: OutlineInputBorder()),
-                      ),
-                    ),
-                  ],
+                twoColumn(
+                  TextFormField(
+                    controller: vm.pincode,
+                    decoration: const InputDecoration(
+                        labelText: 'Pincode (optional)',
+                        border: OutlineInputBorder()),
+                  ),
+                  TextFormField(
+                    controller: vm.locality,
+                    decoration: const InputDecoration(
+                        labelText: 'Locality (optional)',
+                        border: OutlineInputBorder()),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -307,28 +299,21 @@ class _CreatePropertyViewState extends State<_CreatePropertyView> {
                       border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: vm.latitude,
-                        decoration: const InputDecoration(
-                            labelText: 'Latitude (optional)',
-                            border: OutlineInputBorder()),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: vm.longitude,
-                        decoration: const InputDecoration(
-                            labelText: 'Longitude (optional)',
-                            border: OutlineInputBorder()),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
+                twoColumn(
+                  TextFormField(
+                    controller: vm.latitude,
+                    decoration: const InputDecoration(
+                        labelText: 'Latitude (optional)',
+                        border: OutlineInputBorder()),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextFormField(
+                    controller: vm.longitude,
+                    decoration: const InputDecoration(
+                        labelText: 'Longitude (optional)',
+                        border: OutlineInputBorder()),
+                    keyboardType: TextInputType.number,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _sectionTitle('Details'),

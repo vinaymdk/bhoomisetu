@@ -124,11 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
       case BottomNavItem.list:
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final roles = authProvider.roles;
-        final canAccess = roles.contains('seller') || roles.contains('agent');
+        final canAccess = roles.contains('buyer') || roles.contains('seller') || roles.contains('agent') || roles.contains('admin');
         if (!canAccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-                content: Text('Seller/Agent role required to list properties')),
+                content: Text('Buyer/Seller/Agent role required to list properties')),
           );
           return;
         }
@@ -194,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isAuthenticated = authProvider.isAuthenticated;
     final roles = authProvider.roles;
     final canBuy = roles.contains('buyer') || roles.contains('admin');
+    final avatarUrl = authProvider.userData?['avatarUrl']?.toString();
 
     final data = isAuthenticated ? _dashboardData : _homeData;
     final featuredProperties = data?.featuredProperties ?? [];
@@ -216,7 +217,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (isAuthenticated)
             PopupMenuButton<String>(
-              icon: const Icon(Icons.account_circle_outlined),
+              icon: CircleAvatar(
+                radius: 16,
+                backgroundColor: Colors.white,
+                backgroundImage:
+                    avatarUrl != null && avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                child: avatarUrl == null || avatarUrl.isEmpty
+                    ? const Icon(Icons.person, color: Colors.black54)
+                    : null,
+              ),
               onSelected: (value) async {
                 if (value == 'profile') {
                   Navigator.push(
@@ -389,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: SizedBox(
-                                height: 410,
+                                height: 430,
                                 width: double.infinity,
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
@@ -472,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
-                                  mainAxisExtent: 410,
+                                  mainAxisExtent: 430,
                                   crossAxisSpacing: 12,
                                   mainAxisSpacing: 12,
                                 ),

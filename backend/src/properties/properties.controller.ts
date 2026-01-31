@@ -38,7 +38,7 @@ export class PropertiesController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('seller', 'agent')
+  @Roles('buyer', 'seller', 'agent', 'admin')
   async create(
     @CurrentUser() currentUser: CurrentUserData,
     @Body() createDto: CreatePropertyDto,
@@ -86,7 +86,7 @@ export class PropertiesController {
 
   @Get('my')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('seller', 'agent')
+  @Roles('buyer', 'seller', 'agent', 'admin')
   async findMyProperties(
     @CurrentUser() currentUser: CurrentUserData,
     @Query('status') status?: string,
@@ -123,7 +123,7 @@ export class PropertiesController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('seller', 'agent')
+  @Roles('buyer', 'seller', 'agent', 'admin')
   async update(
     @Param('id') id: string,
     @CurrentUser() currentUser: CurrentUserData,
@@ -134,7 +134,7 @@ export class PropertiesController {
 
   @Post(':id/submit')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('seller', 'agent')
+  @Roles('buyer', 'seller', 'agent', 'admin')
   @HttpCode(HttpStatus.OK)
   async submitForVerification(
     @Param('id') id: string,
@@ -145,7 +145,7 @@ export class PropertiesController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('seller', 'agent')
+  @Roles('buyer', 'seller', 'agent', 'admin')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string, @CurrentUser() currentUser: CurrentUserData): Promise<void> {
     return this.propertiesService.remove(id, currentUser.userId);
@@ -159,7 +159,7 @@ export class PropertiesController {
    */
   @Post('images/upload')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('seller', 'agent')
+  @Roles('buyer', 'seller', 'agent', 'admin')
   @UseInterceptors(FilesInterceptor('images', 20, { limits: { fileSize: 10 * 1024 * 1024 } })) // Max 20 files, 10MB each
   async uploadImages(
     @UploadedFiles() files: Express.Multer.File[],

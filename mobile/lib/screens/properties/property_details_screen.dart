@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../services/properties_service.dart';
 import '../../models/property.dart';
@@ -18,6 +20,7 @@ import '../reviews/reviews_list_screen.dart';
 import '../reviews/create_review_screen.dart';
 import '../../services/reviews_service.dart';
 import '../../models/review.dart';
+import '../../services/app_config_service.dart';
 
 class PropertyDetailsScreen extends StatefulWidget {
   final String propertyId;
@@ -48,6 +51,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   Review? _existingReview;
   bool _isLiked = false;
   int _likeCount = 0;
+  String? _mapboxToken;
 
   @override
   void initState() {
@@ -55,6 +59,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     _userId = authProvider.userData?['id']?.toString() ?? 'guest';
     _load();
+    _loadMapToken();
   }
 
   @override
@@ -102,6 +107,50 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     }
   }
 
+  Future<void> _loadMapToken() async {
+    try {
+      final token = await AppConfigService().getMapboxToken();
+      if (mounted) setState(() => _mapboxToken = token);
+    } catch (_) {
+      if (mounted) setState(() => _mapboxToken = null);
+    }
+  }
+
+  String _formatPostedDate(DateTime date) {
+    final diffDays = DateTime.now().difference(date).inDays;
+    if (diffDays <= 0) return 'Posted today';
+    if (diffDays == 1) return 'Posted 1 day ago';
+    return 'Posted $diffDays days ago';
+  }
+
+  String? _formatOptionalDate(dynamic value) {
+    if (value == null) return null;
+    final parsed = DateTime.tryParse(value.toString());
+    return parsed != null ? '${parsed.day}/${parsed.month}/${parsed.year}' : value.toString();
+  }
+
+  String? _formatCurrency(dynamic value) {
+    if (value == null) return null;
+    final parsed = num.tryParse(value.toString());
+    if (parsed == null) return value.toString();
+    return '₹${parsed.toStringAsFixed(0)}';
+  }
+
+  Widget _buildInfoChip(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 12, color: Colors.black87),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -123,6 +172,17 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     final isBuyer = authProvider.roles.contains('buyer') || authProvider.roles.contains('admin');
     final canLike = authProvider.isAuthenticated;
     final canEditReview = _existingReview == null || ['pending', 'flagged'].contains(_existingReview!.status);
+    final listingLabel = property.listingType == 'rent' ? 'For Rent' : 'For Sale';
+    final features = property.features ?? {};
+    final availableFrom =
+        features['availableFrom'] ?? features['available_from'] ?? features['availableDate'];
+    final leaseDuration =
+        features['leaseDuration'] ?? features['lease_duration'] ?? features['leaseTenure'];
+    final securityDeposit =
+        features['securityDeposit'] ?? features['security_deposit'] ?? features['deposit'];
+    final canShowMap = property.location.latitude != null &&
+        property.location.longitude != null &&
+        _mapboxToken != null;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Property Details'),
@@ -187,6 +247,25 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               style: const TextStyle(color: Colors.black54),
             ),
             const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildInfoChip(listingLabel),
+                _buildInfoChip(_formatPostedDate(property.createdAt)),
+                if (property.ageOfConstruction != null)
+                  _buildInfoChip('${property.ageOfConstruction} years old'),
+                if (property.furnishingStatus != null && property.furnishingStatus!.isNotEmpty)
+                  _buildInfoChip(property.furnishingStatus!),
+                if (_formatOptionalDate(availableFrom) != null)
+                  _buildInfoChip('Available: ${_formatOptionalDate(availableFrom)}'),
+                if (leaseDuration != null)
+                  _buildInfoChip('Lease: $leaseDuration'),
+                if (_formatCurrency(securityDeposit) != null)
+                  _buildInfoChip('Deposit: ${_formatCurrency(securityDeposit)}'),
+              ],
+            ),
+            const SizedBox(height: 16),
             if (property.images != null && property.images!.isNotEmpty) ...[
               SizedBox(
                 height: 220,
@@ -241,9 +320,19 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               child: Column(
                 children: [
                   _infoRow('Price', '₹${property.price.toStringAsFixed(0)}'),
+                  _infoRow('Posted', _formatPostedDate(property.createdAt)),
                   _infoRow('Area', '${property.area} ${property.areaUnit}'),
-                  _infoRow('Listing Type', property.listingType),
+                  _infoRow('Listing Type', listingLabel),
                   _infoRow('Property Type', property.propertyType),
+                  if (property.ageOfConstruction != null)
+                    _infoRow('Property Age', '${property.ageOfConstruction} years'),
+                  if (property.furnishingStatus != null && property.furnishingStatus!.isNotEmpty)
+                    _infoRow('Furnishing', property.furnishingStatus!),
+                  if (_formatOptionalDate(availableFrom) != null)
+                    _infoRow('Available From', _formatOptionalDate(availableFrom)!),
+                  if (leaseDuration != null) _infoRow('Lease Duration', leaseDuration.toString()),
+                  if (_formatCurrency(securityDeposit) != null)
+                    _infoRow('Security Deposit', _formatCurrency(securityDeposit)!),
                   if (property.bedrooms != null) _infoRow('Bedrooms', '${property.bedrooms}'),
                   if (property.bathrooms != null) _infoRow('Bathrooms', '${property.bathrooms}'),
                 ],
@@ -254,6 +343,44 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               const Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               Text(property.description!),
+            ],
+            if (canShowMap) ...[
+              const SizedBox(height: 16),
+              const Text('Location Map', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 220,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(
+                      property.location.latitude!,
+                      property.location.longitude!,
+                    ),
+                    initialZoom: 14,
+                    interactionOptions: const InteractionOptions(flags: InteractiveFlag.none),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/256/{z}/{x}/{y}@2x?access_token=$_mapboxToken',
+                      userAgentPackageName: 'com.bhoomisetu.app',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(
+                            property.location.latitude!,
+                            property.location.longitude!,
+                          ),
+                          width: 36,
+                          height: 36,
+                          child: const Icon(Icons.location_pin, color: Colors.red, size: 36),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ],
             const SizedBox(height: 16),
             Container(

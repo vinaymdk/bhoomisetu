@@ -1,14 +1,25 @@
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../config/firebase_config.dart';
 
 class SocialAuthService {
+  static const String _webClientId =
+      '16495143806-2d11jb9mshp0bitmgklbnfce0pu177bo.apps.googleusercontent.com';
+  // TODO(iOS): Provide the iOS client ID when ready.
+  static const String _iosClientId = '';
+
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   bool _isInitialized = false;
 
   Future<void> _ensureInitialized() async {
     if (_isInitialized) return;
-    await _googleSignIn.initialize();
+    await _googleSignIn.initialize(
+      // Android requires serverClientId (use Web client ID).
+      serverClientId: _webClientId,
+      // iOS requires clientId; skip until provided.
+      clientId: Platform.isIOS && _iosClientId.isNotEmpty ? _iosClientId : null,
+    );
     _isInitialized = true;
   }
 

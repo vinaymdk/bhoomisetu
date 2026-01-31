@@ -1,0 +1,30 @@
+.terms-page {
+  min-height: calc(100vh - 60px);
+  background: var(--color-bg-secondary);
+  padding: var(--spacing-2xl) var(--spacing-md);
+}
+
+.terms-card {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-md);
+}
+
+.terms-card h1 {
+  margin-top: 0;
+  color: var(--color-text-primary);
+}
+
+.terms-card h2 {
+  margin-top: var(--spacing-lg);
+  color: var(--color-text-primary);
+}
+
+.terms-card p,
+.terms-card li {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}

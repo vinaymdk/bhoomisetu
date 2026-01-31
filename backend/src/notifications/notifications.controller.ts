@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -59,6 +60,39 @@ export class NotificationsController {
   @Put('read-all')
   markAllAsRead(@CurrentUser() currentUser: CurrentUserData) {
     return this.notificationsService.markAllAsRead(currentUser.userId);
+  }
+
+  /**
+   * Delete a single notification
+   * DELETE /api/notifications/:id
+   */
+  @Delete(':id')
+  deleteNotification(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.notificationsService.deleteNotification(currentUser.userId, id);
+  }
+
+  /**
+   * Delete multiple notifications
+   * POST /api/notifications/bulk-delete
+   */
+  @Post('bulk-delete')
+  deleteNotifications(
+    @CurrentUser() currentUser: CurrentUserData,
+    @Body() body: { ids: string[] },
+  ) {
+    return this.notificationsService.deleteNotifications(currentUser.userId, body?.ids || []);
+  }
+
+  /**
+   * Delete all notifications
+   * DELETE /api/notifications
+   */
+  @Delete()
+  deleteAllNotifications(@CurrentUser() currentUser: CurrentUserData) {
+    return this.notificationsService.deleteAllNotifications(currentUser.userId);
   }
 
   /**

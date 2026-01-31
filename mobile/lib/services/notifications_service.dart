@@ -104,6 +104,18 @@ class NotificationsService {
     await _apiClient.dio.put('/notifications/read-all');
   }
 
+  Future<void> deleteOne(String id) async {
+    await _apiClient.dio.delete('/notifications/$id');
+  }
+
+  Future<void> deleteMany(List<String> ids) async {
+    await _apiClient.dio.post('/notifications/bulk-delete', data: {'ids': ids});
+  }
+
+  Future<void> deleteAll() async {
+    await _apiClient.dio.delete('/notifications');
+  }
+
   Future<NotificationPreferences> getPreferences() async {
     final response = await _apiClient.dio.get('/notifications/preferences');
     return NotificationPreferences.fromJson(response.data as Map<String, dynamic>);

@@ -10,10 +10,10 @@
 //     // For physical device testing - use your computer's IP address
 //     // Dev environment IPs
 //     // const String physicalDeviceIP = 'http://192.168.0.108:3000'; // Home
-//     // const String physicalDeviceIP = 'http://192.168.0.11:3000'; // Office
+//     const String physicalDeviceIP = 'http://192.168.0.11:3000'; // Office
 
 //     // production and development environment IPs
-//     const String physicalDeviceIP = 'https://api.helpmatesolutions.in'; // Office Server
+//     // const String physicalDeviceIP = 'https://api.helpmatesolutions.in'; // Office Server
 
 //     // Dev environment
 //     // if (Platform.isAndroid) {
@@ -28,34 +28,11 @@
 //     } else {
 //       apiBaseUrl = 'http://192.168.0.2:3000/api';
 //     }
-
 //   }
 
 //   static String baseUrl = defaultBaseUrl;
 
 //   // Fetch API base URL from backend
-//   // static Future<void> initialize() async {
-//   //   try {
-//   //     final response = await http
-//   //         .get(Uri.parse('$defaultBaseUrl/config/app'))
-//   //         .timeout(const Duration(seconds: 5));
-
-//   //     if (response.statusCode == 200) {
-//   //       final config = json.decode(response.body) as Map<String, dynamic>;
-//   //       final apiBaseUrl = config['apiBaseUrl'] as String?;
-//   //       if (apiBaseUrl != null && apiBaseUrl.isNotEmpty) {
-//   //         baseUrl = apiBaseUrl;
-//   //       }
-//   //     }
-//   //   } catch (e) {
-//   //     // Fallback to default
-//   //     baseUrl = defaultBaseUrl;
-//   //     if (kDebugMode) {
-//   //       debugPrint('API Config: Using default base URL: $baseUrl');
-//   //       debugPrint('API Config: Failed to fetch from backend: $e');
-//   //     }
-//   //   }
-//   // }
 //   static Future<void> initialize() async {
 //     try {
 //       final response = await http
@@ -63,34 +40,55 @@
 //           .timeout(const Duration(seconds: 5));
 
 //       if (response.statusCode == 200) {
-//         final config = json.decode(response.body);
-
+//         final config = json.decode(response.body) as Map<String, dynamic>;
 //         final apiBaseUrl = config['apiBaseUrl'] as String?;
-
-//         // 🔥 BLOCK local IPs
-//         if (apiBaseUrl != null &&
-//             !apiBaseUrl.startsWith('http://192.') &&
-//             !apiBaseUrl.startsWith('http://10.') &&
-//             !apiBaseUrl.startsWith('http://localhost')) {
+//         if (apiBaseUrl != null && apiBaseUrl.isNotEmpty) {
 //           baseUrl = apiBaseUrl;
-//         } else {
-//           baseUrl = defaultBaseUrl;
 //         }
 //       }
-//     } catch (_) {
+//     } catch (e) {
+//       // Fallback to default
 //       baseUrl = defaultBaseUrl;
-//     }
-
-//     if (kDebugMode) {
-//       debugPrint('FINAL API BASE → $baseUrl');
+//       if (kDebugMode) {
+//         debugPrint('API Config: Using default base URL: $baseUrl');
+//         debugPrint('API Config: Failed to fetch from backend: $e');
+//       }
 //     }
 //   }
+//   // static Future<void> initialize() async {
+//   //   try {
+//   //     final response = await http
+//   //         .get(Uri.parse('$defaultBaseUrl/config/app'))
+//   //         .timeout(const Duration(seconds: 5));
 
+//   //     if (response.statusCode == 200) {
+//   //       final config = json.decode(response.body);
+
+//   //       final apiBaseUrl = config['apiBaseUrl'] as String?;
+
+//   //       // 🔥 BLOCK local IPs
+//   //       if (apiBaseUrl != null &&
+//   //           !apiBaseUrl.startsWith('http://192.') &&
+//   //           !apiBaseUrl.startsWith('http://10.') &&
+//   //           !apiBaseUrl.startsWith('http://localhost')) {
+//   //         baseUrl = apiBaseUrl;
+//   //       } else {
+//   //         baseUrl = defaultBaseUrl;
+//   //       }
+//   //     }
+//   //   } catch (_) {
+//   //     baseUrl = defaultBaseUrl;
+//   //   }
+
+//   //   if (kDebugMode) {
+//   //     debugPrint('FINAL API BASE → $baseUrl');
+//   //   }
+//   // }
 // }
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io';
+// import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
@@ -102,7 +100,7 @@ class ApiConfig {
     }
 
     // Development fallback (local backend)
-    return 'http://192.168.0.2:3000/api';
+    return 'http://192.168.0.11:3000/api';
   }
 
   static String baseUrl = defaultBaseUrl;

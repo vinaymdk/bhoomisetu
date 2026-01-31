@@ -22,6 +22,20 @@ export const notificationsService = {
     return response.data;
   },
 
+  async deleteOne(id: string): Promise<void> {
+    await apiClient.delete(`/notifications/${id}`);
+  },
+
+  async deleteMany(ids: string[]): Promise<number> {
+    const response = await apiClient.post('/notifications/bulk-delete', { ids });
+    return response.data;
+  },
+
+  async deleteAll(): Promise<number> {
+    const response = await apiClient.delete('/notifications');
+    return response.data;
+  },
+
   async getPreferences(): Promise<NotificationPreferences> {
     const response = await apiClient.get('/notifications/preferences');
     return response.data;

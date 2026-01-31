@@ -109,6 +109,7 @@ class Property {
   final int? floorNumber;
   final String? furnishingStatus;
   final int? ageOfConstruction;
+  final Map<String, dynamic>? features;
   final List<PropertyImage>? images;
   final List<PropertyFeature>? propertyFeatures;
   final bool isFeatured;
@@ -139,6 +140,7 @@ class Property {
     this.floorNumber,
     this.furnishingStatus,
     this.ageOfConstruction,
+    this.features,
     this.images,
     this.propertyFeatures,
     required this.isFeatured,
@@ -202,6 +204,9 @@ class Property {
       floorNumber: parseInt(json['floorNumber']),
       furnishingStatus: json['furnishingStatus'] as String?,
       ageOfConstruction: parseInt(json['ageOfConstruction']),
+      features: json['features'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(json['features'] as Map)
+          : null,
       images: json['images'] != null
           ? (json['images'] as List).map((i) => PropertyImage.fromJson(i as Map<String, dynamic>)).toList()
           : null,

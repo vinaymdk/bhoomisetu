@@ -32,6 +32,7 @@ import { SubscriptionManagementPage } from './pages/SubscriptionManagementPage';
 import { PaymentsHistoryPage } from './pages/PaymentsHistoryPage';
 import { ReviewsPage } from './pages/ReviewsPage';
 import { CreateReviewPage } from './pages/CreateReviewPage';
+import { TermsPage } from './pages/TermsPage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { AdminPropertiesPage } from './pages/admin/AdminPropertiesPage';
@@ -51,6 +52,7 @@ function App() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/ai-chat" element={<AIChatPage />} />
         <Route path="/reviews" element={<ReviewsPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route
           path="/reviews/new"
           element={
@@ -204,7 +206,7 @@ function App() {
         <Route
           path="/list-property"
           element={
-            <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
+            <RoleProtectedRoute allowedRoles={['buyer', 'seller', 'agent', 'admin']}>
               <CreateListingPage />
             </RoleProtectedRoute>
           }
@@ -212,7 +214,7 @@ function App() {
         <Route
           path="/my-listings"
           element={
-            <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
+            <RoleProtectedRoute allowedRoles={['buyer', 'seller', 'agent', 'admin']}>
               <MyListingsPage />
             </RoleProtectedRoute>
           }
@@ -220,7 +222,7 @@ function App() {
         <Route
           path="/my-listings/:id/edit"
           element={
-            <RoleProtectedRoute allowedRoles={['seller', 'agent']}>
+            <RoleProtectedRoute allowedRoles={['buyer', 'seller', 'agent', 'admin']}>
               <EditListingPage />
             </RoleProtectedRoute>
           }

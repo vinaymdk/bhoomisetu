@@ -9,6 +9,8 @@ import { ReviewList } from '../components/reviews/ReviewList';
 import { reviewsService } from '../services/reviews.service';
 import type { Review } from '../types/review';
 import './PropertyDetailsPage.css';
+import { MapPicker } from '../components/location/MapPicker';
+import { locationService } from '../services/location.service';
 
 export const PropertyDetailsPage = () => {
   const { id } = useParams();
@@ -28,6 +30,7 @@ export const PropertyDetailsPage = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [mapboxToken, setMapboxToken] = useState<string | null>(null);
 
   const isBuyer = useMemo(() => roles.includes('buyer'), [roles]);
   const canEditReview = useMemo(
@@ -84,6 +87,13 @@ export const PropertyDetailsPage = () => {
     void load();
   }, [id, user?.id, isBuyer]);
 
+  useEffect(() => {
+    locationService
+      .getAppConfig()
+      .then((config) => setMapboxToken(config.mapboxToken || null))
+      .catch(() => setMapboxToken(null));
+  }, []);
+
   if (loading) {
     return <div className="property-details-page">Loading property...</div>;
   }
@@ -91,6 +101,41 @@ export const PropertyDetailsPage = () => {
   if (error || !property) {
     return <div className="property-details-page">❌ {error || 'Property not found.'}</div>;
   }
+
+  const listingLabel = property.listingType === 'rent' ? 'For Rent' : 'For Sale';
+  const formatPostedDate = (isoDate: string) => {
+    const date = new Date(isoDate);
+    const diffDays = Math.max(0, Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24)));
+    if (diffDays === 0) return 'Posted today';
+    if (diffDays === 1) return 'Posted 1 day ago';
+    return `Posted ${diffDays} days ago`;
+  };
+  const formatOptionalDate = (value: unknown) => {
+    if (!value) return null;
+    const date = new Date(value as string);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleDateString();
+    }
+    return String(value);
+  };
+  const formatCurrencyValue = (value: unknown) => {
+    if (value === null || value === undefined) return null;
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed)) {
+      return `₹${parsed.toLocaleString()}`;
+    }
+    return String(value);
+  };
+  const availableFrom =
+    property.features?.availableFrom ?? property.features?.available_from ?? property.features?.availableDate;
+  const leaseDuration =
+    property.features?.leaseDuration ?? property.features?.lease_duration ?? property.features?.leaseTenure;
+  const securityDeposit =
+    property.features?.securityDeposit ?? property.features?.security_deposit ?? property.features?.deposit;
+  const hasMap =
+    property.location.latitude != null &&
+    property.location.longitude != null &&
+    !!mapboxToken;
 
   return (
     <div className="property-details-page">
@@ -209,6 +254,10 @@ export const PropertyDetailsPage = () => {
             <span>₹{property.price.toLocaleString()}</span>
           </div>
           <div>
+            <span className="label">Posted</span>
+            <span>{formatPostedDate(property.createdAt)}</span>
+          </div>
+          <div>
             <span className="label">Area</span>
             <span>
               {property.area} {property.areaUnit}
@@ -216,12 +265,42 @@ export const PropertyDetailsPage = () => {
           </div>
           <div>
             <span className="label">Listing Type</span>
-            <span>{property.listingType}</span>
+            <span>{listingLabel}</span>
           </div>
           <div>
             <span className="label">Property Type</span>
             <span>{property.propertyType}</span>
           </div>
+          {property.ageOfConstruction != null && (
+            <div>
+              <span className="label">Property Age</span>
+              <span>{property.ageOfConstruction} years old</span>
+            </div>
+          )}
+          {property.furnishingStatus && (
+            <div>
+              <span className="label">Furnishing</span>
+              <span>{property.furnishingStatus}</span>
+            </div>
+          )}
+          {availableFrom && (
+            <div>
+              <span className="label">Available From</span>
+              <span>{formatOptionalDate(availableFrom)}</span>
+            </div>
+          )}
+          {leaseDuration && (
+            <div>
+              <span className="label">Lease Duration</span>
+              <span>{leaseDuration}</span>
+            </div>
+          )}
+          {securityDeposit && (
+            <div>
+              <span className="label">Security Deposit</span>
+              <span>{formatCurrencyValue(securityDeposit)}</span>
+            </div>
+          )}
           {property.bedrooms != null && (
             <div>
               <span className="label">Bedrooms</span>
@@ -240,6 +319,18 @@ export const PropertyDetailsPage = () => {
           <div className="property-details-description">
             <h3>Description</h3>
             <p>{property.description}</p>
+          </div>
+        )}
+
+        {hasMap && (
+          <div className="property-details-map">
+            <h3>Location Map</h3>
+            <MapPicker
+              mapboxToken={mapboxToken}
+              latitude={property.location.latitude!}
+              longitude={property.location.longitude!}
+              onSelect={() => undefined}
+            />
           </div>
         )}
 

@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere, LessThan, IsNull } from 'typeorm';
+import { Repository, FindOptionsWhere, LessThan, IsNull, In } from 'typeorm';
 import { Notification, NotificationType, NotificationPriority, NotificationStatus } from './entities/notification.entity';
 import { NotificationPreference } from './entities/notification-preference.entity';
 import { NotificationDeliveryLog, DeliveryChannel, DeliveryStatus } from './entities/notification-delivery-log.entity';
@@ -638,6 +638,35 @@ export class NotificationsService {
       { userId, readAt: IsNull() },
       { readAt: new Date(), status: NotificationStatus.READ },
     );
+    return result.affected || 0;
+  }
+
+  /**
+   * Delete a single notification
+   */
+  async deleteNotification(userId: string, notificationId: string): Promise<void> {
+    const result = await this.notificationRepository.delete({ id: notificationId, userId });
+    if (!result.affected) {
+      throw new NotFoundException('Notification not found');
+    }
+  }
+
+  /**
+   * Delete multiple notifications
+   */
+  async deleteNotifications(userId: string, ids: string[]): Promise<number> {
+    if (!ids || ids.length === 0) {
+      throw new BadRequestException('Notification ids are required');
+    }
+    const result = await this.notificationRepository.delete({ userId, id: In(ids) });
+    return result.affected || 0;
+  }
+
+  /**
+   * Delete all notifications
+   */
+  async deleteAllNotifications(userId: string): Promise<number> {
+    const result = await this.notificationRepository.delete({ userId });
     return result.affected || 0;
   }
 

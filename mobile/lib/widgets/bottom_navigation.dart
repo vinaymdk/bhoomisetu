@@ -416,8 +416,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
     final roles = authProvider.roles;
     final isAuthenticated = authProvider.isAuthenticated;
 
-    final canList = roles.contains('seller') || roles.contains('agent');
-    final canBuy = roles.contains('buyer') || roles.contains('admin');
     final canVerify =
         roles.contains('customer_service') || roles.contains('admin');
 
@@ -426,7 +424,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
           icon: Icons.home, label: 'Home', item: BottomNavItem.home),
       _buildNavItem(context,
           icon: Icons.search, label: 'Search', item: BottomNavItem.search),
-      if (canList)
+      if (isAuthenticated)
         _buildCountNavItem(
           context,
           icon: Icons.add_business,
@@ -442,7 +440,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
           label: 'Saved',
           item: BottomNavItem.saved,
         ),
-      if (canBuy)
+      if (isAuthenticated)
         _buildCountNavItem(
           context,
           icon: Icons.assignment_outlined,

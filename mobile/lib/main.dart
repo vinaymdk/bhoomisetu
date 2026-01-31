@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
-import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/search/search_screen.dart';
+import 'screens/terms/terms_screen.dart';
 import 'config/firebase_config.dart';
 import 'config/api_config.dart';
 import 'config/api_client.dart';
@@ -159,7 +159,7 @@ class _BhoomiSetuAppState extends State<BhoomiSetuApp> with WidgetsBindingObserv
             }
 
             if (authProvider.isAuthenticated) {
-              return const DashboardScreen();
+              return const HomeScreen();
             }
 
             return const LoginScreen();
@@ -168,8 +168,8 @@ class _BhoomiSetuAppState extends State<BhoomiSetuApp> with WidgetsBindingObserv
         routes: {
           '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
-          '/dashboard': (context) => const DashboardScreen(),
           '/search': (context) => const SearchScreen(),
+          '/terms': (context) => const TermsScreen(),
         },
       ),
     );

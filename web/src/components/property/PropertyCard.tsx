@@ -30,7 +30,17 @@ export const PropertyCard = ({ property, showFeaturedBadge = true }: PropertyCar
     return `${count}`;
   };
 
+  const formatRelativeDate = (isoDate: string) => {
+    const date = new Date(isoDate);
+    const diffMs = Date.now() - date.getTime();
+    const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    if (diffDays === 0) return 'Posted today';
+    if (diffDays === 1) return 'Posted 1 day ago';
+    return `Posted ${diffDays} days ago`;
+  };
+
   const location = `${property.location.city}, ${property.location.state}`;
+  const listingBadge = property.listingType === 'rent' ? 'For Rent' : 'For Sale';
 
   return (
     <Link to={`/properties/${property.id}`} className="property-card">
@@ -44,9 +54,7 @@ export const PropertyCard = ({ property, showFeaturedBadge = true }: PropertyCar
         {showFeaturedBadge && property.isFeatured && (
           <span className="property-card-featured-badge">Featured</span>
         )}
-        {property.listingType === 'rent' && (
-          <span className="property-card-listing-type">For Rent</span>
-        )}
+        <span className="property-card-listing-type">{listingBadge}</span>
       </div>
       
       <div className="property-card-content">
@@ -58,6 +66,13 @@ export const PropertyCard = ({ property, showFeaturedBadge = true }: PropertyCar
         <div className="property-card-location">
           <span className="property-card-location-icon">📍</span>
           <span>{location}</span>
+        </div>
+
+        <div className="property-card-meta">
+          <span>{formatRelativeDate(property.createdAt)}</span>
+          {property.ageOfConstruction !== undefined && property.ageOfConstruction !== null && (
+            <span>{property.ageOfConstruction} years old</span>
+          )}
         </div>
         
         <div className="property-card-details">

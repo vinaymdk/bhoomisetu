@@ -31,6 +31,7 @@ export const NotificationsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<SupportChatRole>('customer_service');
   const [allowedRoles, setAllowedRoles] = useState<SupportChatRole[]>([]);
   const [activeSession, setActiveSession] = useState<SupportChatSession | null>(null);
@@ -68,6 +69,18 @@ export const NotificationsPage = () => {
     }, 2500);
   };
 
+  const selectionActive = selectedIds.length > 0;
+  const allSelected = notifications.length > 0 && selectedIds.length === notifications.length;
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((current) => current !== id) : [...prev, id],
+    );
+  };
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? [] : notifications.map((item) => item.id));
+  };
+  const clearSelection = () => setSelectedIds([]);
+
   const loadNotifications = async () => {
     if (!currentUserId) {
       setLoading(false);
@@ -78,6 +91,9 @@ export const NotificationsPage = () => {
       const response = await notificationsService.list({ unreadOnly });
       setNotifications(response.notifications);
       setUnreadCount(response.unreadCount);
+      setSelectedIds((prev) =>
+        prev.filter((id) => response.notifications.some((item) => item.id === id)),
+      );
       notifyBadgeUpdate(response.unreadCount);
       setError(null);
     } catch (err: any) {
@@ -151,6 +167,43 @@ export const NotificationsPage = () => {
       });
     } catch {
       showToast('Failed to mark notification as read.', 'error');
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!currentUserId || selectedIds.length === 0) return;
+    try {
+      await notificationsService.deleteMany(selectedIds);
+      clearSelection();
+      await loadNotifications();
+      showToast('Selected notifications deleted.');
+    } catch {
+      showToast('Failed to delete selected notifications.', 'error');
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!currentUserId || notifications.length === 0) return;
+    const confirmed = window.confirm('Delete all notifications? This cannot be undone.');
+    if (!confirmed) return;
+    try {
+      await notificationsService.deleteAll();
+      clearSelection();
+      await loadNotifications();
+      showToast('All notifications deleted.');
+    } catch {
+      showToast('Failed to delete notifications.', 'error');
+    }
+  };
+
+  const handleDeleteOne = async (item: NotificationItem) => {
+    if (!currentUserId) return;
+    try {
+      await notificationsService.deleteOne(item.id);
+      await loadNotifications();
+      showToast('Notification deleted.');
+    } catch {
+      showToast('Failed to delete notification.', 'error');
     }
   };
 
@@ -614,6 +667,27 @@ export const NotificationsPage = () => {
           <button className="notifications-action" onClick={handleMarkAllRead} disabled={unreadCount === 0}>
             Mark all read
           </button>
+          {notifications.length > 0 && (
+            <>
+              <label className="notifications-toggle">
+                <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} />
+                &nbsp; Select all
+              </label>
+              <button
+                className="notifications-action"
+                onClick={handleDeleteSelected}
+                disabled={!selectionActive}
+              >
+                Delete selected
+              </button>
+              <button
+                className="notifications-action notifications-action-danger"
+                onClick={handleDeleteAll}
+              >
+                Delete all
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -633,13 +707,28 @@ export const NotificationsPage = () => {
           ) : (
             <div className="notifications-cards">
               {notifications.map((item) => (
-                <button
+                <div
                   key={item.id}
                   className={`notifications-card ${item.readAt ? 'read' : 'unread'} type-${item.type}`}
                   onClick={() => handleMarkRead(item)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      handleMarkRead(item);
+                    }
+                  }}
                 >
                   <div className="notifications-card-header">
                     <div className="notifications-card-title">
+                      <input
+                        type="checkbox"
+                        className="notifications-select-checkbox"
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        onClick={(event) => event.stopPropagation()}
+                      />
                       {!item.readAt && <span className="notifications-dot" />}
                       <span>{item.title}</span>
                     </div>
@@ -649,8 +738,18 @@ export const NotificationsPage = () => {
                   <div className="notifications-meta">
                     <span className={`notifications-tag priority-${item.priority}`}>{item.priority}</span>
                     <span className="notifications-tag">{item.type.replace(/_/g, ' ')}</span>
+                    <button
+                      type="button"
+                      className="notifications-card-delete"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteOne(item);
+                      }}
+                    >
+                      Delete
+                    </button>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           )}

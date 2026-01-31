@@ -134,26 +134,13 @@ export const Header = () => {
               <Link to="/properties" className="header-nav-link">
                 Properties
               </Link>
-              <Link to="/search" className="header-nav-link">
-                Search
+              <Link to="/buyer-requirements" className="header-nav-link header-nav-link-badge">
+                Buyer Requirements
+                {showReqsBadge && reqsCount > 0 && <span className="nav-badge">{reqsCount}</span>}
               </Link>
-              {canBuy && (
-                <Link to="/buyer-requirements" className="header-nav-link header-nav-link-badge">
-                  Buyer Requirements
-                  {showReqsBadge && reqsCount > 0 && <span className="nav-badge">{reqsCount}</span>}
-                </Link>
-              )}
-              {canBuy && (
-                <Link to="/mediation/my-interests" className="header-nav-link">
-                  My Interests
-                </Link>
-              )}
-              {canBuy && (
-                <Link to="/saved" className="header-nav-link header-nav-link-badge">
-                  Saved
-                  {showSavedBadge && savedCount > 0 && <span className="nav-badge">{savedCount}</span>}
-                </Link>
-              )}
+              <Link to="/mediation/my-interests" className="header-nav-link">
+                My Interests
+              </Link>
               {canVerify && (
                 <Link to="/cs/dashboard" className="header-nav-link">
                   CS Dashboard
@@ -174,24 +161,41 @@ export const Header = () => {
                   Mediation
                 </Link>
               )}
-              {canList && (
-                <>
-                  <Link to="/my-listings" className="header-nav-link">
-                    My Listings
+              <>
+                <Link to="/my-listings" className="header-nav-link">
+                  My Listings
+                </Link>
+                {showListBadge && listCount > 0 && (
+                  <span className="nav-badge-inline">{listCount}</span>
+                )}
+                {isSeller && (
+                  <Link to="/mediation/property-interests" className="header-nav-link">
+                    Interests
                   </Link>
-                  {showListBadge && listCount > 0 && (
-                    <span className="nav-badge-inline">{listCount}</span>
-                  )}
-                  {isSeller && (
-                    <Link to="/mediation/property-interests" className="header-nav-link">
-                      Interests
-                    </Link>
-                  )}
-                  <Link to="/list-property" className="header-nav-link header-nav-link-primary">
-                    List Property
-                  </Link>
-                </>
-              )}
+                )}
+                <Link to="/list-property" className="header-nav-link header-nav-link-primary">
+                  List Property
+                </Link>
+              </>
+              <button
+                type="button"
+                className="header-notifications"
+                onClick={() => navigate('/search')}
+                aria-label="Search"
+                title="Search"
+              >
+                <i className="fas fa-search header-notifications-icon" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="header-notifications"
+                onClick={() => navigate('/saved')}
+                aria-label="Saved"
+                title="Saved"
+              >
+                <i className="far fa-bookmark header-notifications-icon" aria-hidden="true" />
+                {showSavedBadge && savedCount > 0 && <span className="header-notifications-badge">{savedCount}</span>}
+              </button>
               <button
                 className="header-notifications"
                 onClick={() => navigate('/notifications')}
@@ -217,7 +221,13 @@ export const Header = () => {
                   aria-haspopup="menu"
                   aria-expanded={userMenuOpen}
                 >
-                  <span className="header-user-name">{user?.fullName || 'Account'}</span>
+                  <span className="header-user-avatar" aria-hidden="true">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" />
+                    ) : (
+                      <i className="far fa-user header-user-avatar-fallback" />
+                    )}
+                  </span>
                   <span className="header-user-caret">▾</span>
                 </button>
                 {userMenuOpen && (
